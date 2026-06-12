@@ -188,5 +188,19 @@
   "announcements": {
     "title": "公告",
     "empty": "暂无公告"
+  },
+  "subscriptions": {
+    "title": "我的订阅",
+    "empty": "暂无订阅",
+    "expires": "到期时间",
+    "remaining": "剩余",
+    "daysCount": "{days} 天",
+    "usage": "用量统计",
+    "daily": "每日",
+    "weekly": "每周",
+    "monthly": "每月",
+    "status_active": "生效中",
+    "status_expired": "已过期",
+    "status_pending": "待生效"
   }
 }

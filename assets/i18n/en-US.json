@@ -188,5 +188,19 @@
   "announcements": {
     "title": "Announcements",
     "empty": "No announcements"
+  },
+  "subscriptions": {
+    "title": "My Subscriptions",
+    "empty": "No subscriptions",
+    "expires": "Expires",
+    "remaining": "Remaining",
+    "daysCount": "{days} days",
+    "usage": "Usage",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "status_active": "Active",
+    "status_expired": "Expired",
+    "status_pending": "Pending"
   }
 }

@@ -16,6 +16,7 @@ import '../../features/user/profile/presentation/profile_page.dart';
 import '../../features/user/profile/presentation/totp_manage_page.dart';
 import '../../features/user/announcements/presentation/announcements_page.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
+import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
@@ -102,6 +103,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/announcements',
         builder: (context, state) => const AnnouncementsPage(),
+      ),
+      GoRoute(
+        path: '/subscriptions',
+        builder: (context, state) => const SubscriptionsPage(),
       ),
       GoRoute(
         path: '/admin',

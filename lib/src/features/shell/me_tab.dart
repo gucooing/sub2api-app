@@ -98,6 +98,12 @@ class MeTab extends ConsumerWidget {
             onTap: () => context.push('/profile'),
           ),
           ListTile(
+            leading: const Icon(Icons.card_membership_outlined),
+            title: Text(context.tr('nav.subscriptions')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/subscriptions'),
+          ),
+          ListTile(
             leading: const Icon(Icons.card_giftcard_outlined),
             title: Text(context.tr('redeem.title')),
             trailing: const Icon(Icons.chevron_right),
