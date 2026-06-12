@@ -14,3 +14,17 @@ final announcementsListProvider =
   final api = ref.watch(announcementsApiProvider);
   return await api.list();
 });
+
+/// 未读公告列表提供者。
+final unreadAnnouncementsProvider =
+    FutureProvider.autoDispose<List<UserAnnouncement>>((ref) async {
+  final api = ref.watch(announcementsApiProvider);
+  return await api.list(unreadOnly: true);
+});
+
+/// 未读公告数量。
+final unreadAnnouncementsCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final unread = await ref.watch(unreadAnnouncementsProvider.future);
+  return unread.length;
+});
