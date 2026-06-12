@@ -97,6 +97,12 @@ class MeTab extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/profile'),
           ),
+          ListTile(
+            leading: const Icon(Icons.card_giftcard_outlined),
+            title: Text(context.tr('redeem.title')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/redeem'),
+          ),
           if (session.isAdmin)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),

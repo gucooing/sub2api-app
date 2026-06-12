@@ -171,5 +171,18 @@
     "totpEnableStep1": "Verify your identity first:",
     "totpEnableStep2": "Scan the QR code with your authenticator (e.g. Google Authenticator) or enter the secret manually, then type the 6-digit code:",
     "totpDisableConfirm": "Are you sure you want to disable two-factor authentication? Verify your identity first:"
+  },
+  "redeem": {
+    "title": "Redeem Code",
+    "code": "Redeem code",
+    "codeHint": "Enter your code",
+    "codeRequired": "Code is required",
+    "submit": "Redeem",
+    "history": "History",
+    "historyEmpty": "No redemptions yet",
+    "typeBalance": "Balance top-up",
+    "typeSubscription": "Subscription: {group}",
+    "typeConcurrency": "Concurrency quota",
+    "days": "d"
   }
 }
