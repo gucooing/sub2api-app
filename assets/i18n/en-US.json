@@ -109,5 +109,22 @@
     "packReloaded": "Language packs reloaded",
     "about": "About",
     "version": "Version"
+  },
+  "dashboard": {
+    "balance": "Balance",
+    "today": "Today",
+    "total": "All time",
+    "requests": "Requests",
+    "cost": "Cost",
+    "tokens": "Tokens",
+    "keys": "Keys (active/total)"
+  },
+  "usage": {
+    "today": "Today",
+    "week": "7 days",
+    "month": "30 days",
+    "costTrend": "Cost trend",
+    "byModel": "By model",
+    "model": "Model"
   }
 }

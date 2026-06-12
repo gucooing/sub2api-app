@@ -9,6 +9,8 @@ import '../../features/settings/settings_screen.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/shell/me_tab.dart';
 import '../../features/shell/splash_screen.dart';
+import '../../features/user/dashboard/presentation/dashboard_tab.dart';
+import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
 
@@ -91,8 +93,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/dashboard',
-              builder: (context, state) =>
-                  const ModulePlaceholderScreen(titleKey: 'nav.dashboard'),
+              builder: (context, state) => const DashboardTab(),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -105,8 +106,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/usage',
-              builder: (context, state) =>
-                  const ModulePlaceholderScreen(titleKey: 'nav.usage'),
+              builder: (context, state) => const UsageTab(),
             ),
           ]),
           StatefulShellBranch(routes: [

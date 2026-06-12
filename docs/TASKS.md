@@ -44,9 +44,9 @@
 
 | 任务 | 模块位置 | 优先级 | 状态 |
 |---|---|---|---|
-| 控制台总览:余额、今日消耗、密钥数、订阅概况卡片 | `lib/src/features/user/dashboard/` | P0 | ⬜ |
+| 控制台总览:余额、今日消耗、密钥数、订阅概况卡片 | `lib/src/features/user/dashboard/` | P0 | ✅ |
 | API 密钥管理:列表/创建/编辑/删除/启停/复制 | `lib/src/features/user/keys/` | P0 | ⬜ |
-| 用量统计:时间范围/模型维度,趋势图(fl_chart)+ 明细列表 | `lib/src/features/user/usage/` | P0 | ⬜ |
+| 用量统计:时间范围/模型维度,趋势图(fl_chart)+ 明细列表 | `lib/src/features/user/usage/` | P0 | ✅ |
 | 订阅管理:我的订阅列表与详情 | `lib/src/features/user/subscriptions/` | P1 | ⬜ |
 | 兑换码兑换 | `lib/src/features/user/redeem/` | P1 | ⬜ |
 | 公告列表与详情 | `lib/src/features/user/announcements/` | P1 | ⬜ |
