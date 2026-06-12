@@ -1,0 +1,67 @@
+name: sub2api
+description: "Sub2api mobile & desktop client - manage your Sub2API gateway (user + admin) on Android, iOS, Windows, macOS and Linux."
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  # 网络层:REST 请求/拦截器/日志
+  dio: ^5.9.2
+  # 状态管理
+  flutter_riverpod: ^3.3.2
+  # 声明式路由
+  go_router: ^17.3.0
+  # 令牌等敏感信息安全存储
+  flutter_secure_storage: ^10.3.1
+  # 轻量本地配置(语言、主题、服务器列表等)
+  shared_preferences: ^2.5.5
+  # 应用数据目录(外置语言包等)
+  path_provider: ^2.1.5
+  # 仪表盘图表
+  fl_chart: ^1.2.0
+  # 日期/数字本地化格式
+  intl: ^0.20.2
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  # 图标生成(dart run flutter_launcher_icons)
+  flutter_launcher_icons: ^0.14.4
+  # tool/prepare_icon.dart 使用的图像处理库
+  image: ^4.9.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/branding/
+    - assets/icon/
+    - assets/i18n/
+
+# 应用图标生成配置,运行: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  adaptive_icon_background: "#1a2e63"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  ios: true
+  image_path_ios: "assets/icon/app_icon_ios.png"
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
