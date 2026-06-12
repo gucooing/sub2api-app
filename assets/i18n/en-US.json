@@ -184,5 +184,9 @@
     "typeSubscription": "Subscription: {group}",
     "typeConcurrency": "Concurrency quota",
     "days": "d"
+  },
+  "announcements": {
+    "title": "Announcements",
+    "empty": "No announcements"
   }
 }

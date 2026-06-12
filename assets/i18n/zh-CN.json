@@ -184,5 +184,9 @@
     "typeSubscription": "订阅:{group}",
     "typeConcurrency": "并发额度",
     "days": "天"
+  },
+  "announcements": {
+    "title": "公告",
+    "empty": "暂无公告"
   }
 }
