@@ -31,8 +31,8 @@
 
 | 任务 | 模块位置 | 优先级 | 状态 |
 |---|---|---|---|
-| ApiClient:dio 封装、BaseURL 注入、Bearer 鉴权拦截器、错误归一化(ApiException) | `lib/src/core/network/` | P0 | ⬜ |
-| SecureStore:令牌安全存取封装 | `lib/src/core/storage/secure_store.dart` | P0 | ⬜ |
+| ApiClient:dio 封装、BaseURL 注入、Bearer 鉴权拦截器、错误归一化(ApiException) | `lib/src/core/network/` | P0 | ✅ |
+| SecureStore:令牌安全存取封装 | `lib/src/core/storage/secure_store.dart` | P0 | ✅ |
 | 多后端 ServerProfile:模型、增删改查、当前选中(默认 `https://ai.alsl.xyz`) | `lib/src/core/server/` | P0 | ⬜ |
 | 会话控制器:登录态/当前用户/角色(user·admin),启动时恢复会话 | `lib/src/core/session/` | P0 | ⬜ |
 | 登录页:邮箱+密码、TOTP 两步验证、服务器选择入口 | `lib/src/features/auth/` | P0 | ⬜ |
