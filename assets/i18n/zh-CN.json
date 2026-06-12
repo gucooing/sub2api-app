@@ -1,0 +1,66 @@
+{
+  "@@locale": "zh-CN",
+  "@@name": "Simplified Chinese",
+  "@@nativeName": "简体中文",
+  "app": {
+    "name": "Sub2api",
+    "tagline": "一个密钥,畅用多个 AI 模型"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "confirm": "确认",
+    "retry": "重试",
+    "refresh": "刷新",
+    "loading": "加载中…",
+    "search": "搜索",
+    "copy": "复制",
+    "copied": "已复制",
+    "close": "关闭",
+    "back": "返回",
+    "empty": "暂无内容",
+    "unknownError": "出错了"
+  },
+  "nav": {
+    "home": "首页",
+    "dashboard": "控制台",
+    "keys": "API 密钥",
+    "usage": "用量",
+    "subscriptions": "订阅",
+    "settings": "设置",
+    "admin": "管理"
+  },
+  "home": {
+    "welcome": "欢迎使用 {name}",
+    "subtitle": "随时随地管理你的 AI 网关",
+    "openSettings": "打开设置"
+  },
+  "settings": {
+    "title": "设置",
+    "appearance": "外观",
+    "language": "语言",
+    "theme": "主题",
+    "themeSystem": "跟随系统",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "languageFollowSystem": "跟随系统语言",
+    "languagePacks": "语言包",
+    "reloadPacks": "重新加载外部语言包",
+    "externalPackHint": "将 .json 语言包放入此目录后点击重新加载,无需重新安装:",
+    "packReloaded": "语言包已重新加载",
+    "about": "关于",
+    "version": "版本"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "email": "邮箱",
+    "password": "密码",
+    "server": "服务器",
+    "loginButton": "登录"
+  }
+}

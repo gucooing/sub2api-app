@@ -1,0 +1,66 @@
+{
+  "@@locale": "en-US",
+  "@@name": "English",
+  "@@nativeName": "English",
+  "app": {
+    "name": "Sub2api",
+    "tagline": "One key for every AI model"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "search": "Search",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close",
+    "back": "Back",
+    "empty": "Nothing here yet",
+    "unknownError": "Something went wrong"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "keys": "API Keys",
+    "usage": "Usage",
+    "subscriptions": "Subscriptions",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  "home": {
+    "welcome": "Welcome to {name}",
+    "subtitle": "Manage your AI gateway on the go",
+    "openSettings": "Open settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "themeSystem": "Follow system",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "languageFollowSystem": "Follow system language",
+    "languagePacks": "Language packs",
+    "reloadPacks": "Reload external packs",
+    "externalPackHint": "Drop .json language packs into this folder, then reload — no reinstall needed:",
+    "packReloaded": "Language packs reloaded",
+    "about": "About",
+    "version": "Version"
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "server": "Server",
+    "loginButton": "Sign in"
+  }
+}

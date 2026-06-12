@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "fallback": "en-US",
+  "packs": [
+    "en-US.json",
+    "zh-CN.json"
+  ]
+}
