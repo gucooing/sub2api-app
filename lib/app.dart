@@ -18,6 +18,7 @@ class Sub2apiApp extends ConsumerWidget {
     final localeState = ref.watch(localeControllerProvider);
     final themeMode = ref.watch(themeControllerProvider);
     final registry = ref.watch(languagePackRegistryProvider);
+    final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       title: AppConfig.appName,
@@ -25,7 +26,7 @@ class Sub2apiApp extends ConsumerWidget {
       themeMode: themeMode,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      routerConfig: appRouter,
+      routerConfig: router,
       // 跟随系统时交给 Flutter 按 supportedLocales 解析,否则用用户所选。
       locale: localeState.followSystem ? null : localeState.locale,
       supportedLocales: localeState.supportedLocales.isEmpty

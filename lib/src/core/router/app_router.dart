@@ -1,21 +1,122 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/home/home_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
+import '../../features/settings/servers_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/shell/home_shell.dart';
+import '../../features/shell/me_tab.dart';
+import '../../features/shell/splash_screen.dart';
+import '../../shared/widgets/module_placeholder.dart';
+import '../session/session_controller.dart';
 
-/// 应用路由表(go_router)。后续按功能新增登录、控制台、管理端等路由。
-final appRouter = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      name: 'home',
-      builder: (context, state) => const HomeScreen(),
-    ),
-    GoRoute(
-      path: '/settings',
-      name: 'settings',
-      builder: (context, state) => const SettingsScreen(),
-    ),
-  ],
-);
+/// 会话状态变化时通知 GoRouter 重新评估 redirect。
+class _SessionRefreshNotifier extends ChangeNotifier {
+  void refresh() => notifyListeners();
+}
+
+/// 应用路由表(集中注册)+ 登录态守卫。
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = _SessionRefreshNotifier();
+  ref.listen(sessionControllerProvider, (_, _) => notifier.refresh());
+  ref.onDispose(notifier.dispose);
+
+  return GoRouter(
+    initialLocation: '/splash',
+    refreshListenable: notifier,
+    redirect: (context, state) {
+      final session = ref.read(sessionControllerProvider);
+      final location = state.matchedLocation;
+
+      // 登录前后都可访问的页面
+      const open = {'/servers', '/settings'};
+      if (open.contains(location)) return null;
+
+      switch (session.status) {
+        case SessionStatus.restoring:
+          return location == '/splash' ? null : '/splash';
+        case SessionStatus.unauthenticated:
+          final allowed = location == '/login' || location == '/register';
+          return allowed ? null : '/login';
+        case SessionStatus.authenticated:
+          if (location == '/splash' ||
+              location == '/login' ||
+              location == '/register') {
+            return '/dashboard';
+          }
+          if (location.startsWith('/admin') && !session.isAdmin) {
+            return '/dashboard';
+          }
+          return null;
+      }
+    },
+    routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/servers',
+        builder: (context, state) => const ServersScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'me.profile'),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'nav.admin'),
+      ),
+      // 登录后的主壳:底部导航四个分支
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/dashboard',
+              builder: (context, state) =>
+                  const ModulePlaceholderScreen(titleKey: 'nav.dashboard'),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/keys',
+              builder: (context, state) =>
+                  const ModulePlaceholderScreen(titleKey: 'nav.keys'),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/usage',
+              builder: (context, state) =>
+                  const ModulePlaceholderScreen(titleKey: 'nav.usage'),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/me',
+              builder: (context, state) => const MeTab(),
+            ),
+          ]),
+        ],
+      ),
+    ],
+  );
+});

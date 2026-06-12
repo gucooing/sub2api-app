@@ -23,16 +23,71 @@
     "close": "Close",
     "back": "Back",
     "empty": "Nothing here yet",
+    "optional": "optional",
+    "comingSoon": "This module is under construction",
     "unknownError": "Something went wrong"
+  },
+  "errors": {
+    "network": "Connection failed. Check your network or server address",
+    "timeout": "Request timed out. Please try again",
+    "cancelled": "Request cancelled",
+    "http": "Request failed ({status})",
+    "business": "Operation failed ({status})"
   },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "keys": "API Keys",
+    "keys": "Keys",
     "usage": "Usage",
+    "me": "Me",
     "subscriptions": "Subscriptions",
     "settings": "Settings",
     "admin": "Admin"
+  },
+  "auth": {
+    "login": "Sign in",
+    "loginButton": "Sign in",
+    "logout": "Sign out",
+    "email": "Email",
+    "emailInvalid": "Enter a valid email address",
+    "password": "Password",
+    "passwordRequired": "Enter your password",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordConfirm": "Confirm password",
+    "passwordMismatch": "Passwords do not match",
+    "register": "Create account",
+    "registerTitle": "Sign up",
+    "registerButton": "Sign up",
+    "registrationDisabled": "Registration is disabled on this server",
+    "forgotPassword": "Forgot password",
+    "forgotPasswordHint": "Reset your password on the web:\n{url}",
+    "verifyCode": "Email code",
+    "verifyCodeRequired": "Enter the verification code",
+    "sendCode": "Send code",
+    "resendIn": "Resend in {seconds}s",
+    "promoCode": "Promo code",
+    "invitationCode": "Invitation code",
+    "totpTitle": "Two-factor authentication",
+    "totpHint": "Enter the 6-digit code from your authenticator {email}",
+    "totpCode": "Code",
+    "totpButton": "Verify & sign in",
+    "turnstileWarning": "This server requires human verification, which is not yet supported in the app. Use the web if sign-in fails"
+  },
+  "servers": {
+    "title": "Servers",
+    "add": "Add server",
+    "edit": "Edit server",
+    "name": "Name",
+    "address": "Server address",
+    "invalidAddress": "Address must start with http(s):// and include a host",
+    "builtinTag": "Built-in",
+    "deleteConfirm": "Delete server \"{name}\"? Its sign-in state will also be cleared."
+  },
+  "me": {
+    "profile": "Profile",
+    "roleAdmin": "Admin",
+    "balance": "Balance ${amount}",
+    "logoutConfirm": "Sign out of the current account?"
   },
   "home": {
     "welcome": "Welcome to {name}",
@@ -54,13 +109,5 @@
     "packReloaded": "Language packs reloaded",
     "about": "About",
     "version": "Version"
-  },
-  "auth": {
-    "login": "Sign in",
-    "logout": "Sign out",
-    "email": "Email",
-    "password": "Password",
-    "server": "Server",
-    "loginButton": "Sign in"
   }
 }

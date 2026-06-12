@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/server/server_store.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../i18n/app_localizations.dart';
 import '../../i18n/language_pack_loader.dart';
@@ -63,6 +65,16 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 32),
           _SectionHeader(context.tr('settings.languagePacks')),
           _ExternalPacksTile(),
+
+          const Divider(height: 32),
+          _SectionHeader(context.tr('servers.title')),
+          ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: Text(context.tr('servers.title')),
+            subtitle: Text(ref.watch(activeServerProvider).name),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/servers'),
+          ),
 
           const Divider(height: 32),
           _SectionHeader(context.tr('settings.about')),

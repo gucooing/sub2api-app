@@ -35,10 +35,10 @@
 | SecureStore:令牌安全存取封装 | `lib/src/core/storage/secure_store.dart` | P0 | ✅ |
 | 多后端 ServerProfile:模型、增删改查、当前选中(默认 `https://ai.alsl.xyz`) | `lib/src/core/server/` | P0 | ✅ |
 | 会话控制器:登录态/当前用户/角色(user·admin),启动时恢复会话 | `lib/src/core/session/` | P0 | ✅ |
-| 登录页:邮箱+密码、TOTP 两步验证、服务器选择入口 | `lib/src/features/auth/` | P0 | ⬜ |
-| 注册页(若后端开放注册)+ 忘记密码引导 | `lib/src/features/auth/` | P1 | ⬜ |
-| 登录后导航壳:用户端底部导航(总览/密钥/用量/我的),管理员显示管理入口 | `lib/src/features/shell/` | P0 | ⬜ |
-| 路由守卫:未登录跳登录页,已登录禁回登录页 | `lib/src/core/router/app_router.dart` | P0 | ⬜ |
+| 登录页:邮箱+密码、TOTP 两步验证、服务器选择入口 | `lib/src/features/auth/` | P0 | ✅ |
+| 注册页(若后端开放注册)+ 忘记密码引导 | `lib/src/features/auth/` | P1 | ✅ |
+| 登录后导航壳:用户端底部导航(总览/密钥/用量/我的),管理员显示管理入口 | `lib/src/features/shell/` | P0 | ✅ |
+| 路由守卫:未登录跳登录页,已登录禁回登录页 | `lib/src/core/router/app_router.dart` | P0 | ✅ |
 
 ## 里程碑 M2 · 用户端核心(P0/P1)
 

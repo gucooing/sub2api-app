@@ -23,16 +23,71 @@
     "close": "关闭",
     "back": "返回",
     "empty": "暂无内容",
+    "optional": "选填",
+    "comingSoon": "模块开发中,敬请期待",
     "unknownError": "出错了"
+  },
+  "errors": {
+    "network": "网络连接失败,请检查网络或服务器地址",
+    "timeout": "请求超时,请稍后重试",
+    "cancelled": "请求已取消",
+    "http": "请求失败({status})",
+    "business": "操作失败({status})"
   },
   "nav": {
     "home": "首页",
-    "dashboard": "控制台",
-    "keys": "API 密钥",
+    "dashboard": "总览",
+    "keys": "密钥",
     "usage": "用量",
+    "me": "我的",
     "subscriptions": "订阅",
     "settings": "设置",
-    "admin": "管理"
+    "admin": "管理端"
+  },
+  "auth": {
+    "login": "登录",
+    "loginButton": "登录",
+    "logout": "退出登录",
+    "email": "邮箱",
+    "emailInvalid": "请输入有效的邮箱地址",
+    "password": "密码",
+    "passwordRequired": "请输入密码",
+    "passwordTooShort": "密码至少 6 位",
+    "passwordConfirm": "确认密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "register": "注册账号",
+    "registerTitle": "注册",
+    "registerButton": "注册",
+    "registrationDisabled": "该服务器未开放注册",
+    "forgotPassword": "忘记密码",
+    "forgotPasswordHint": "请在网页端找回密码:\n{url}",
+    "verifyCode": "邮箱验证码",
+    "verifyCodeRequired": "请输入验证码",
+    "sendCode": "发送验证码",
+    "resendIn": "{seconds}s 后重发",
+    "promoCode": "优惠码",
+    "invitationCode": "邀请码",
+    "totpTitle": "两步验证",
+    "totpHint": "请输入身份验证器中的 6 位动态码 {email}",
+    "totpCode": "动态码",
+    "totpButton": "验证并登录",
+    "turnstileWarning": "该服务器开启了人机验证,移动端暂不支持,如登录失败请改用网页端"
+  },
+  "servers": {
+    "title": "服务器",
+    "add": "添加服务器",
+    "edit": "编辑服务器",
+    "name": "名称",
+    "address": "服务器地址",
+    "invalidAddress": "地址需以 http(s):// 开头且包含主机名",
+    "builtinTag": "内置",
+    "deleteConfirm": "确定删除服务器「{name}」吗?该服务器的登录状态也会一并清除。"
+  },
+  "me": {
+    "profile": "个人资料",
+    "roleAdmin": "管理员",
+    "balance": "余额 ${amount}",
+    "logoutConfirm": "确定退出当前账号吗?"
   },
   "home": {
     "welcome": "欢迎使用 {name}",
@@ -54,13 +109,5 @@
     "packReloaded": "语言包已重新加载",
     "about": "关于",
     "version": "版本"
-  },
-  "auth": {
-    "login": "登录",
-    "logout": "退出登录",
-    "email": "邮箱",
-    "password": "密码",
-    "server": "服务器",
-    "loginButton": "登录"
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sub2api/src/i18n/app_localizations.dart';
@@ -46,6 +48,22 @@ void main() {
       expect(registry.resolve(const Locale('zh', 'TW'))?.tag, 'zh-CN');
       // 完全不支持的语言 → 回退
       expect(registry.resolve(const Locale('fr'))?.tag, 'en-US');
+    });
+  });
+
+  group('内置语言包', () {
+    test('zh-CN 与 en-US 键集一致', () {
+      final zh = LanguagePack.fromJsonString(
+          File('assets/i18n/zh-CN.json').readAsStringSync());
+      final en = LanguagePack.fromJsonString(
+          File('assets/i18n/en-US.json').readAsStringSync());
+
+      final zhKeys = zh.messages.keys.toSet();
+      final enKeys = en.messages.keys.toSet();
+      expect(zhKeys.difference(enKeys), isEmpty,
+          reason: 'zh-CN 比 en-US 多出的键');
+      expect(enKeys.difference(zhKeys), isEmpty,
+          reason: 'en-US 比 zh-CN 多出的键');
     });
   });
 
