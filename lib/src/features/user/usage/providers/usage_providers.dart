@@ -3,63 +3,95 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client_provider.dart';
 import '../data/usage_api.dart';
 
-/// 用量页时间范围。
-enum UsageRange { today, week, month }
+/// 用量页时间范围类型。
+enum UsageRangeType { today, week, month, custom }
 
-extension UsageRangeX on UsageRange {
-  int get days => switch (this) {
-        UsageRange.today => 1,
-        UsageRange.week => 7,
-        UsageRange.month => 30,
-      };
+/// 日期范围。
+class DateRange {
+  const DateRange({
+    required this.start,
+    required this.end,
+    required this.type,
+  });
 
-  String get granularity =>
-      this == UsageRange.today ? 'hour' : 'day';
+  final DateTime start;
+  final DateTime end;
+  final UsageRangeType type;
+
+  String get startDate => _fmt(start);
+  String get endDate => _fmt(end);
+
+  int get days => end.difference(start).inDays + 1;
+
+  String get granularity => days <= 1 ? 'hour' : 'day';
+
+  static String _fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// 创建预设范围。
+  factory DateRange.preset(UsageRangeType type) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return switch (type) {
+      UsageRangeType.today => DateRange(
+          start: today,
+          end: today,
+          type: UsageRangeType.today,
+        ),
+      UsageRangeType.week => DateRange(
+          start: today.subtract(const Duration(days: 6)),
+          end: today,
+          type: UsageRangeType.week,
+        ),
+      UsageRangeType.month => DateRange(
+          start: today.subtract(const Duration(days: 29)),
+          end: today,
+          type: UsageRangeType.month,
+        ),
+      UsageRangeType.custom => throw ArgumentError('Use DateRange() for custom'),
+    };
+  }
 }
 
 final usageApiProvider = Provider<UsageApi>(
   (ref) => UsageApi(ref.watch(apiClientProvider)),
 );
 
-/// 当前选中的时间范围。
-final usageRangeProvider =
-    NotifierProvider<UsageRangeController, UsageRange>(
-        UsageRangeController.new);
+/// 当前选中的日期范围。
+final usageDateRangeProvider =
+    NotifierProvider<UsageDateRangeController, DateRange>(
+  UsageDateRangeController.new,
+);
 
-class UsageRangeController extends Notifier<UsageRange> {
+class UsageDateRangeController extends Notifier<DateRange> {
   @override
-  UsageRange build() => UsageRange.week;
+  DateRange build() => DateRange.preset(UsageRangeType.week);
 
-  void set(UsageRange range) => state = range;
+  void setPreset(UsageRangeType type) {
+    if (type == UsageRangeType.custom) return;
+    state = DateRange.preset(type);
+  }
+
+  void setCustom(DateTime start, DateTime end) {
+    state = DateRange(start: start, end: end, type: UsageRangeType.custom);
+  }
 }
-
-/// 由 [usageRangeProvider] 推导的日期区间(本地时区,YYYY-MM-DD)。
-({String start, String end}) rangeDates(UsageRange range) {
-  final now = DateTime.now();
-  final end = _fmt(now);
-  final start = _fmt(now.subtract(Duration(days: range.days - 1)));
-  return (start: start, end: end);
-}
-
-String _fmt(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 final usageTrendProvider =
     FutureProvider.autoDispose<List<TrendPoint>>((ref) {
-  final range = ref.watch(usageRangeProvider);
-  final dates = rangeDates(range);
+  final range = ref.watch(usageDateRangeProvider);
   return ref.watch(usageApiProvider).trend(
-        startDate: dates.start,
-        endDate: dates.end,
+        startDate: range.startDate,
+        endDate: range.endDate,
         granularity: range.granularity,
       );
 });
 
 final usageModelsProvider =
     FutureProvider.autoDispose<List<ModelUsageStat>>((ref) {
-  final range = ref.watch(usageRangeProvider);
-  final dates = rangeDates(range);
+  final range = ref.watch(usageDateRangeProvider);
   return ref
       .watch(usageApiProvider)
-      .models(startDate: dates.start, endDate: dates.end);
+      .models(startDate: range.startDate, endDate: range.endDate);
 });

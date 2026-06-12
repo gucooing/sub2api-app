@@ -124,6 +124,7 @@
     "today": "今天",
     "week": "7 天",
     "month": "30 天",
+    "customRange": "自定义时间段",
     "costTrend": "消耗趋势",
     "byModel": "按模型统计",
     "model": "模型"

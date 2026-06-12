@@ -47,16 +47,27 @@ void main() {
     expect(m.model, 'claude-fable-5');
   });
 
-  test('UsageRange 日期区间与粒度', () {
-    expect(UsageRange.today.granularity, 'hour');
-    expect(UsageRange.week.granularity, 'day');
+  test('DateRange 日期区间与粒度', () {
+    final today = DateRange.preset(UsageRangeType.today);
+    expect(today.granularity, 'hour');
+    expect(today.days, 1);
+    expect(today.startDate, today.endDate);
 
-    final week = rangeDates(UsageRange.week);
-    final start = DateTime.parse(week.start);
-    final end = DateTime.parse(week.end);
-    expect(end.difference(start).inDays, 6);
+    final week = DateRange.preset(UsageRangeType.week);
+    expect(week.granularity, 'day');
+    expect(week.days, 7);
 
-    final today = rangeDates(UsageRange.today);
-    expect(today.start, today.end);
+    final month = DateRange.preset(UsageRangeType.month);
+    expect(month.days, 30);
+
+    // 自定义范围
+    final custom = DateRange(
+      start: DateTime(2026, 6, 1),
+      end: DateTime(2026, 6, 10),
+      type: UsageRangeType.custom,
+    );
+    expect(custom.days, 10);
+    expect(custom.startDate, '2026-06-01');
+    expect(custom.endDate, '2026-06-10');
   });
 }

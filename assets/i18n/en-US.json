@@ -124,6 +124,7 @@
     "today": "Today",
     "week": "7 days",
     "month": "30 days",
+    "customRange": "Custom range",
     "costTrend": "Cost trend",
     "byModel": "By model",
     "model": "Model"

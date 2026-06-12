@@ -13,7 +13,7 @@ class UsageTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final range = ref.watch(usageRangeProvider);
+    final range = ref.watch(usageDateRangeProvider);
     final trend = ref.watch(usageTrendProvider);
     final models = ref.watch(usageModelsProvider);
 
@@ -33,27 +33,7 @@ class UsageTab extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Center(
-              child: SegmentedButton<UsageRange>(
-                segments: [
-                  ButtonSegment(
-                    value: UsageRange.today,
-                    label: Text(context.tr('usage.today')),
-                  ),
-                  ButtonSegment(
-                    value: UsageRange.week,
-                    label: Text(context.tr('usage.week')),
-                  ),
-                  ButtonSegment(
-                    value: UsageRange.month,
-                    label: Text(context.tr('usage.month')),
-                  ),
-                ],
-                selected: {range},
-                onSelectionChanged: (sel) =>
-                    ref.read(usageRangeProvider.notifier).set(sel.first),
-              ),
-            ),
+            _DateRangeSelector(currentRange: range),
             const SizedBox(height: 16),
             Text(
               context.tr('usage.costTrend'),
@@ -88,6 +68,88 @@ class UsageTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// 日期范围选择器。
+class _DateRangeSelector extends ConsumerWidget {
+  const _DateRangeSelector({required this.currentRange});
+
+  final DateRange currentRange;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: SegmentedButton<UsageRangeType>(
+                segments: [
+                  ButtonSegment(
+                    value: UsageRangeType.today,
+                    label: Text(context.tr('usage.today')),
+                  ),
+                  ButtonSegment(
+                    value: UsageRangeType.week,
+                    label: Text(context.tr('usage.week')),
+                  ),
+                  ButtonSegment(
+                    value: UsageRangeType.month,
+                    label: Text(context.tr('usage.month')),
+                  ),
+                ],
+                selected: {currentRange.type},
+                onSelectionChanged: (sel) {
+                  final type = sel.first;
+                  if (type != UsageRangeType.custom) {
+                    ref.read(usageDateRangeProvider.notifier).setPreset(type);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.outlined(
+              icon: const Icon(Icons.date_range),
+              tooltip: context.tr('usage.customRange'),
+              onPressed: () => _showDatePicker(context, ref),
+            ),
+          ],
+        ),
+        if (currentRange.type == UsageRangeType.custom) ...[
+          const SizedBox(height: 8),
+          Text(
+            '${_formatDate(currentRange.start)} - ${_formatDate(currentRange.end)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _showDatePicker(BuildContext context, WidgetRef ref) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(
+        start: currentRange.start,
+        end: currentRange.end,
+      ),
+    );
+
+    if (picked != null) {
+      ref.read(usageDateRangeProvider.notifier).setCustom(
+            picked.start,
+            picked.end,
+          );
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 
