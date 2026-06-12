@@ -18,6 +18,7 @@ import '../../features/user/announcements/presentation/announcements_page.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
+import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
 
@@ -107,6 +108,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/subscriptions',
         builder: (context, state) => const SubscriptionsPage(),
+      ),
+      GoRoute(
+        path: '/usage-logs',
+        builder: (context, state) => const UsageLogsPage(),
       ),
       GoRoute(
         path: '/admin',

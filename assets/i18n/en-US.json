@@ -203,5 +203,17 @@
     "status_active": "Active",
     "status_expired": "Expired",
     "status_pending": "Pending"
+  },
+  "usageLogs": {
+    "title": "Usage Logs",
+    "empty": "No usage logs",
+    "provider": "Provider",
+    "apiKey": "API Key",
+    "inputTokens": "Input Tokens",
+    "outputTokens": "Output Tokens",
+    "cacheReadTokens": "Cache Read Tokens",
+    "cacheCreationTokens": "Cache Creation Tokens",
+    "totalTokens": "Total Tokens",
+    "duration": "Duration"
   }
 }

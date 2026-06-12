@@ -115,6 +115,12 @@ class MeTab extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/announcements'),
           ),
+          ListTile(
+            leading: const Icon(Icons.list_alt_outlined),
+            title: Text(context.tr('usageLogs.title')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/usage-logs'),
+          ),
           if (session.isAdmin)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),

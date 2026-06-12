@@ -203,5 +203,17 @@
     "status_active": "生效中",
     "status_expired": "已过期",
     "status_pending": "待生效"
+  },
+  "usageLogs": {
+    "title": "使用记录",
+    "empty": "暂无使用记录",
+    "provider": "平台",
+    "apiKey": "API 密钥",
+    "inputTokens": "输入 Tokens",
+    "outputTokens": "输出 Tokens",
+    "cacheReadTokens": "缓存读取 Tokens",
+    "cacheCreationTokens": "缓存创建 Tokens",
+    "totalTokens": "总 Tokens",
+    "duration": "耗时"
   }
 }
