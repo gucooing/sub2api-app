@@ -115,83 +115,164 @@ class _UsageLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ExpansionTile(
-        leading: _StatusIcon(status: log.status),
-        title: Text(
-          log.model,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        subtitle: Column(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (log.createdAt != null)
-              Text(_formatDateTime(log.createdAt!)),
-            Text(
-              '\$${(log.actualCost ?? 0).toStringAsFixed(6)}',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                _DetailRow(
-                  label: context.tr('usageLogs.provider'),
-                  value: log.provider,
+                _StatusIcon(status: log.status),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        log.model,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        log.provider,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-                if (log.apiKeyName != null)
-                  _DetailRow(
-                    label: context.tr('usageLogs.apiKey'),
-                    value: log.apiKeyName!,
-                  ),
-                if (log.inputTokens != null)
-                  _DetailRow(
-                    label: context.tr('usageLogs.inputTokens'),
-                    value: log.inputTokens.toString(),
-                  ),
-                if (log.outputTokens != null)
-                  _DetailRow(
-                    label: context.tr('usageLogs.outputTokens'),
-                    value: log.outputTokens.toString(),
-                  ),
-                if (log.cacheReadTokens != null && log.cacheReadTokens! > 0)
-                  _DetailRow(
-                    label: context.tr('usageLogs.cacheReadTokens'),
-                    value: log.cacheReadTokens.toString(),
-                  ),
-                if (log.cacheCreationTokens != null &&
-                    log.cacheCreationTokens! > 0)
-                  _DetailRow(
-                    label: context.tr('usageLogs.cacheCreationTokens'),
-                    value: log.cacheCreationTokens.toString(),
-                  ),
-                if (log.totalTokens != null)
-                  _DetailRow(
-                    label: context.tr('usageLogs.totalTokens'),
-                    value: log.totalTokens.toString(),
-                  ),
-                if (log.durationMs != null)
-                  _DetailRow(
-                    label: context.tr('usageLogs.duration'),
-                    value: '${log.durationMs}ms',
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${(log.actualCost ?? 0).toStringAsFixed(6)}',
+                      style:
+                          Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                    ),
+                    if (log.durationMs != null)
+                      Text(
+                        '${log.durationMs}ms',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                  ],
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (log.inputTokens != null) ...[
+                  Icon(Icons.input,
+                      size: 14, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${log.inputTokens}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                if (log.outputTokens != null) ...[
+                  Icon(Icons.output,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.secondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${log.outputTokens}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                if (log.totalTokens != null) ...[
+                  Icon(Icons.token,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${log.totalTokens}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+            if (log.createdAt != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.access_time,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDateTime(log.createdAt!),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  if (log.apiKeyName != null) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.vpn_key,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        log.apiKeyName!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+            if ((log.cacheReadTokens != null && log.cacheReadTokens! > 0) ||
+                (log.cacheCreationTokens != null &&
+                    log.cacheCreationTokens! > 0)) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.cached,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.tertiary),
+                  const SizedBox(width: 4),
+                  if (log.cacheReadTokens != null && log.cacheReadTokens! > 0)
+                    Text(
+                      '${context.tr('usageLogs.read')}: ${log.cacheReadTokens}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (log.cacheCreationTokens != null &&
+                      log.cacheCreationTokens! > 0) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '${context.tr('usageLogs.creation')}: ${log.cacheCreationTokens}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 
   String _formatDateTime(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+    return '${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
   }
 }
@@ -222,41 +303,6 @@ class _StatusIcon extends StatelessWidget {
                 : Icons.remove,
         size: 18,
         color: color,
-      ),
-    );
-  }
-}
-
-/// 详情行。
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 140,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
       ),
     );
   }

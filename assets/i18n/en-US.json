@@ -218,6 +218,8 @@
     "cacheReadTokens": "Cache Read Tokens",
     "cacheCreationTokens": "Cache Creation Tokens",
     "totalTokens": "Total Tokens",
-    "duration": "Duration"
+    "duration": "Duration",
+    "read": "Read",
+    "creation": "Creation"
   }
 }

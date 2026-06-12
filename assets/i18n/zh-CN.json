@@ -218,6 +218,8 @@
     "cacheReadTokens": "缓存读取 Tokens",
     "cacheCreationTokens": "缓存创建 Tokens",
     "totalTokens": "总 Tokens",
-    "duration": "耗时"
+    "duration": "耗时",
+    "read": "读取",
+    "creation": "创建"
   }
 }
