@@ -118,7 +118,11 @@
     "requests": "Requests",
     "cost": "Cost",
     "tokens": "Tokens",
-    "keys": "Keys (active/total)"
+    "keys": "Keys",
+    "avgDuration": "Avg Duration",
+    "active": "Active",
+    "totalKeys": "Total",
+    "byPlatform": "By Platform"
   },
   "usage": {
     "today": "Today",

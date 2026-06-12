@@ -114,11 +114,106 @@ class DashboardTab extends ConsumerWidget {
                   icon: Icons.token_outlined,
                 ),
                 _StatItem(
-                  label: context.tr('dashboard.keys'),
-                  value: '${data.activeApiKeys} / ${data.totalApiKeys}',
-                  icon: Icons.vpn_key_outlined,
+                  label: context.tr('dashboard.avgDuration'),
+                  value: '${data.averageDurationMs.toStringAsFixed(0)}ms',
+                  icon: Icons.timer_outlined,
                 ),
               ]),
+              const SizedBox(height: 16),
+              Text(
+                context.tr('dashboard.keys'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.vpn_key,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${data.activeApiKeys} ${context.tr('dashboard.active')}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '${context.tr('dashboard.totalKeys')}: ${data.totalApiKeys}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (data.byPlatform.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  context.tr('dashboard.byPlatform'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                for (final platform in data.byPlatform)
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.cloud_outlined,
+                                  size: 20,
+                                  color:
+                                      Theme.of(context).colorScheme.primary),
+                              const SizedBox(width: 8),
+                              Text(
+                                platform.platform,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _SmallStat(
+                                  label: context.tr('dashboard.requests'),
+                                  value: '${platform.totalRequests}',
+                                ),
+                              ),
+                              Expanded(
+                                child: _SmallStat(
+                                  label: context.tr('dashboard.cost'),
+                                  value:
+                                      '\$${platform.totalActualCost.toStringAsFixed(3)}',
+                                ),
+                              ),
+                              Expanded(
+                                child: _SmallStat(
+                                  label: context.tr('dashboard.tokens'),
+                                  value: _formatTokens(platform.totalTokens),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ],
           ),
         ),
@@ -146,6 +241,35 @@ class _StatItem {
   final String label;
   final String value;
   final IconData icon;
+}
+
+class _SmallStat extends StatelessWidget {
+  const _SmallStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
 }
 
 class _StatGrid extends StatelessWidget {

@@ -118,7 +118,11 @@
     "requests": "请求数",
     "cost": "消耗",
     "tokens": "Tokens",
-    "keys": "密钥(活跃/总数)"
+    "keys": "密钥",
+    "avgDuration": "平均耗时",
+    "active": "活跃",
+    "totalKeys": "总数",
+    "byPlatform": "平台分布"
   },
   "usage": {
     "today": "今天",

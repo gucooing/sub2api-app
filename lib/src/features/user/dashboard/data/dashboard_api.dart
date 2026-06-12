@@ -2,6 +2,40 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_client.dart';
 
+/// 平台统计。
+@immutable
+class PlatformStats {
+  const PlatformStats({
+    required this.platform,
+    required this.totalRequests,
+    required this.totalTokens,
+    required this.totalActualCost,
+    required this.todayRequests,
+    required this.todayTokens,
+    required this.todayActualCost,
+  });
+
+  final String platform;
+  final int totalRequests;
+  final int totalTokens;
+  final double totalActualCost;
+  final int todayRequests;
+  final int todayTokens;
+  final double todayActualCost;
+
+  factory PlatformStats.fromJson(Map<String, dynamic> json) {
+    return PlatformStats(
+      platform: json['platform'] as String? ?? '',
+      totalRequests: (json['total_requests'] as num?)?.toInt() ?? 0,
+      totalTokens: (json['total_tokens'] as num?)?.toInt() ?? 0,
+      totalActualCost: (json['total_actual_cost'] as num?)?.toDouble() ?? 0,
+      todayRequests: (json['today_requests'] as num?)?.toInt() ?? 0,
+      todayTokens: (json['today_tokens'] as num?)?.toInt() ?? 0,
+      todayActualCost: (json['today_actual_cost'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
 /// `GET /usage/dashboard/stats` 的用户总览统计(客户端关心的字段)。
 @immutable
 class UserDashboardStats {
@@ -17,6 +51,7 @@ class UserDashboardStats {
     required this.averageDurationMs,
     required this.rpm,
     required this.tpm,
+    this.byPlatform = const [],
   });
 
   final int totalApiKeys;
@@ -30,10 +65,18 @@ class UserDashboardStats {
   final double averageDurationMs;
   final double rpm;
   final double tpm;
+  final List<PlatformStats> byPlatform;
 
   factory UserDashboardStats.fromJson(Map<String, dynamic> json) {
     int asInt(String key) => (json[key] as num?)?.toInt() ?? 0;
     double asDouble(String key) => (json[key] as num?)?.toDouble() ?? 0;
+
+    final platformList = json['by_platform'] as List? ?? const [];
+    final platforms = platformList
+        .whereType<Map>()
+        .map((e) => PlatformStats.fromJson(e.cast<String, dynamic>()))
+        .toList();
+
     return UserDashboardStats(
       totalApiKeys: asInt('total_api_keys'),
       activeApiKeys: asInt('active_api_keys'),
@@ -46,6 +89,7 @@ class UserDashboardStats {
       averageDurationMs: asDouble('average_duration_ms'),
       rpm: asDouble('rpm'),
       tpm: asDouble('tpm'),
+      byPlatform: platforms,
     );
   }
 }
