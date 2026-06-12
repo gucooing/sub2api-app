@@ -126,5 +126,29 @@
     "costTrend": "消耗趋势",
     "byModel": "按模型统计",
     "model": "模型"
+  },
+  "keys": {
+    "create": "创建密钥",
+    "edit": "编辑密钥",
+    "name": "名称",
+    "nameRequired": "请输入名称",
+    "group": "分组",
+    "groupDefault": "默认分组",
+    "quota": "配额上限",
+    "quotaHint": "留空或 0 表示不限",
+    "quotaInvalid": "请输入有效数字",
+    "expiresInDays": "有效期(天)",
+    "expires": "到期",
+    "unlimited": "不限",
+    "statusActive": "启用",
+    "statusInactive": "停用",
+    "statusQuotaExhausted": "配额用尽",
+    "statusExpired": "已过期",
+    "enable": "启用",
+    "disable": "停用",
+    "deleteConfirm": "确定删除密钥「{name}」吗?使用该密钥的应用将立即失效。",
+    "createdTitle": "密钥已创建",
+    "createdHint": "请妥善保存,完整密钥也可随时在列表中复制:",
+    "emptyHint": "还没有密钥,点击右下角创建"
   }
 }

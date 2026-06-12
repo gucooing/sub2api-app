@@ -126,5 +126,29 @@
     "costTrend": "Cost trend",
     "byModel": "By model",
     "model": "Model"
+  },
+  "keys": {
+    "create": "Create key",
+    "edit": "Edit key",
+    "name": "Name",
+    "nameRequired": "Name is required",
+    "group": "Group",
+    "groupDefault": "Default group",
+    "quota": "Quota limit",
+    "quotaHint": "empty or 0 = unlimited",
+    "quotaInvalid": "Enter a valid number",
+    "expiresInDays": "Expires in (days)",
+    "expires": "Expires",
+    "unlimited": "Unlimited",
+    "statusActive": "Active",
+    "statusInactive": "Disabled",
+    "statusQuotaExhausted": "Quota exhausted",
+    "statusExpired": "Expired",
+    "enable": "Enable",
+    "disable": "Disable",
+    "deleteConfirm": "Delete key \"{name}\"? Apps using it will stop working immediately.",
+    "createdTitle": "Key created",
+    "createdHint": "Keep it safe — you can also copy the full key from the list anytime:",
+    "emptyHint": "No keys yet — tap the button to create one"
   }
 }

@@ -10,6 +10,7 @@ import '../../features/shell/home_shell.dart';
 import '../../features/shell/me_tab.dart';
 import '../../features/shell/splash_screen.dart';
 import '../../features/user/dashboard/presentation/dashboard_tab.dart';
+import '../../features/user/keys/presentation/keys_tab.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
@@ -99,8 +100,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/keys',
-              builder: (context, state) =>
-                  const ModulePlaceholderScreen(titleKey: 'nav.keys'),
+              builder: (context, state) => const KeysTab(),
             ),
           ]),
           StatefulShellBranch(routes: [
