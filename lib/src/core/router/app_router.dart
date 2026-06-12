@@ -11,6 +11,9 @@ import '../../features/shell/me_tab.dart';
 import '../../features/shell/splash_screen.dart';
 import '../../features/user/dashboard/presentation/dashboard_tab.dart';
 import '../../features/user/keys/presentation/keys_tab.dart';
+import '../../features/user/profile/presentation/change_password_page.dart';
+import '../../features/user/profile/presentation/profile_page.dart';
+import '../../features/user/profile/presentation/totp_manage_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
@@ -78,8 +81,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'me.profile'),
+        builder: (context, state) => const ProfilePage(),
+        routes: [
+          GoRoute(
+            path: 'change-password',
+            builder: (context, state) => const ChangePasswordPage(),
+          ),
+          GoRoute(
+            path: 'totp',
+            builder: (context, state) => const TotpManagePage(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/admin',

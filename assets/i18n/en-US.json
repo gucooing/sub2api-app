@@ -63,6 +63,7 @@
     "forgotPasswordHint": "Reset your password on the web:\n{url}",
     "verifyCode": "Email code",
     "verifyCodeRequired": "Enter the verification code",
+    "verifyCodeSent": "Verification code sent",
     "sendCode": "Send code",
     "resendIn": "Resend in {seconds}s",
     "promoCode": "Promo code",
@@ -150,5 +151,25 @@
     "createdTitle": "Key created",
     "createdHint": "Keep it safe — you can also copy the full key from the list anytime:",
     "emptyHint": "No keys yet — tap the button to create one"
+  },
+  "profile": {
+    "title": "Profile",
+    "accountInfo": "Account info",
+    "balance": "Balance",
+    "changePassword": "Change password",
+    "changePasswordHint": "You will be signed out after changing your password and need to sign in again",
+    "oldPassword": "Current password",
+    "newPassword": "New password",
+    "passwordChanged": "Password changed — please sign in again",
+    "totp": "Two-factor authentication (TOTP)",
+    "totpEnabled": "Enabled",
+    "totpDisabled": "Disabled",
+    "totpEnabledAt": "Enabled at: {time}",
+    "totpDescription": "Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app at every sign-in.",
+    "totpEnable": "Enable 2FA",
+    "totpDisable": "Disable 2FA",
+    "totpEnableStep1": "Verify your identity first:",
+    "totpEnableStep2": "Scan the QR code with your authenticator (e.g. Google Authenticator) or enter the secret manually, then type the 6-digit code:",
+    "totpDisableConfirm": "Are you sure you want to disable two-factor authentication? Verify your identity first:"
   }
 }
