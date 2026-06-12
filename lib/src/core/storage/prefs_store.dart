@@ -16,4 +16,10 @@ class PrefKeys {
 
   /// 主题模式:system / light / dark。
   static const String themeMode = 'pref.theme_mode';
+
+  /// 服务器列表(ServerProfile JSON 数组)。
+  static const String servers = 'pref.servers';
+
+  /// 当前激活的服务器 ID。
+  static const String activeServerId = 'pref.active_server_id';
 }
