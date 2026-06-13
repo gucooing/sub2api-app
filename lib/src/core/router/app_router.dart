@@ -20,6 +20,7 @@ import '../../features/user/announcements/presentation/announcements_page.dart';
 import '../../features/user/announcements/presentation/announcement_detail_page.dart';
 import '../../features/user/announcements/data/announcements_api.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
+import '../../features/user/recharge/presentation/recharge_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
@@ -128,8 +129,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 可选开启的功能页面(占位,完整页见 P5–P7)。入口仅在管理员开启对应开关时展示。
       GoRoute(
         path: '/recharge',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'features.recharge'),
+        builder: (context, state) => const RechargePage(),
       ),
       GoRoute(
         path: '/affiliate',
