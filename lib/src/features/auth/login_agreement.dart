@@ -23,6 +23,12 @@ Future<void> persistAgreementAccepted(
   }
 }
 
+/// 清除已记住的同意(取消勾选时调用)。
+Future<void> clearAgreementAccepted(
+    SharedPreferences prefs, String serverId) async {
+  await prefs.remove(_consentKey(serverId));
+}
+
 /// 查看单个条款文档(Markdown 沉浸页)。
 void openAgreementDoc(BuildContext context, LoginAgreementDocument doc) {
   Navigator.of(context).push(MaterialPageRoute<void>(

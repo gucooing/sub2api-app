@@ -173,6 +173,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) setState(() => _agreementAcceptedLocal = true);
   }
 
+  Future<void> _revokeAgreement(String serverId) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await clearAgreementAccepted(prefs, serverId);
+    if (mounted) setState(() => _agreementAcceptedLocal = false);
+  }
+
   void _maybeShowModal(PublicSettingsLite s, String serverId) {
     if (s.loginAgreementMode == 'checkbox') return;
     if (!s.agreementGateActive || _agreementAccepted(s, serverId)) return;
@@ -317,7 +323,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   if (v) {
                     _acceptAgreement(settings, server.id);
                   } else {
-                    setState(() => _agreementAcceptedLocal = false);
+                    _revokeAgreement(server.id);
                   }
                 },
               )
@@ -366,6 +372,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildServerSelector() {
     final servers = ref.watch(serverStoreProvider).servers;
     const addValue = '__add_server__';
+    final scheme = Theme.of(context).colorScheme;
     return DropdownButtonFormField<String>(
       initialValue: _serverId,
       isExpanded: true,
@@ -374,20 +381,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         prefixIcon: const Icon(Icons.dns_outlined),
         border: const OutlineInputBorder(),
       ),
+      // 收起态只显示服务器名,避免被完整 URL 撑长。
+      selectedItemBuilder: (context) => [
+        for (final s in servers)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(s.name, overflow: TextOverflow.ellipsis),
+          ),
+        const SizedBox.shrink(),
+      ],
       items: [
         for (final s in servers)
           DropdownMenuItem(
             value: s.id,
-            child: Text('${s.name}  ·  ${s.baseUrl}',
-                overflow: TextOverflow.ellipsis),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.name, overflow: TextOverflow.ellipsis, maxLines: 1),
+                Text(
+                  s.baseUrl,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
         DropdownMenuItem(
           value: addValue,
           child: Row(
             children: [
-              const Icon(Icons.add, size: 18),
+              Icon(Icons.add, size: 18, color: scheme.primary),
               const SizedBox(width: 6),
-              Text(context.tr('servers.add')),
+              Text(context.tr('servers.add'),
+                  style: TextStyle(color: scheme.primary)),
             ],
           ),
         ),
