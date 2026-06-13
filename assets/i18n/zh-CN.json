@@ -159,7 +159,18 @@
     "deleteConfirm": "确定删除密钥「{name}」吗?使用该密钥的应用将立即失效。",
     "createdTitle": "密钥已创建",
     "createdHint": "请妥善保存,完整密钥也可随时在列表中复制:",
-    "emptyHint": "还没有密钥,点击右下角创建"
+    "emptyHint": "还没有密钥,点击右下角创建",
+    "todayCost": "今日消耗",
+    "totalCost": "累计消耗",
+    "rate": "倍率",
+    "windows": "滚动窗口",
+    "lastUsed": "最近使用",
+    "neverUsed": "从未使用",
+    "created": "创建于",
+    "detail": "密钥详情",
+    "dailyUsage": "每日用量",
+    "overview": "概览",
+    "noUsageData": "暂无用量数据"
   },
   "profile": {
     "title": "个人资料",

@@ -1,15 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/progress_meter.dart';
+import '../../../../shared/widgets/status_pill.dart';
 import '../data/keys_api.dart';
 import '../providers/keys_providers.dart';
 import 'key_edit_sheet.dart';
 
-/// 「密钥」tab:API 密钥列表与管理(创建/编辑/启停/删除/复制)。
+/// 密钥状态 → 统一色调。
+StatusTone keyStatusTone(String status) => switch (status) {
+      'active' => StatusTone.positive,
+      'inactive' => StatusTone.neutral,
+      'quota_exhausted' => StatusTone.danger,
+      'expired' => StatusTone.danger,
+      _ => StatusTone.neutral,
+    };
+
+String keyStatusLabel(BuildContext context, String status) => switch (status) {
+      'active' => context.tr('keys.statusActive'),
+      'inactive' => context.tr('keys.statusInactive'),
+      'quota_exhausted' => context.tr('keys.statusQuotaExhausted'),
+      'expired' => context.tr('keys.statusExpired'),
+      _ => status,
+    };
+
+/// 「密钥」tab:API 密钥列表(状态/倍率/今日·累计消耗/配额进度),点击进详情。
 class KeysTab extends ConsumerWidget {
   const KeysTab({super.key});
 
@@ -27,6 +49,7 @@ class KeysTab extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(keysListProvider);
+          ref.invalidate(keysUsageProvider);
           try {
             await ref.read(keysListProvider.future);
           } on Exception {
@@ -40,21 +63,18 @@ class KeysTab extends ConsumerWidget {
             if (list.isEmpty) {
               return ListView(
                 children: [
-                  const SizedBox(height: 120),
-                  Icon(
-                    Icons.vpn_key_off_outlined,
-                    size: 56,
-                    color: Theme.of(context).colorScheme.outline,
+                  const SizedBox(height: 80),
+                  EmptyState(
+                    icon: Icons.vpn_key_off_outlined,
+                    message: context.tr('keys.emptyHint'),
                   ),
-                  const SizedBox(height: 12),
-                  Center(child: Text(context.tr('keys.emptyHint'))),
                 ],
               );
             }
             return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, i) => _KeyCard(info: list[i]),
             );
           },
@@ -72,93 +92,193 @@ class _KeyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final usage = ref.watch(keysUsageProvider).value?[info.id];
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    info.name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                _StatusChip(status: info.status),
-                _ActionsMenu(info: info),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // 密钥脱敏 + 复制
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () async {
-                await Clipboard.setData(ClipboardData(text: info.key));
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(context.tr('common.copied'))),
-                  );
-                }
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        info.maskedKey,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(fontFamily: 'monospace'),
-                      ),
+      child: InkWell(
+        onTap: () => context.push('/keys/${info.id}'),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      info.name,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Icon(Icons.copy, size: 16, color: scheme.primary),
+                  ),
+                  if (info.rateMultiplier != null &&
+                      info.rateMultiplier != 1) ...[
+                    _RateBadge(rate: info.rateMultiplier!),
+                    const SizedBox(width: 6),
                   ],
+                  StatusPill(
+                    label: keyStatusLabel(context, info.status),
+                    tone: keyStatusTone(info.status),
+                  ),
+                  _ActionsMenu(info: info),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // 密钥脱敏 + 复制
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () async {
+                  await Clipboard.setData(ClipboardData(text: info.key));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(context.tr('common.copied'))),
+                    );
+                  }
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          info.maskedKey,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(fontFamily: 'monospace'),
+                        ),
+                      ),
+                      Icon(Icons.copy, size: 16, color: scheme.primary),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 4,
-              children: [
-                if (info.groupName != null)
-                  _Meta(icon: Icons.folder_outlined, text: info.groupName!),
-                _Meta(
-                  icon: Icons.data_usage_outlined,
-                  text: info.quota > 0
-                      ? '\$${info.quotaUsed.toStringAsFixed(2)} / \$${info.quota.toStringAsFixed(2)}'
-                      : '\$${info.quotaUsed.toStringAsFixed(2)} / ${context.tr('keys.unlimited')}',
-                ),
-                if (info.expiresAt != null)
-                  _Meta(
-                    icon: Icons.schedule_outlined,
-                    text:
-                        '${context.tr('keys.expires')} ${_date(info.expiresAt!)}',
+              const SizedBox(height: 12),
+              // 今日 / 累计消耗
+              Row(
+                children: [
+                  Expanded(
+                    child: _CostStat(
+                      label: context.tr('keys.todayCost'),
+                      value: usage != null
+                          ? formatCost(usage.todayActualCost)
+                          : '—',
+                    ),
                   ),
+                  Expanded(
+                    child: _CostStat(
+                      label: context.tr('keys.totalCost'),
+                      value: usage != null
+                          ? formatCost(usage.totalActualCost)
+                          : '—',
+                    ),
+                  ),
+                ],
+              ),
+              if (info.quota > 0) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(context.tr('keys.quota'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant)),
+                    const Spacer(),
+                    Text(
+                      '${formatCost(info.quotaUsed)} / ${formatCost(info.quota)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ProgressMeter(value: info.quotaUsed, max: info.quota),
+                ),
               ],
-            ),
-          ],
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  if (info.groupName != null)
+                    _Meta(icon: Icons.folder_outlined, text: info.groupName!),
+                  if (info.expiresAt != null)
+                    _Meta(
+                      icon: Icons.schedule_outlined,
+                      text:
+                          '${context.tr('keys.expires')} ${formatDate(info.expiresAt!)}',
+                    ),
+                  _Meta(
+                    icon: Icons.chevron_right,
+                    text: context.tr('keys.detail'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  static String _date(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+class _RateBadge extends StatelessWidget {
+  const _RateBadge({required this.rate});
+
+  final double rate;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        '×${rate.toStringAsFixed(rate.truncateToDouble() == rate ? 0 : 2)}',
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: scheme.onTertiaryContainer, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _CostStat extends StatelessWidget {
+  const _CostStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
 }
 
 class _ActionsMenu extends ConsumerWidget {
@@ -257,52 +377,6 @@ class _ActionsMenu extends ConsumerWidget {
         );
       }
     }
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final (label, bg, fg) = switch (status) {
-      'active' => (
-          context.tr('keys.statusActive'),
-          scheme.primaryContainer,
-          scheme.onPrimaryContainer
-        ),
-      'inactive' => (
-          context.tr('keys.statusInactive'),
-          scheme.surfaceContainerHighest,
-          scheme.onSurfaceVariant
-        ),
-      'quota_exhausted' => (
-          context.tr('keys.statusQuotaExhausted'),
-          scheme.errorContainer,
-          scheme.onErrorContainer
-        ),
-      'expired' => (
-          context.tr('keys.statusExpired'),
-          scheme.errorContainer,
-          scheme.onErrorContainer
-        ),
-      _ => (status, scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
-    };
-    return Container(
-      margin: const EdgeInsets.only(left: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg),
-      ),
-    );
   }
 }
 

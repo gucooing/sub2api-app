@@ -159,7 +159,18 @@
     "deleteConfirm": "Delete key \"{name}\"? Apps using it will stop working immediately.",
     "createdTitle": "Key created",
     "createdHint": "Keep it safe — you can also copy the full key from the list anytime:",
-    "emptyHint": "No keys yet — tap the button to create one"
+    "emptyHint": "No keys yet — tap the button to create one",
+    "todayCost": "Today",
+    "totalCost": "Total",
+    "rate": "Rate",
+    "windows": "Windows",
+    "lastUsed": "Last used",
+    "neverUsed": "Never used",
+    "created": "Created",
+    "detail": "Key Details",
+    "dailyUsage": "Daily Usage",
+    "overview": "Overview",
+    "noUsageData": "No usage data"
   },
   "profile": {
     "title": "Profile",
