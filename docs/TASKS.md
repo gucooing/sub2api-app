@@ -40,19 +40,25 @@
 | 登录后导航壳:用户端底部导航(总览/密钥/用量/我的),管理员显示管理入口 | `lib/src/features/shell/` | P0 | ✅ |
 | 路由守卫:未登录跳登录页,已登录禁回登录页 | `lib/src/core/router/app_router.dart` | P0 | ✅ |
 
-## 里程碑 M2 · 用户端核心(P0/P1)
+## 里程碑 M2 · 用户端「Pro 数据控制台」重做 + 功能补全
+
+> 用户判定原 M2 设计不合理,要求从零重做为 Pro 数据控制台并补齐缺失功能。方案见 `.claude/plans/playful-roaming-acorn.md`,分阶段 P0–P9。
 
 | 任务 | 模块位置 | 优先级 | 状态 |
 |---|---|---|---|
-| 控制台总览:余额、今日消耗、密钥数、订阅概况卡片 | `lib/src/features/user/dashboard/` | P0 | ✅ |
-| API 密钥管理:列表/创建/编辑/删除/启停/复制 | `lib/src/features/user/keys/` | P0 | ✅ |
-| 用量统计:时间范围/模型维度,趋势图(fl_chart)+ 明细列表 | `lib/src/features/user/usage/` | P0 | ✅ |
-| 订阅管理:我的订阅列表与详情 | `lib/src/features/user/subscriptions/` | P1 | ⬜ |
-| 兑换码兑换 | `lib/src/features/user/redeem/` | P1 | ⬜ |
-| 公告列表与详情 | `lib/src/features/user/announcements/` | P1 | ⬜ |
-| 个人资料:改密、TOTP 绑定/解绑 | `lib/src/features/user/profile/` | P1 | ⬜ |
-| 可用渠道/渠道状态(只读) | `lib/src/features/user/channels/` | P2 | ⬜ |
-| 钱包与在线充值(支付下单/跳转) | `lib/src/features/user/wallet/` | P2 | ⬜ |
+| P0 共享组件库 + 主题 + 依赖(url_launcher/qr_flutter) | `lib/src/shared/widgets/` | P0 | ✅ |
+| P1 总览重做:品牌 hero + KPI 磁贴 + 多线趋势 + 平台分布 + 快捷入口 | `lib/src/features/user/dashboard/` | P0 | ✅ |
+| P2 密钥重做:卡片增信息 + 密钥详情页(日用量/窗口) | `lib/src/features/user/keys/` | P0 | ✅ |
+| P3 用量重做:时间筛选 + 多线趋势 + 按模型表;使用记录多维筛选 + 记录详情 | `lib/src/features/user/usage/` `usage_logs/` | P0 | ✅ |
+| P4 公告重做:列表卡 + 沉浸详情页(替代弹窗) | `lib/src/features/user/announcements/` | P1 | ✅ |
+| P5 充值:套餐/金额 + 支付方式 + 二维码/跳转 + 核验 + 订单历史 | `lib/src/features/user/recharge/` | P1 | ✅ |
+| P6 邀请返利:邀请码/链接(二维码)+ 额度卡 + 转入余额 + 被邀请人 | `lib/src/features/user/affiliate/` | P1 | ✅ |
+| P7 可用渠道 + 渠道状态(可用率/延迟/时间轴/多窗口详情) | `lib/src/features/user/channels_view/` | P2 | ✅ |
+| P8 导航整合:新模块入口接线 + 总览快捷入口 + 我的页账号入口 | `lib/src/features/shell/` `core/router/` | P1 | ✅ |
+| P9 收尾:各模块 data 层单测 + 文档 + 模拟器验收 | `test/` `docs/` | P1 | ✅ |
+| 订阅管理 / 兑换码 / 个人资料 / 绑定设置 / TOTP | `lib/src/features/user/{subscriptions,redeem,profile}/` | P1 | ✅ |
+| **多账号(以账号为单位)**:账号存储/切换/登出/删除;登录页选/加服务器;登录条款 checkbox+modal | `lib/src/core/account/` `features/settings/accounts_screen.dart` `features/auth/` | P1 | ✅ |
+
 
 ## 里程碑 M3 · 管理端(P1)
 

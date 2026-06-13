@@ -71,13 +71,16 @@ sub2api/
 │       ├── core/                              # 与业务无关的基础设施层
 │       │   ├── config/app_config.dart         #   编译期常量:应用名、默认后端、超时、仓库地址
 │       │   ├── router/app_router.dart         #   go_router 路由表(全部路由集中于此)
-│       │   ├── network/                       #   [规划中] dio 封装:ApiClient、ApiException、
-│       │   │                                  #     鉴权拦截器、统一错误归一化
-│       │   ├── server/                        #   [规划中] 多后端管理:ServerProfile 模型与存储
-│       │   ├── session/                       #   [规划中] 会话状态:登录态、当前用户、角色(user/admin)
+│       │   ├── network/                       #   dio 封装:ApiClient、ApiException、鉴权拦截器、
+│       │   │                                  #     api_client_provider(按激活账号/指定服务器构建)
+│       │   ├── account/                       #   多账号:AccountProfile + AccountStore(令牌按账号分键)
+│       │   ├── server/                        #   多后端:ServerProfile 模型与 ServerStore 持久化
+│       │   ├── session/                       #   会话:SessionController(以账号为单位)、AuthApi、
+│       │   │                                  #     auth_models(AppUser/PublicSettingsLite/登录条款)
+│       │   ├── preferences/                   #   轻量偏好(外置浏览器开关等)
 │       │   ├── storage/
 │       │   │   ├── prefs_store.dart           #   SharedPreferences Provider + PrefKeys 键名集中管理
-│       │   │   └── secure_store.dart          #   [规划中] flutter_secure_storage 封装(令牌)
+│       │   │   └── secure_store.dart          #   flutter_secure_storage 封装(令牌按账号、凭据按服务器)
 │       │   └── theme/
 │       │       ├── app_colors.dart            #   品牌色板(取自官方 Logo:#1A2E63/#4ADE80/#3B82F6)
 │       │       ├── app_theme.dart             #   Material 3 明暗主题工厂
@@ -89,19 +92,25 @@ sub2api/
 │       │   ├── app_localizations.dart         #   本地化入口:AppLocalizations.of / context.tr / 委托
 │       │   └── locale_controller.dart         #   语言状态:跟随系统/手动选择/外置包热重载
 │       ├── features/                          # 业务功能层,按域组织;每个子目录 = 一个功能模块
-│       │   ├── home/home_screen.dart          #   首页(当前为骨架演示页,后续替换为登录后壳)
-│       │   ├── settings/settings_screen.dart  #   设置:主题、语言、外置语言包重载、关于
-│       │   ├── auth/                          #   [规划中] 登录/注册/TOTP 两步验证/服务器选择
-│       │   ├── user/                          #   [规划中] 用户端,按子模块再分目录:
-│       │   │                                  #     dashboard/ keys/ usage/ subscriptions/
-│       │   │                                  #     redeem/ announcements/ profile/
-│       │   └── admin/                         #   [规划中] 管理端,按子模块再分目录:
-│       │                                      #     dashboard/ accounts/ users/ groups/
-│       │                                      #     monitor/ promo/
-│       └── shared/                            # [规划中] 跨功能复用的纯 UI 组件与工具
-│           └── widgets/                       #   通用组件(空态、错误重试、卡片、徽标等)
-├── test/
-│   └── i18n_test.dart                         # i18n 单元测试(解析/回退/插值)
+│       │   ├── auth/                          #   登录(选/加服务器 + 登录条款)、注册、登录条款组件
+│       │   ├── settings/                      #   设置、服务器管理(servers_screen)、账号管理(accounts_screen)
+│       │   ├── shell/                         #   登录后外壳:home_shell(底部导航+顶栏)、me_tab、splash
+│       │   ├── user/                          #   用户端,三层(data/providers/presentation)分模块:
+│       │   │                                  #     dashboard/ keys/ usage/ usage_logs/ announcements/
+│       │   │                                  #     subscriptions/ redeem/ profile/ features/
+│       │   │                                  #     recharge/ affiliate/ channels_view/
+│       │   └── admin/                         #   [规划中,M3 暂停] dashboard/ accounts/ users/ …
+│       └── shared/                            # 跨功能复用的纯 UI 组件与工具
+│           ├── format/formatters.dart         #   数值/日期/金额格式化(formatCompact/Cost/Int/Date…)
+│           └── widgets/                       #   Pro 组件库:kpi_tile/sparkline/metric_trend_chart/
+│                                              #     multi_series_trend_chart/token_*/status_pill/
+│                                              #     availability_bar/uptime_timeline/data_table_card/
+│                                              #     brand_header/section_header/confirm_dialog/
+│                                              #     app_toast/markdown_text/user_avatar/empty_state… 等
+├── test/                                      # 单元测试(i18n/account/session/各模块 data 层解析)
+│   ├── i18n_test.dart  account_store_test.dart  session_controller_test.dart
+│   ├── server_store_test.dart  api_client_test.dart
+│   └── user_*_test.dart                       #   dashboard/keys/usage_logs/features/modules 解析
 ├── tool/
 │   └── prepare_icon.dart                      # 图标生成脚本:dart run tool/prepare_icon.dart
 ├── pubspec.yaml                               # 依赖、资源注册、flutter_launcher_icons 配置
