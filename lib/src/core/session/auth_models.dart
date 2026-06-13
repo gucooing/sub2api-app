@@ -113,6 +113,27 @@ class CustomMenuItem {
       );
 }
 
+/// 登录条款文档(标题 + Markdown 正文)。
+@immutable
+class LoginAgreementDocument {
+  const LoginAgreementDocument({
+    required this.id,
+    required this.title,
+    required this.contentMd,
+  });
+
+  final String id;
+  final String title;
+  final String contentMd;
+
+  factory LoginAgreementDocument.fromJson(Map<String, dynamic> json) =>
+      LoginAgreementDocument(
+        id: json['id']?.toString() ?? '',
+        title: json['title'] as String? ?? '',
+        contentMd: json['content_md'] as String? ?? '',
+      );
+}
+
 /// `GET /settings/public` 中客户端关心的开关(无需登录)。
 @immutable
 class PublicSettingsLite {
@@ -138,6 +159,10 @@ class PublicSettingsLite {
     this.customMenuItems = const [],
     this.siteName = '',
     this.version = '',
+    this.loginAgreementEnabled = false,
+    this.loginAgreementMode = 'modal',
+    this.loginAgreementRevision = '',
+    this.loginAgreementDocuments = const [],
   });
 
   final bool registrationEnabled;
@@ -168,6 +193,25 @@ class PublicSettingsLite {
 
   final String siteName;
   final String version;
+
+  /// 登录条款门控。
+  final bool loginAgreementEnabled;
+
+  /// 'checkbox' | 'modal'(默认 modal)。
+  final String loginAgreementMode;
+
+  /// 条款修订号(用于记忆已同意;空则每次都需确认)。
+  final String loginAgreementRevision;
+  final List<LoginAgreementDocument> loginAgreementDocuments;
+
+  /// 标题非空的条款文档。
+  List<LoginAgreementDocument> get agreementDocuments => loginAgreementDocuments
+      .where((d) => d.title.trim().isNotEmpty)
+      .toList(growable: false);
+
+  /// 是否需要条款门控(开启且有有效文档)。
+  bool get agreementGateActive =>
+      loginAgreementEnabled && agreementDocuments.isNotEmpty;
 
   factory PublicSettingsLite.fromJson(Map<String, dynamic> json) =>
       PublicSettingsLite(
@@ -200,5 +244,19 @@ class PublicSettingsLite {
             const [],
         siteName: json['site_name'] as String? ?? '',
         version: json['version'] as String? ?? '',
+        loginAgreementEnabled:
+            json['login_agreement_enabled'] as bool? ?? false,
+        loginAgreementMode:
+            json['login_agreement_mode'] as String? ?? 'modal',
+        loginAgreementRevision:
+            (json['login_agreement_revision'] as String?)?.isNotEmpty == true
+                ? json['login_agreement_revision'] as String
+                : (json['login_agreement_updated_at'] as String? ?? ''),
+        loginAgreementDocuments:
+            (json['login_agreement_documents'] as List<dynamic>?)
+                    ?.whereType<Map<String, dynamic>>()
+                    .map(LoginAgreementDocument.fromJson)
+                    .toList() ??
+                const [],
       );
 }

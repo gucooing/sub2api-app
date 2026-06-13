@@ -2,17 +2,23 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/network/api_exception.dart';
+import '../../core/server/server_profile.dart';
+import '../../core/server/server_store.dart';
 import '../../core/session/auth_api.dart';
 import '../../core/session/session_controller.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/app_toast.dart';
 
 /// 注册页。字段按服务器公开设置动态展示:
-/// 邮箱验证码(email_verify_enabled)、优惠码、邀请码;注册成功即登录。
+/// 邮箱验证码(email_verify_enabled)、优惠码、邀请码;注册成功即登录(建账号)。
 class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.serverId});
+
+  /// 目标服务器(由登录页传入);为空时回退到激活服务器。
+  final String? serverId;
 
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
@@ -32,6 +38,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   int _resendIn = 0;
   Timer? _timer;
 
+  ServerProfile _server() {
+    final servers = ref.read(serverStoreProvider).servers;
+    for (final s in servers) {
+      if (s.id == widget.serverId) return s;
+    }
+    return ref.read(activeServerProvider);
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -48,8 +62,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
     setState(() => _error = null);
     try {
-      final res =
-          await ref.read(authApiProvider).sendVerifyCode(_email.text.trim());
+      final res = await ref
+          .read(authApiForServerProvider(_server()))
+          .sendVerifyCode(_email.text.trim());
       final countdown = (res['countdown'] as num?)?.toInt() ?? 60;
       if (mounted) showAppToast(context, context.tr('auth.verifyCodeSent'));
       setState(() => _resendIn = countdown);
@@ -77,13 +92,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
     try {
       await ref.read(sessionControllerProvider.notifier).register(
+            _server(),
             email: _email.text.trim(),
             password: _password.text,
             verifyCode: needVerifyCode ? _code.text.trim() : null,
             promoCode: _promo.text.trim(),
             invitationCode: _invitation.text.trim(),
           );
-      // 成功后由路由守卫跳转
+      if (mounted) context.go('/dashboard');
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.localizedMessage(context));
     } finally {
@@ -93,7 +109,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(publicSettingsProvider);
+    final settings = ref.watch(publicSettingsForServerProvider(_server()));
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('auth.registerTitle'))),

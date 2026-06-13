@@ -57,9 +57,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final allowed = location == '/login' || location == '/register';
           return allowed ? null : '/login';
         case SessionStatus.authenticated:
-          if (location == '/splash' ||
-              location == '/login' ||
-              location == '/register') {
+          // 已登录:仅启动闪屏跳转到总览;/login、/register 保持可达(用于新增账号)。
+          if (location == '/splash') {
             return '/dashboard';
           }
           if (location.startsWith('/admin') && !session.isAdmin) {
@@ -79,7 +78,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) =>
+            RegisterScreen(serverId: state.extra as String?),
       ),
       GoRoute(
         path: '/servers',

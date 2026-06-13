@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../network/api_client.dart';
 import '../network/api_client_provider.dart';
+import '../server/server_profile.dart';
 
 /// 认证相关端点的薄封装(返回原始 Map,由会话层解析为模型,便于分别测试)。
 abstract class AuthApi {
@@ -95,4 +96,10 @@ class HttpAuthApi implements AuthApi {
 
 final authApiProvider = Provider<AuthApi>(
   (ref) => HttpAuthApi(ref.watch(apiClientProvider)),
+);
+
+/// 面向指定服务器的 AuthApi(登录页选服务器后用于公开设置 + 登录,无需令牌)。
+final authApiForServerProvider =
+    Provider.family<AuthApi, ServerProfile>(
+  (ref, server) => HttpAuthApi(ref.watch(serverApiClientProvider(server))),
 );

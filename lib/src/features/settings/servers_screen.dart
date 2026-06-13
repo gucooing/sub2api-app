@@ -78,10 +78,7 @@ class ServersScreen extends ConsumerWidget {
 
   Future<void> _showEditDialog(BuildContext context, ServerStore store,
       {ServerProfile? server}) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) => _ServerEditDialog(store: store, server: server),
-    );
+    await showServerEditDialog(context, store, server: server);
   }
 
   Future<void> _confirmDelete(
@@ -98,8 +95,19 @@ class ServersScreen extends ConsumerWidget {
   }
 }
 
-/// 添加/编辑服务器对话框。控制器随对话框生命周期创建与释放,
-/// 避免 await showDialog 返回后立即 dispose 与关闭动画产生「used after disposed」。
+/// 添加/编辑服务器对话框。返回受影响的服务器 id(取消则 null)。
+/// 控制器随对话框生命周期创建与释放,避免 await showDialog 返回后立即 dispose
+/// 与关闭动画产生「used after disposed」。
+Future<String?> showServerEditDialog(
+  BuildContext context,
+  ServerStore store, {
+  ServerProfile? server,
+}) =>
+    showDialog<String>(
+      context: context,
+      builder: (context) => _ServerEditDialog(store: store, server: server),
+    );
+
 class _ServerEditDialog extends StatefulWidget {
   const _ServerEditDialog({required this.store, this.server});
 
@@ -130,16 +138,18 @@ class _ServerEditDialogState extends State<_ServerEditDialog> {
   Future<void> _save() async {
     if (!_isBuiltIn && !_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    String? resultId;
     if (widget.server == null) {
-      await widget.store.add(_nameController.text, _urlController.text);
+      resultId = await widget.store.add(_nameController.text, _urlController.text);
     } else {
       await widget.store.update(
         widget.server!.id,
         name: _nameController.text,
         baseUrl: _isBuiltIn ? null : _urlController.text,
       );
+      resultId = widget.server!.id;
     }
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop(resultId);
   }
 
   @override

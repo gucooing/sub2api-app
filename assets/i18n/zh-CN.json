@@ -63,6 +63,7 @@
     "forgotPasswordHint": "请在网页端找回密码:\n{url}",
     "rememberAccount": "记住账号",
     "rememberPassword": "记住密码",
+    "selectServer": "服务器",
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码",
     "verifyCode": "邮箱验证码",
@@ -93,6 +94,26 @@
     "roleAdmin": "管理员",
     "balance": "余额 ${amount}",
     "logoutConfirm": "确定退出当前账号吗?"
+  },
+  "accounts": {
+    "title": "账号",
+    "current": "当前账号",
+    "active": "使用中",
+    "addAccount": "添加账号",
+    "switch": "切换",
+    "logoutThis": "退出此账号",
+    "remove": "删除账号",
+    "removeConfirm": "确定删除账号「{email}」吗?将清除该账号在本机的登录态。",
+    "empty": "暂无账号,点击下方添加"
+  },
+  "agreement": {
+    "title": "条款更新通知",
+    "intro": "继续使用服务前,请阅读并同意以下条款。",
+    "readAndAgree": "我已阅读并同意",
+    "viewDocs": "查看条款",
+    "agree": "同意并继续",
+    "reject": "拒绝",
+    "gateHint": "同意条款后才能登录。"
   },
   "features": {
     "section": "服务",

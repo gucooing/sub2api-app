@@ -63,6 +63,7 @@
     "forgotPasswordHint": "Reset your password on the web:\n{url}",
     "rememberAccount": "Remember account",
     "rememberPassword": "Remember password",
+    "selectServer": "Server",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "verifyCode": "Email code",
@@ -93,6 +94,26 @@
     "roleAdmin": "Admin",
     "balance": "Balance ${amount}",
     "logoutConfirm": "Sign out of the current account?"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "current": "Current account",
+    "active": "Active",
+    "addAccount": "Add account",
+    "switch": "Switch",
+    "logoutThis": "Sign out",
+    "remove": "Remove account",
+    "removeConfirm": "Remove account \"{email}\"? Its login on this device will be cleared.",
+    "empty": "No accounts — tap below to add one"
+  },
+  "agreement": {
+    "title": "Terms updated",
+    "intro": "Please read and agree to the following terms before continuing.",
+    "readAndAgree": "I have read and agree to",
+    "viewDocs": "View terms",
+    "agree": "Agree and continue",
+    "reject": "Decline",
+    "gateHint": "You must agree to the terms to sign in."
   },
   "features": {
     "section": "Services",

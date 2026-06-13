@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/account/account_store.dart';
 import '../../core/network/api_exception.dart';
+import '../../core/server/server_profile.dart';
 import '../../core/server/server_store.dart';
 import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
+import '../../core/storage/prefs_store.dart';
 import '../../core/storage/secure_store.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/brand_mark.dart';
+import '../settings/servers_screen.dart';
+import 'login_agreement.dart';
 
-/// 登录页:邮箱+密码;后端要求时进入 TOTP 第二步。
-/// AppBar 提供服务器切换入口;按公开设置展示注册入口与 Turnstile 提示。
+/// 登录页:选择服务器 + 邮箱密码登录(后端要求时进入 TOTP)。
+/// 服务器在下拉中选择/新增;登录条款支持 checkbox 与 modal 两种形式。
+/// 登录成功新增/激活账号并跳转;已登录时进入本页即「添加账号」。
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -32,35 +38,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _rememberAccount = false;
   bool _rememberPassword = false;
 
-  /// 非空表示处于 TOTP 第二步。
+  /// 当前选中的服务器 id。
+  String? _serverId;
+
+  /// 本会话内已同意条款(无修订号时仅本会话有效)。
+  bool _agreementAcceptedLocal = false;
+
+  /// 已为哪个服务器弹过 modal 条款(避免重复弹出)。
+  String? _modalShownForServerId;
+
   LoginNeedsTotp? _totpChallenge;
 
   @override
   void initState() {
     super.initState();
-    // 回填已记住的账号/密码(按当前服务器)。
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedCredentials());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _serverId = _defaultServerId();
+      _loadSavedCredentials();
+      if (mounted) setState(() {});
+    });
+  }
+
+  String _defaultServerId() {
+    final account = ref.read(activeAccountProvider);
+    if (account != null) return account.serverId;
+    return ref.read(activeServerProvider).id;
+  }
+
+  ServerProfile _selectedServer() {
+    final servers = ref.read(serverStoreProvider).servers;
+    for (final s in servers) {
+      if (s.id == _serverId) return s;
+    }
+    return ref.read(activeServerProvider);
   }
 
   Future<void> _loadSavedCredentials() async {
     final secure = ref.read(secureStoreProvider);
-    final serverId = ref.read(activeServerProvider).id;
+    final serverId = _serverId ?? _defaultServerId();
     final email = await secure.readSavedEmail(serverId);
     final password = await secure.readSavedPassword(serverId);
-    if (!mounted || email == null || email.isEmpty) return;
+    if (!mounted) return;
     setState(() {
-      _email.text = email;
-      _rememberAccount = true;
-      if (password != null && password.isNotEmpty) {
-        _password.text = password;
-        _rememberPassword = true;
+      if (email != null && email.isNotEmpty) {
+        _email.text = email;
+        _rememberAccount = true;
+        if (password != null && password.isNotEmpty) {
+          _password.text = password;
+          _rememberPassword = true;
+        }
+      } else {
+        _email.clear();
+        _password.clear();
+        _rememberAccount = false;
+        _rememberPassword = false;
       }
     });
   }
 
-  Future<void> _persistCredentials() async {
+  Future<void> _persistCredentials(String serverId) async {
     final secure = ref.read(secureStoreProvider);
-    final serverId = ref.read(activeServerProvider).id;
     if (_rememberAccount) {
       await secure.saveCredentials(
         serverId,
@@ -96,50 +133,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submitLogin() async {
     if (!_formKey.currentState!.validate()) return;
+    final server = _selectedServer();
     await _guarded(() async {
       final outcome = await ref
           .read(sessionControllerProvider.notifier)
-          .login(_email.text.trim(), _password.text);
-      // 走到这里说明密码已通过校验(成功或进入 TOTP 第二步),按勾选持久化凭据。
-      await _persistCredentials();
+          .login(server, _email.text.trim(), _password.text);
+      await _persistCredentials(server.id);
       if (outcome is LoginNeedsTotp && mounted) {
         setState(() => _totpChallenge = outcome);
+      } else if (outcome is LoginSuccess && mounted) {
+        context.go('/dashboard');
       }
-      // LoginSuccess 由路由守卫自动跳转
     });
   }
 
   Future<void> _submitTotp() async {
     final code = _totpCode.text.trim();
     if (code.length != 6) return;
-    await _guarded(() => ref
-        .read(sessionControllerProvider.notifier)
-        .submitTotp(_totpChallenge!.tempToken, code));
+    final server = _selectedServer();
+    await _guarded(() async {
+      await ref
+          .read(sessionControllerProvider.notifier)
+          .submitTotp(server, _totpChallenge!.tempToken, code);
+      if (mounted) context.go('/dashboard');
+    });
+  }
+
+  /// 计算条款是否已接受。
+  bool _agreementAccepted(PublicSettingsLite s, String serverId) {
+    if (!s.agreementGateActive) return true;
+    if (_agreementAcceptedLocal) return true;
+    final prefs = ref.read(sharedPreferencesProvider);
+    return isAgreementAccepted(prefs, serverId, s.loginAgreementRevision);
+  }
+
+  Future<void> _acceptAgreement(PublicSettingsLite s, String serverId) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await persistAgreementAccepted(prefs, serverId, s.loginAgreementRevision);
+    if (mounted) setState(() => _agreementAcceptedLocal = true);
+  }
+
+  void _maybeShowModal(PublicSettingsLite s, String serverId) {
+    if (s.loginAgreementMode == 'checkbox') return;
+    if (!s.agreementGateActive || _agreementAccepted(s, serverId)) return;
+    if (_modalShownForServerId == serverId) return;
+    _modalShownForServerId = serverId;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final ok = await showAgreementModal(context, s);
+      if (ok == true) _acceptAgreement(s, serverId);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final server = ref.watch(activeServerProvider);
-    final settings = ref.watch(publicSettingsProvider);
+    final server = _selectedServer();
+    final settingsAsync = ref.watch(publicSettingsForServerProvider(server));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('auth.login')),
-        actions: [
-          IconButton(
-            tooltip: context.tr('servers.title'),
-            icon: const Icon(Icons.dns_outlined),
-            onPressed: _busy ? null : () => context.push('/servers'),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(context.tr('auth.login'))),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: _totpChallenge == null
-                ? _buildLoginForm(server.name, settings)
+                ? _buildLoginForm(server, settingsAsync)
                 : _buildTotpForm(),
           ),
         ),
@@ -148,9 +207,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildLoginForm(
-      String serverName, AsyncValue<PublicSettingsLite> settings) {
-    final turnstileEnabled = settings.value?.turnstileEnabled ?? false;
-    final registrationEnabled = settings.value?.registrationEnabled ?? false;
+      ServerProfile server, AsyncValue<PublicSettingsLite> settingsAsync) {
+    final settings = settingsAsync.value;
+    final turnstileEnabled = settings?.turnstileEnabled ?? false;
+    final registrationEnabled = settings?.registrationEnabled ?? false;
+    final gateActive = settings?.agreementGateActive ?? false;
+    final accepted =
+        settings == null ? true : _agreementAccepted(settings, server.id);
+    final authDisabled = _busy || (gateActive && !accepted);
+
+    if (settings != null) _maybeShowModal(settings, server.id);
 
     return Form(
       key: _formKey,
@@ -158,16 +224,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Center(child: BrandMark(size: 72)),
-          const SizedBox(height: 12),
-          Center(
-            child: Text(
-              serverName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+          _buildServerSelector(),
+          const SizedBox(height: 20),
           if (turnstileEnabled) ...[
             _InfoBanner(text: context.tr('auth.turnstileWarning')),
             const SizedBox(height: 16),
@@ -196,7 +255,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             enabled: !_busy,
             obscureText: _obscurePassword,
             autofillHints: const [AutofillHints.password],
-            onFieldSubmitted: (_) => _submitLogin(),
+            onFieldSubmitted: (_) => authDisabled ? null : _submitLogin(),
             decoration: InputDecoration(
               labelText: context.tr('auth.password'),
               prefixIcon: const Icon(Icons.lock_outline),
@@ -218,7 +277,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 : null,
           ),
           const SizedBox(height: 8),
-          // 记住账号 / 记住密码(记住密码隐含记住账号)。
           Row(
             children: [
               Expanded(
@@ -247,9 +305,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ],
           ),
+          // 登录条款门控。
+          if (settings != null && gateActive) ...[
+            const SizedBox(height: 4),
+            if (settings.loginAgreementMode == 'checkbox')
+              LoginAgreementCheckbox(
+                documents: settings.agreementDocuments,
+                accepted: accepted,
+                enabled: !_busy,
+                onChanged: (v) {
+                  if (v) {
+                    _acceptAgreement(settings, server.id);
+                  } else {
+                    setState(() => _agreementAcceptedLocal = false);
+                  }
+                },
+              )
+            else if (!accepted)
+              _AgreementGateBanner(
+                onView: () => showAgreementModal(context, settings).then((ok) {
+                  if (ok == true) _acceptAgreement(settings, server.id);
+                }),
+              ),
+          ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _busy ? null : _submitLogin,
+            onPressed: authDisabled ? null : _submitLogin,
             child: _busy
                 ? const SizedBox(
                     width: 20,
@@ -264,7 +345,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               if (registrationEnabled)
                 TextButton(
-                  onPressed: _busy ? null : () => context.push('/register'),
+                  onPressed: _busy
+                      ? null
+                      : () => context.push('/register', extra: server.id),
                   child: Text(context.tr('auth.register')),
                 )
               else
@@ -277,6 +360,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildServerSelector() {
+    final servers = ref.watch(serverStoreProvider).servers;
+    const addValue = '__add_server__';
+    return DropdownButtonFormField<String>(
+      initialValue: _serverId,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: context.tr('auth.selectServer'),
+        prefixIcon: const Icon(Icons.dns_outlined),
+        border: const OutlineInputBorder(),
+      ),
+      items: [
+        for (final s in servers)
+          DropdownMenuItem(
+            value: s.id,
+            child: Text('${s.name}  ·  ${s.baseUrl}',
+                overflow: TextOverflow.ellipsis),
+          ),
+        DropdownMenuItem(
+          value: addValue,
+          child: Row(
+            children: [
+              const Icon(Icons.add, size: 18),
+              const SizedBox(width: 6),
+              Text(context.tr('servers.add')),
+            ],
+          ),
+        ),
+      ],
+      onChanged: _busy
+          ? null
+          : (value) async {
+              if (value == null) return;
+              if (value == addValue) {
+                final store = ref.read(serverStoreProvider.notifier);
+                final newId = await showServerEditDialog(context, store);
+                if (newId != null) {
+                  setState(() {
+                    _serverId = newId;
+                    _agreementAcceptedLocal = false;
+                  });
+                  _loadSavedCredentials();
+                }
+                return;
+              }
+              setState(() {
+                _serverId = value;
+                _agreementAcceptedLocal = false;
+              });
+              _loadSavedCredentials();
+            },
     );
   }
 
@@ -347,7 +484,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _showForgotPassword() {
-    final origin = ref.read(activeServerProvider).baseUrl;
+    final origin = _selectedServer().baseUrl;
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -359,6 +496,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(context.tr('common.ok')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// modal 模式未同意时的提示条 + 「查看条款」。
+class _AgreementGateBanner extends StatelessWidget {
+  const _AgreementGateBanner({required this.onView});
+
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.shield_outlined, size: 20, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              context.tr('agreement.gateHint'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          TextButton(
+            onPressed: onView,
+            child: Text(context.tr('agreement.viewDocs')),
           ),
         ],
       ),
