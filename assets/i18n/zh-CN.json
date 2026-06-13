@@ -129,6 +129,18 @@
     "invitees": "被邀请人",
     "inviteesEmpty": "还没有邀请记录"
   },
+  "channels": {
+    "empty": "暂无可用渠道",
+    "statusEmpty": "暂无监控数据",
+    "priceIn": "输入",
+    "priceOut": "输出",
+    "priced": "已定价",
+    "statusOperational": "正常",
+    "statusDegraded": "降级",
+    "statusFailed": "故障",
+    "statusUnknown": "未知",
+    "avgLatency": "7 天平均延迟 {ms} ms"
+  },
   "features": {
     "section": "服务",
     "customPages": "更多",

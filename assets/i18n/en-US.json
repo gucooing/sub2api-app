@@ -129,6 +129,18 @@
     "invitees": "Invitees",
     "inviteesEmpty": "No invitations yet"
   },
+  "channels": {
+    "empty": "No available channels",
+    "statusEmpty": "No monitor data",
+    "priceIn": "In",
+    "priceOut": "Out",
+    "priced": "Priced",
+    "statusOperational": "Operational",
+    "statusDegraded": "Degraded",
+    "statusFailed": "Failed",
+    "statusUnknown": "Unknown",
+    "avgLatency": "Avg latency (7d) {ms} ms"
+  },
   "features": {
     "section": "Services",
     "customPages": "More",

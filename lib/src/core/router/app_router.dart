@@ -23,6 +23,9 @@ import '../../features/user/announcements/data/announcements_api.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
 import '../../features/user/recharge/presentation/recharge_page.dart';
 import '../../features/user/affiliate/presentation/affiliate_page.dart';
+import '../../features/user/channels_view/presentation/channels_page.dart';
+import '../../features/user/channels_view/presentation/channel_status_page.dart';
+import '../../features/user/channels_view/presentation/monitor_detail_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
@@ -143,13 +146,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/channels',
-        builder: (context, state) => const ModulePlaceholderScreen(
-            titleKey: 'features.availableChannels'),
+        builder: (context, state) => const ChannelsPage(),
       ),
       GoRoute(
         path: '/channel-status',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'features.channelStatus'),
+        builder: (context, state) => const ChannelStatusPage(),
+      ),
+      GoRoute(
+        path: '/channel-status/:id',
+        builder: (context, state) => MonitorDetailPage(
+          monitorId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
       ),
       GoRoute(
         path: '/subscriptions',
