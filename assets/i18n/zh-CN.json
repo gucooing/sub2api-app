@@ -296,6 +296,7 @@
     "bound": "已绑定",
     "notBound": "未绑定",
     "bind": "绑定",
+    "change": "修改",
     "unbind": "解绑",
     "unbindConfirm": "确定解绑「{name}」吗?",
     "unbound": "已解绑",

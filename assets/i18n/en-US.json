@@ -296,6 +296,7 @@
     "bound": "Bound",
     "notBound": "Not bound",
     "bind": "Bind",
+    "change": "Change",
     "unbind": "Unbind",
     "unbindConfirm": "Unbind \"{name}\"?",
     "unbound": "Unbound",

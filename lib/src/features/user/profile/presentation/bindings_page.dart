@@ -120,12 +120,23 @@ class _BindingTile extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final name = _providerLabel(context, binding.provider);
     final isEmail = binding.provider == 'email';
-    final canBindNow = !binding.bound &&
-        binding.canBind &&
-        (isEmail || enabled);
+    final canBindNow = !binding.bound && binding.canBind && enabled;
 
     Widget? trailing;
-    if (binding.bound && binding.canUnbind) {
+    if (isEmail) {
+      // 邮箱:未绑定可绑定、已绑定可修改(换绑);始终不可解绑。
+      trailing = binding.bound
+          ? OutlinedButton(
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 36)),
+              onPressed: () => _bindEmail(context, ref),
+              child: Text(context.tr('bindings.change')),
+            )
+          : FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+              onPressed: () => _bindEmail(context, ref),
+              child: Text(context.tr('bindings.bind')),
+            );
+    } else if (binding.bound && binding.canUnbind) {
       trailing = OutlinedButton(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 36),
@@ -137,8 +148,7 @@ class _BindingTile extends ConsumerWidget {
     } else if (canBindNow) {
       trailing = FilledButton(
         style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
-        onPressed: () =>
-            isEmail ? _bindEmail(context, ref) : _bindOAuth(context, ref),
+        onPressed: () => _bindOAuth(context, ref),
         child: Text(context.tr('bindings.bind')),
       );
     }
