@@ -38,6 +38,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   int _resendIn = 0;
   Timer? _timer;
 
+  /// 注册步骤:0 = 填邮箱/密码;1 = 邮箱验证码(仅 email_verify 开启时进入)。
+  int _step = 0;
+
   ServerProfile _server() {
     final servers = ref.read(serverStoreProvider).servers;
     for (final s in servers) {
@@ -84,7 +87,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
-  Future<void> _submit(bool needVerifyCode) async {
+  /// 第一步「下一步」:校验邮箱/密码 → 进入验证码步骤并自动发送验证码。
+  Future<void> _goToVerify() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _step = 1;
+      _error = null;
+    });
+    await _sendCode();
+  }
+
+  Future<void> _submit({required bool needVerifyCode}) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _busy = true;
@@ -131,187 +144,222 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: Text(context.tr('auth.registrationDisabled')),
             );
           }
-          return _buildForm(
-            needVerifyCode: s.emailVerifyEnabled,
-            showPromo: s.promoCodeEnabled,
-            showInvitation: s.invitationCodeEnabled,
-            turnstile: s.turnstileEnabled,
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Form(
+                  key: _formKey,
+                  child: _step == 0
+                      ? _buildCredentialsStep(
+                          needVerifyCode: s.emailVerifyEnabled,
+                          showPromo: s.promoCodeEnabled,
+                          showInvitation: s.invitationCodeEnabled,
+                          turnstile: s.turnstileEnabled,
+                        )
+                      : _buildVerifyStep(),
+                ),
+              ),
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildForm({
+  Widget? _errorBanner() {
+    if (_error == null) return null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        _error!,
+        style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+      ),
+    );
+  }
+
+  /// 第一步:邮箱 + 密码(+ 可选优惠/邀请码)。
+  Widget _buildCredentialsStep({
     required bool needVerifyCode,
     required bool showPromo,
     required bool showInvitation,
     required bool turnstile,
   }) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (turnstile) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      context.tr('auth.turnstileWarning'),
-                      style: TextStyle(
-                        color:
-                            Theme.of(context).colorScheme.onTertiaryContainer,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                if (_error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                TextFormField(
-                  controller: _email,
-                  enabled: !_busy,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: context.tr('auth.email'),
-                    prefixIcon: const Icon(Icons.mail_outline),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (v) => (v == null || !v.contains('@'))
-                      ? context.tr('auth.emailInvalid')
-                      : null,
-                ),
-                if (needVerifyCode) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _code,
-                          enabled: !_busy,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: context.tr('auth.verifyCode'),
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? context.tr('auth.verifyCodeRequired')
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        height: 56,
-                        child: OutlinedButton(
-                          onPressed:
-                              (_busy || _resendIn > 0) ? null : _sendCode,
-                          child: Text(
-                            _resendIn > 0
-                                ? context.tr('auth.resendIn',
-                                    params: {'seconds': '$_resendIn'})
-                                : context.tr('auth.sendCode'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _password,
-                  enabled: !_busy,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: context.tr('auth.password'),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (v) => (v == null || v.length < 6)
-                      ? context.tr('auth.passwordTooShort')
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirm,
-                  enabled: !_busy,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: context.tr('auth.passwordConfirm'),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (v) => (v != _password.text)
-                      ? context.tr('auth.passwordMismatch')
-                      : null,
-                ),
-                if (showPromo) ...[
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _promo,
-                    enabled: !_busy,
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('auth.promoCode')} (${context.tr('common.optional')})',
-                      prefixIcon: const Icon(Icons.card_giftcard_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-                if (showInvitation) ...[
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _invitation,
-                    enabled: !_busy,
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('auth.invitationCode')} (${context.tr('common.optional')})',
-                      prefixIcon: const Icon(Icons.key_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _busy ? null : () => _submit(needVerifyCode),
-                  child: _busy
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(context.tr('auth.registerButton')),
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (turnstile) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              context.tr('auth.turnstileWarning'),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+              ),
             ),
           ),
+          const SizedBox(height: 16),
+        ],
+        if (_error != null) ...[_errorBanner()!, const SizedBox(height: 16)],
+        TextFormField(
+          controller: _email,
+          enabled: !_busy,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: context.tr('auth.email'),
+            prefixIcon: const Icon(Icons.mail_outline),
+            border: const OutlineInputBorder(),
+          ),
+          validator: (v) => (v == null || !v.contains('@'))
+              ? context.tr('auth.emailInvalid')
+              : null,
         ),
-      ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _password,
+          enabled: !_busy,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: context.tr('auth.password'),
+            prefixIcon: const Icon(Icons.lock_outline),
+            border: const OutlineInputBorder(),
+          ),
+          validator: (v) => (v == null || v.length < 6)
+              ? context.tr('auth.passwordTooShort')
+              : null,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _confirm,
+          enabled: !_busy,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: context.tr('auth.passwordConfirm'),
+            prefixIcon: const Icon(Icons.lock_outline),
+            border: const OutlineInputBorder(),
+          ),
+          validator: (v) => (v != _password.text)
+              ? context.tr('auth.passwordMismatch')
+              : null,
+        ),
+        if (showPromo) ...[
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _promo,
+            enabled: !_busy,
+            decoration: InputDecoration(
+              labelText:
+                  '${context.tr('auth.promoCode')} (${context.tr('common.optional')})',
+              prefixIcon: const Icon(Icons.card_giftcard_outlined),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+        if (showInvitation) ...[
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _invitation,
+            enabled: !_busy,
+            decoration: InputDecoration(
+              labelText:
+                  '${context.tr('auth.invitationCode')} (${context.tr('common.optional')})',
+              prefixIcon: const Icon(Icons.key_outlined),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: _busy
+              ? null
+              : () =>
+                  needVerifyCode ? _goToVerify() : _submit(needVerifyCode: false),
+          child: _busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(context.tr(
+                  needVerifyCode ? 'auth.nextStep' : 'auth.registerButton')),
+        ),
+      ],
+    );
+  }
+
+  /// 第二步:邮箱验证码 → 完成注册。
+  Widget _buildVerifyStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          context.tr('auth.codeSentTo', params: {'email': _email.text.trim()}),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 16),
+        if (_error != null) ...[_errorBanner()!, const SizedBox(height: 16)],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _code,
+                enabled: !_busy,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.verifyCode'),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.tr('auth.verifyCodeRequired')
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 56,
+              child: OutlinedButton(
+                onPressed: (_busy || _resendIn > 0) ? null : _sendCode,
+                child: Text(
+                  _resendIn > 0
+                      ? context.tr('auth.resendIn',
+                          params: {'seconds': '$_resendIn'})
+                      : context.tr('auth.sendCode'),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        FilledButton(
+          onPressed: _busy ? null : () => _submit(needVerifyCode: true),
+          child: _busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(context.tr('auth.completeRegister')),
+        ),
+        TextButton(
+          onPressed: _busy
+              ? null
+              : () => setState(() {
+                    _step = 0;
+                    _error = null;
+                  }),
+          child: Text(context.tr('common.back')),
+        ),
+      ],
     );
   }
 }

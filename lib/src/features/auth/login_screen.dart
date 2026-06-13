@@ -6,11 +6,13 @@ import '../../core/account/account_store.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/server/server_profile.dart';
 import '../../core/server/server_store.dart';
+import '../../core/session/auth_api.dart';
 import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
 import '../../core/storage/prefs_store.dart';
 import '../../core/storage/secure_store.dart';
 import '../../i18n/app_localizations.dart';
+import '../../shared/widgets/app_toast.dart';
 import '../../shared/widgets/brand_mark.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../settings/servers_screen.dart';
@@ -243,6 +245,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 20),
           _buildServerSelector(),
           const SizedBox(height: 20),
+          // 公开设置(注册/条款/Turnstile 开关)加载/错误状态显式化,
+          // 避免设置未就绪时「注册入口/条款」静默消失。
+          if (settings == null && settingsAsync.isLoading) ...[
+            const LinearProgressIndicator(minHeight: 2),
+            const SizedBox(height: 16),
+          ],
+          if (settingsAsync.hasError) ...[
+            _SettingsErrorRetry(
+              onRetry: () =>
+                  ref.invalidate(publicSettingsForServerProvider(server)),
+            ),
+            const SizedBox(height: 16),
+          ],
           // 开启 Turnstile 但服务端未提供站点密钥时,回退为提示。
           if (turnstileEnabled && !turnstileActive) ...[
             _InfoBanner(text: context.tr('auth.turnstileWarning')),
@@ -605,19 +620,111 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  void _showForgotPassword() {
-    final origin = _selectedServer().baseUrl;
-    showDialog<void>(
+  /// 忘记密码:输入邮箱 → 请求发送重置邮件(对齐 web `/auth/forgot-password`)。
+  Future<void> _showForgotPassword() async {
+    final server = _selectedServer();
+    final controller = TextEditingController(text: _email.text.trim());
+    var sending = false;
+    await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('auth.forgotPassword')),
-        content: Text(
-          context.tr('auth.forgotPasswordHint', params: {'url': origin}),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(context.tr('auth.forgotPassword')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(context.tr('auth.forgotPasswordEmailHint')),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.emailAddress,
+                enabled: !sending,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.email'),
+                  prefixIcon: const Icon(Icons.mail_outline),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.of(dialogContext).pop(),
+              child: Text(context.tr('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = controller.text.trim();
+                      if (!email.contains('@')) return;
+                      setDialogState(() => sending = true);
+                      try {
+                        await ref
+                            .read(authApiForServerProvider(server))
+                            .forgotPassword(email);
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                        if (mounted) {
+                          showAppToast(
+                              context, context.tr('auth.forgotPasswordSent'));
+                        }
+                      } catch (e) {
+                        setDialogState(() => sending = false);
+                        if (mounted) {
+                          showAppToast(
+                            context,
+                            e is ApiException
+                                ? (e.serverMessage ??
+                                    context.tr('common.unknownError'))
+                                : context.tr('common.unknownError'),
+                            error: true,
+                          );
+                        }
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(context.tr('auth.forgotPasswordSend')),
+            ),
+          ],
         ),
-        actions: [
+      ),
+    );
+    controller.dispose();
+  }
+}
+
+/// 公开设置加载失败时的重试条(登录页)。
+class _SettingsErrorRetry extends StatelessWidget {
+  const _SettingsErrorRetry({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              context.tr('auth.settingsLoadFailed'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('common.ok')),
+            onPressed: onRetry,
+            child: Text(context.tr('common.retry')),
           ),
         ],
       ),

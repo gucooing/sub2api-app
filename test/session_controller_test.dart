@@ -99,6 +99,11 @@ class FakeAuthApi implements AuthApi {
       {'message': 'ok', 'countdown': 60};
 
   @override
+  Future<Map<String, dynamic>> forgotPassword(String email,
+          {String? turnstileToken}) async =>
+      {'message': 'sent'};
+
+  @override
   Future<Map<String, dynamic>> publicSettings() async => {
         'registration_enabled': true,
         'email_verify_enabled': false,

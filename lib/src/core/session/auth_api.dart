@@ -25,6 +25,10 @@ abstract class AuthApi {
 
   Future<Map<String, dynamic>> sendVerifyCode(String email);
 
+  /// 忘记密码:请求发送重置邮件。
+  Future<Map<String, dynamic>> forgotPassword(String email,
+      {String? turnstileToken});
+
   Future<Map<String, dynamic>> publicSettings();
 }
 
@@ -90,6 +94,16 @@ class HttpAuthApi implements AuthApi {
     final data = await _client
         .post<dynamic>('/auth/send-verify-code', data: {'email': email});
     return (data as Map).cast<String, dynamic>();
+  }
+
+  @override
+  Future<Map<String, dynamic>> forgotPassword(String email,
+      {String? turnstileToken}) async {
+    final data = await _client.post<dynamic>('/auth/forgot-password', data: {
+      'email': email,
+      'turnstile_token': ?turnstileToken,
+    });
+    return (data as Map?)?.cast<String, dynamic>() ?? {};
   }
 
   @override
