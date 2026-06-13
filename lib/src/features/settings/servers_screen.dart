@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/server/server_profile.dart';
 import '../../core/server/server_store.dart';
 import '../../i18n/app_localizations.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 
 /// 服务器管理页:列表选择激活后端、添加/编辑/删除。
 /// 登录前后均可进入;切换激活服务器后会话层自动针对新后端恢复登录态。
@@ -118,11 +119,13 @@ class ServersScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
             onPressed: () => Navigator.of(context).pop(),
             child: Text(context.tr('common.cancel')),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
             onPressed: () async {
               if (!(server?.builtIn ?? false) &&
                   !formKey.currentState!.validate()) {
@@ -150,28 +153,15 @@ class ServersScreen extends ConsumerWidget {
 
   Future<void> _confirmDelete(
       BuildContext context, ServerStore store, ServerProfile server) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('common.delete')),
-        content: Text(context
-            .tr('servers.deleteConfirm', params: {'name': server.name})),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('common.cancel')),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('common.delete')),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: context.tr('common.delete'),
+      message:
+          context.tr('servers.deleteConfirm', params: {'name': server.name}),
+      confirmLabel: context.tr('common.delete'),
+      destructive: true,
     );
-    if (confirmed == true) await store.remove(server.id);
+    if (confirmed) await store.remove(server.id);
   }
 }
 

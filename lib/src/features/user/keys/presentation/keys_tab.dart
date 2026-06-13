@@ -10,6 +10,7 @@ import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/progress_meter.dart';
 import '../../../../shared/widgets/status_pill.dart';
+import '../../../../shared/widgets/confirm_dialog.dart';
 import '../data/keys_api.dart';
 import '../providers/keys_providers.dart';
 import 'key_edit_sheet.dart';
@@ -345,28 +346,14 @@ class _ActionsMenu extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('common.delete')),
-        content:
-            Text(context.tr('keys.deleteConfirm', params: {'name': info.name})),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('common.cancel')),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('common.delete')),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: context.tr('common.delete'),
+      message: context.tr('keys.deleteConfirm', params: {'name': info.name}),
+      confirmLabel: context.tr('common.delete'),
+      destructive: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       await ref.read(keysApiProvider).remove(info.id);
       ref.invalidate(keysListProvider);

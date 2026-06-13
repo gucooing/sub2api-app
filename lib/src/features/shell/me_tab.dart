@@ -8,6 +8,7 @@ import '../../core/session/session_controller.dart';
 import '../../i18n/app_localizations.dart';
 import '../user/features/data/user_features.dart';
 import '../user/features/presentation/custom_page_launcher.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 
 /// 「我的」tab:用户信息卡 + 各入口(资料/服务器/设置/管理端)+ 退出登录。
 class MeTab extends ConsumerWidget {
@@ -193,27 +194,14 @@ class MeTab extends ConsumerWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('auth.logout')),
-        content: Text(context.tr('me.logoutConfirm')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('common.cancel')),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('auth.logout')),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: context.tr('auth.logout'),
+      message: context.tr('me.logoutConfirm'),
+      confirmLabel: context.tr('auth.logout'),
+      destructive: true,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       await ref.read(sessionControllerProvider.notifier).logout();
     }
   }

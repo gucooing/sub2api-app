@@ -344,11 +344,13 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: Text(context.tr('common.cancel')),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
           onPressed: _isLoading ? null : (_step == 1 ? _initiate : _enable),
           child: _isLoading
               ? const SizedBox(
@@ -568,62 +570,63 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(context.tr('profile.totpDisable')),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(context.tr('profile.totpDisableConfirm')),
-          const SizedBox(height: 16),
-          if (widget.verificationMethod == 'email') ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _emailCodeController,
-                    decoration: InputDecoration(
-                      labelText: context.tr('auth.verifyCode'),
-                      border: const OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    enabled: !_isLoading,
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context.tr('profile.totpDisableConfirm')),
+            const SizedBox(height: 16),
+            if (widget.verificationMethod == 'email') ...[
+              TextField(
+                controller: _emailCodeController,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.verifyCode'),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: TextButton(
+                    onPressed: _isLoading ? null : _sendEmailCode,
+                    child: Text(context.tr('auth.sendCode')),
                   ),
+                  suffixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
                 ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _isLoading ? null : _sendEmailCode,
-                  child: Text(context.tr('auth.sendCode')),
-                ),
-              ],
-            ),
-          ] else ...[
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: context.tr('auth.password'),
-                border: const OutlineInputBorder(),
+                keyboardType: TextInputType.number,
+                enabled: !_isLoading,
               ),
-              obscureText: true,
-              enabled: !_isLoading,
-            ),
+            ] else ...[
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.password'),
+                  border: const OutlineInputBorder(),
+                ),
+                obscureText: true,
+                enabled: !_isLoading,
+              ),
+            ],
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
           ],
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              _errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ],
-        ],
+        ),
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           child: Text(context.tr('common.cancel')),
         ),
         FilledButton(
           onPressed: _isLoading ? null : _disable,
           style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 44),
             backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           child: _isLoading
               ? const SizedBox(
