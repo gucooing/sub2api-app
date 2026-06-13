@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.gucooing.sub2api"
-    compileSdk = flutter.compileSdkVersion
+    // file_picker 等插件要求 compileSdk >= 36
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
