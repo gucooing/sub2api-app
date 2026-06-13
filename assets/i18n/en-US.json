@@ -230,7 +230,11 @@
     "externalBrowser": "Open links in external browser",
     "externalBrowserHint": "When off, links open in an in-app browser that carries your login automatically — no re-login needed.",
     "about": "About",
-    "version": "Version"
+    "version": "Version",
+    "buildTime": "Build time",
+    "localBuild": "Local build",
+    "repo": "Repository",
+    "checkUpdate": "Check for updates"
   },
   "dashboard": {
     "balance": "Balance",
@@ -432,6 +436,14 @@
     "detail": "Announcement",
     "modePopup": "Important",
     "modeNotice": "Notice"
+  },
+  "update": {
+    "found": "New version v{version} available",
+    "foundHint": "A new version is available — download to update.",
+    "download": "Download",
+    "later": "Later",
+    "upToDate": "You're on the latest version",
+    "checkFailed": "Update check failed"
   },
   "subscriptions": {
     "title": "My Subscriptions",

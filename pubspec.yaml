@@ -42,6 +42,8 @@ dependencies:
   image: ^4.9.1
   # 人机验证(Cloudflare Turnstile)挑战页内嵌渲染
   webview_flutter: ^4.10.0
+  # 读取应用版本号(更新检查)
+  package_info_plus: ^8.1.1
 
 dev_dependencies:
   flutter_test:

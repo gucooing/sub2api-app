@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/markdown_text.dart';
+import '../settings/update_check.dart';
 import '../user/announcements/data/announcements_api.dart';
 import '../user/announcements/providers/announcements_providers.dart';
 
@@ -26,8 +27,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void initState() {
     super.initState();
-    // 启动即在总览页时检查 popup 公告。
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
+    // 启动即在总览页时检查 popup 公告;并静默检查应用更新(仅有更新时弹窗)。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowPopup();
+      runUpdateCheck(context, ref, silent: true);
+    });
   }
 
   /// 切到总览页时:若有未读且为 popup 的公告,自动弹出(每条仅一次)。

@@ -2,15 +2,18 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/preferences/external_browser_controller.dart';
 import '../../core/server/server_store.dart';
 import '../../core/theme/theme_controller.dart';
+import '../../core/update/update_service.dart';
 import '../../i18n/app_localizations.dart';
 import '../../i18n/locale_controller.dart';
 import '../../shared/widgets/app_toast.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import 'update_check.dart';
 
 /// 设置页:演示并驱动主题切换、语言切换、外置语言包热重载。
 class SettingsScreen extends ConsumerWidget {
@@ -97,7 +100,35 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.info_outline),
             title: Text(context.tr('settings.version')),
             subtitle: const Text(AppConfig.appName),
-            trailing: const Text('0.1.0'),
+            trailing: ref.watch(appVersionProvider).maybeWhen(
+                  data: (v) => Text('v$v'),
+                  orElse: () => const Text('—'),
+                ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.schedule_outlined),
+            title: Text(context.tr('settings.buildTime')),
+            subtitle: Text(
+              kBuildTime.isNotEmpty
+                  ? kBuildTime
+                  : context.tr('settings.localBuild'),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.code_outlined),
+            title: Text(context.tr('settings.repo')),
+            subtitle: const Text(AppConfig.repoUrl),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => launchUrl(
+              Uri.parse(AppConfig.repoUrl),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.system_update_outlined),
+            title: Text(context.tr('settings.checkUpdate')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => runUpdateCheck(context, ref),
           ),
         ],
       ),

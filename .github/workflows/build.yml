@@ -2,17 +2,23 @@ name: build
 
 # 触发:
 #  - 任意提交(push)/ PR  → 仅检查代码(analyze + test)
-#  - 推送 vX.Y.Z 形式的 tag → 检查 + 五端构建 + 发布 Release
-#  - 手动 workflow_dispatch → 检查 + 五端构建(不发布)
+#  - 手动 workflow_dispatch:
+#      · 填写了「版本号」→ 检查 + 五端构建 + 发布 Release(tag/名称为该版本号)
+#      · 未填写         → 检查 + 五端构建(不发布)
 on:
   push:
     branches: ['**']
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号(填写则发布 Release,如 0.2.0;留空仅构建不发布)'
+        required: false
+        default: ''
 
 env:
   FLUTTER_VERSION: 3.44.0
+  REPO: gucooing/sub2api-app
 
 permissions:
   contents: write # 发布 Release 需要
@@ -31,13 +37,13 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test --reporter expanded
 
-  # ── Android:arm64-v8a / armeabi-v7a / x86_64 三个 ABI 的 APK ──
+  # 仅手动触发时构建各平台;PR/普通 push 只做上面的检查。
   build-android:
     name: 构建 Android
     needs: analyze-test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,9 +57,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: 计算版本号
-        id: ver
-        run: echo "v=$(.github/version.sh)" >> "$GITHUB_OUTPUT"
+      - name: 计算版本号 / 编译时间
+        id: meta
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: 还原签名密钥(来自 Secrets)
         env:
@@ -75,10 +85,13 @@ jobs:
           EOF
 
       - name: 构建 APK(按 ABI 拆分)
-        run: flutter build apk --release --split-per-abi
+        run: |
+          flutter build apk --release --split-per-abi \
+            --build-name="${{ steps.meta.outputs.v }}" \
+            --dart-define=APP_BUILD_TIME="${{ steps.meta.outputs.build_time }}"
       - name: 汇集产物
         run: |
-          V="${{ steps.ver.outputs.v }}"
+          V="${{ steps.meta.outputs.v }}"
           mkdir -p dist
           for f in build/app/outputs/flutter-apk/app-*-release.apk; do
             abi=$(basename "$f" | sed -E 's/app-(.*)-release\.apk/\1/')
@@ -89,11 +102,10 @@ jobs:
           name: android
           path: dist/*
 
-  # ── Windows x64:便携 zip + Inno Setup 安装包 ──
   build-windows:
     name: 构建 Windows (x64)
     needs: analyze-test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,23 +115,30 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: 计算版本号
-        id: ver
+      - name: 计算版本号 / 编译时间
+        id: meta
         shell: bash
-        run: echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
-      - run: flutter build windows --release
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - run: >
+          flutter build windows --release
+          --build-name="${{ steps.meta.outputs.v }}"
+          --dart-define=APP_BUILD_TIME="${{ steps.meta.outputs.build_time }}"
       - name: 便携 zip
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path build/windows/x64/runner/Release/* `
-            -DestinationPath "dist/sub2api_windows_${{ steps.ver.outputs.v }}_x64_portable.zip"
+            -DestinationPath "dist/sub2api_windows_${{ steps.meta.outputs.v }}_x64_portable.zip"
       - name: 安装 Inno Setup
         run: choco install innosetup --no-progress -y
       - name: 生成安装包(setup.exe)
         shell: bash
         run: |
-          V="${{ steps.ver.outputs.v }}"
+          V="${{ steps.meta.outputs.v }}"
           cat > installer.iss <<EOF
           [Setup]
           AppName=Sub2api
@@ -147,11 +166,10 @@ jobs:
           name: windows
           path: dist/*
 
-  # ── Linux x64:tar.gz + deb + AppImage ──
   build-linux:
     name: 构建 Linux (x64)
     needs: analyze-test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -165,22 +183,28 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: 计算版本号
-        id: ver
-        run: echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
-      - run: flutter build linux --release
+      - name: 计算版本号 / 编译时间
+        id: meta
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - run: >
+          flutter build linux --release
+          --build-name="${{ steps.meta.outputs.v }}"
+          --dart-define=APP_BUILD_TIME="${{ steps.meta.outputs.build_time }}"
       - name: 打包 tar.gz / deb / AppImage
-        run: bash .github/package-linux.sh "${{ steps.ver.outputs.v }}"
+        run: bash .github/package-linux.sh "${{ steps.meta.outputs.v }}"
       - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: dist/*
 
-  # ── macOS:universal(arm64+x64)dmg ──
   build-macos:
     name: 构建 macOS (universal)
     needs: analyze-test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -190,13 +214,20 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: 计算版本号
-        id: ver
-        run: echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
-      - run: flutter build macos --release
+      - name: 计算版本号 / 编译时间
+        id: meta
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - run: >
+          flutter build macos --release
+          --build-name="${{ steps.meta.outputs.v }}"
+          --dart-define=APP_BUILD_TIME="${{ steps.meta.outputs.build_time }}"
       - name: 打包 dmg
         run: |
-          V="${{ steps.ver.outputs.v }}"
+          V="${{ steps.meta.outputs.v }}"
           mkdir -p dist
           APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" | head -1)
           hdiutil create -volname Sub2api -srcfolder "$APP" -ov -format UDZO "dist/sub2api_macos_${V}.dmg"
@@ -205,11 +236,10 @@ jobs:
           name: macos
           path: dist/*
 
-  # ── iOS arm64:未签名 ipa(未提供证书;自签 / 侧载用) ──
   build-ios:
     name: 构建 iOS (arm64, 未签名)
     needs: analyze-test
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -219,13 +249,20 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: 计算版本号
-        id: ver
-        run: echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
-      - run: flutter build ios --release --no-codesign
+      - name: 计算版本号 / 编译时间
+        id: meta
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          echo "v=$(bash .github/version.sh)" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - run: >
+          flutter build ios --release --no-codesign
+          --build-name="${{ steps.meta.outputs.v }}"
+          --dart-define=APP_BUILD_TIME="${{ steps.meta.outputs.build_time }}"
       - name: 打包未签名 ipa
         run: |
-          V="${{ steps.ver.outputs.v }}"
+          V="${{ steps.meta.outputs.v }}"
           mkdir -p dist Payload
           cp -R build/ios/iphoneos/Runner.app Payload/
           zip -qr "dist/sub2api_ios_${V}.ipa" Payload
@@ -234,10 +271,10 @@ jobs:
           name: ios
           path: dist/*
 
-  # ── 仅在 tag(版本号)推送时发布 Release ──
+  # ── 仅手动触发且填写了版本号时,发布 Release(tag 即该版本号) ──
   release:
     name: 发布 Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'workflow_dispatch' && inputs.version != ''
     needs: [build-android, build-windows, build-linux, build-macos, build-ios]
     runs-on: ubuntu-latest
     steps:
@@ -251,7 +288,7 @@ jobs:
           ls -lh dist
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
           generate_release_notes: true
           files: dist/*

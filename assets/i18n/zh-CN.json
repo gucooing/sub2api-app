@@ -230,7 +230,11 @@
     "externalBrowser": "使用外置浏览器打开链接",
     "externalBrowserHint": "关闭时在应用内浏览器打开并自动携带登录态,无需重新登录",
     "about": "关于",
-    "version": "版本"
+    "version": "版本",
+    "buildTime": "构建时间",
+    "localBuild": "本地构建",
+    "repo": "项目仓库",
+    "checkUpdate": "检查更新"
   },
   "dashboard": {
     "balance": "账户余额",
@@ -432,6 +436,14 @@
     "detail": "公告详情",
     "modePopup": "重要通知",
     "modeNotice": "通知"
+  },
+  "update": {
+    "found": "发现新版本 v{version}",
+    "foundHint": "有新版本可用,前往下载更新。",
+    "download": "前往下载",
+    "later": "稍后",
+    "upToDate": "已是最新版本",
+    "checkFailed": "检查更新失败"
   },
   "subscriptions": {
     "title": "我的订阅",
