@@ -457,7 +457,7 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
                   _setupData!.qrCodeUrl,
                   width: 200,
                   height: 200,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               const SizedBox(height: 12),
               Row(

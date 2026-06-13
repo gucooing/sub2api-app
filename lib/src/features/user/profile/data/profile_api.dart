@@ -97,8 +97,8 @@ class ProfileApi {
     String? password,
   }) async {
     final data = await _client.post<dynamic>('/user/totp/setup', data: {
-      if (emailCode != null) 'email_code': emailCode,
-      if (password != null) 'password': password,
+      'email_code': ?emailCode,
+      'password': ?password,
     });
     return TotpSetupData.fromJson((data as Map).cast<String, dynamic>());
   }
@@ -120,8 +120,8 @@ class ProfileApi {
     String? password,
   }) async {
     await _client.post<dynamic>('/user/totp/disable', data: {
-      if (emailCode != null) 'email_code': emailCode,
-      if (password != null) 'password': password,
+      'email_code': ?emailCode,
+      'password': ?password,
     });
   }
 }

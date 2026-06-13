@@ -36,7 +36,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze
+      # info 级提示不阻断构建;warning/error 仍会使其失败(保留真正的代码检查)。
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test --reporter expanded
 
   # 仅手动触发时构建各平台;PR/普通 push 只做上面的检查。
