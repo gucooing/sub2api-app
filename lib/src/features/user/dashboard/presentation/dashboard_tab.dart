@@ -9,7 +9,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/brand_header.dart';
 import '../../../../shared/widgets/kpi_tile.dart';
-import '../../../../shared/widgets/metric_trend_chart.dart';
+import '../../../../shared/widgets/multi_series_trend_chart.dart';
 import '../../../../shared/widgets/pill_segmented.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/token_composition.dart';
@@ -17,8 +17,6 @@ import '../data/dashboard_api.dart';
 import '../providers/dashboard_providers.dart';
 
 enum _Period { today, total }
-
-enum _Metric { cost, tokens }
 
 /// 「总览」tab:品牌 hero(余额 + RPM/TPM/活跃密钥)+ KPI 磁贴(迷你折线+涨跌)
 /// + 消耗/Tokens 双指标趋势图 + 平台分布 + 快捷入口。
@@ -31,7 +29,6 @@ class DashboardTab extends ConsumerStatefulWidget {
 
 class _DashboardTabState extends ConsumerState<DashboardTab> {
   _Period _period = _Period.today;
-  _Metric _metric = _Metric.cost;
 
   @override
   Widget build(BuildContext context) {
@@ -94,42 +91,19 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    SectionHeader(
-                      title: context.tr('dashboard.trend'),
-                      trailing: PillSegmented<_Metric>(
-                        selected: _metric,
-                        onChanged: (m) => setState(() => _metric = m),
-                        options: [
-                          (_Metric.cost, context.tr('dashboard.cost')),
-                          (_Metric.tokens, context.tr('dashboard.tokens')),
-                        ],
-                      ),
-                    ),
+                    SectionHeader(title: context.tr('dashboard.trend')),
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+                        padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
                         child: SizedBox(
-                          height: 220,
+                          height: 280,
                           child: AsyncValueView(
                             value: trend,
                             onRetry: () =>
                                 ref.invalidate(dashboardTrendProvider),
-                            builder: (context, points) => MetricTrendChart(
-                              points: [
-                                for (final p in points)
-                                  TrendChartPoint(
-                                    label: p.shortLabel,
-                                    value: _metric == _Metric.cost
-                                        ? p.actualCost
-                                        : p.totalTokens.toDouble(),
-                                  ),
-                              ],
-                              color: _metric == _Metric.cost
-                                  ? Theme.of(context).colorScheme.primary
-                                  : AppColors.brandGreen,
-                              valueLabel: (v) => _metric == _Metric.cost
-                                  ? formatCost(v)
-                                  : formatCompact(v.round()),
+                            builder: (context, points) => MultiSeriesTrendChart(
+                              labels: [for (final p in points) p.shortLabel],
+                              series: _trendSeries(context, points),
                               emptyHint: context.tr('common.empty'),
                             ),
                           ),
@@ -157,6 +131,61 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
       ),
     );
   }
+}
+
+/// 多线趋势图的系列:input/output/缓存创建/缓存读取 四条 token 实线
+/// + 缓存命中率(%)+ 金额($)两条虚线;量纲各自归一化,图例可点按切换。
+List<TrendSeries> _trendSeries(
+  BuildContext context,
+  List<DashboardTrendPoint> points,
+) {
+  String compact(double v) => formatCompact(v.round());
+  return [
+    TrendSeries(
+      key: 'input',
+      label: context.tr('tokens.input'),
+      color: AppColors.brandBlue,
+      values: [for (final p in points) p.inputTokens.toDouble()],
+      format: compact,
+    ),
+    TrendSeries(
+      key: 'output',
+      label: context.tr('tokens.output'),
+      color: AppColors.brandGreen,
+      values: [for (final p in points) p.outputTokens.toDouble()],
+      format: compact,
+    ),
+    TrendSeries(
+      key: 'cacheCreation',
+      label: context.tr('tokens.cacheCreation'),
+      color: const Color(0xFFF59E0B),
+      values: [for (final p in points) p.cacheCreationTokens.toDouble()],
+      format: compact,
+    ),
+    TrendSeries(
+      key: 'cacheRead',
+      label: context.tr('tokens.cacheRead'),
+      color: const Color(0xFF06B6D4),
+      values: [for (final p in points) p.cacheReadTokens.toDouble()],
+      format: compact,
+    ),
+    TrendSeries(
+      key: 'cacheHitRate',
+      label: context.tr('tokens.cacheHitRate'),
+      color: const Color(0xFF8B5CF6),
+      dashed: true,
+      values: [for (final p in points) p.cacheHitRate],
+      format: (v) => '${v.toStringAsFixed(1)}%',
+    ),
+    TrendSeries(
+      key: 'amount',
+      label: context.tr('tokens.amount'),
+      color: Theme.of(context).colorScheme.primary,
+      dashed: true,
+      values: [for (final p in points) p.actualCost],
+      format: formatCost,
+    ),
+  ];
 }
 
 class _Hero extends StatelessWidget {

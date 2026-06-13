@@ -133,6 +133,10 @@ class DashboardTrendPoint {
     required this.totalTokens,
     required this.cost,
     required this.actualCost,
+    this.inputTokens = 0,
+    this.outputTokens = 0,
+    this.cacheCreationTokens = 0,
+    this.cacheReadTokens = 0,
   });
 
   /// 原始日期标签(day 粒度 `2026-06-13`,hour 粒度 `2026-06-13 08:00`)。
@@ -142,14 +146,32 @@ class DashboardTrendPoint {
   final double cost;
   final double actualCost;
 
+  /// 该点的 token 构成(供总览多线趋势图分线绘制)。
+  final int inputTokens;
+  final int outputTokens;
+  final int cacheCreationTokens;
+  final int cacheReadTokens;
+
+  /// 缓存命中率(%):cache_read /(input + cache_read + cache_creation),
+  /// 与 web `TokenUsageTrend.vue` 同口径;无可缓存 token 时为 0。
+  double get cacheHitRate {
+    final prompt = inputTokens + cacheReadTokens + cacheCreationTokens;
+    return prompt > 0 ? cacheReadTokens / prompt * 100 : 0;
+  }
+
   factory DashboardTrendPoint.fromJson(Map<String, dynamic> json) {
     final cost = (json['cost'] as num?)?.toDouble() ?? 0;
+    int asInt(String key) => (json[key] as num?)?.toInt() ?? 0;
     return DashboardTrendPoint(
       date: json['date'] as String? ?? '',
-      requests: (json['requests'] as num?)?.toInt() ?? 0,
-      totalTokens: (json['total_tokens'] as num?)?.toInt() ?? 0,
+      requests: asInt('requests'),
+      totalTokens: asInt('total_tokens'),
       cost: cost,
       actualCost: (json['actual_cost'] as num?)?.toDouble() ?? cost,
+      inputTokens: asInt('input_tokens'),
+      outputTokens: asInt('output_tokens'),
+      cacheCreationTokens: asInt('cache_creation_tokens'),
+      cacheReadTokens: asInt('cache_read_tokens'),
     );
   }
 

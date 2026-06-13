@@ -47,6 +47,29 @@ void main() {
     expect(m.model, 'claude-fable-5');
   });
 
+  test('DashboardTrendPoint 解析 token 构成并算命中率', () {
+    final p = DashboardTrendPoint.fromJson({
+      'date': '2026-06-13',
+      'requests': 5,
+      'total_tokens': 1000,
+      'cost': 0.5,
+      'input_tokens': 200,
+      'output_tokens': 100,
+      'cache_creation_tokens': 100,
+      'cache_read_tokens': 300,
+    });
+    expect(p.inputTokens, 200);
+    expect(p.cacheReadTokens, 300);
+    expect(p.actualCost, 0.5); // actual_cost 缺失回退 cost
+    // 命中率 = 300 /(200+300+100) * 100 = 50
+    expect(p.cacheHitRate, closeTo(50, 1e-9));
+
+    // 无可缓存 token 时命中率为 0,不抛除零。
+    final empty = DashboardTrendPoint.fromJson(const {'date': 'x'});
+    expect(empty.cacheHitRate, 0);
+    expect(empty.inputTokens, 0);
+  });
+
   test('DateRange 日期区间与粒度', () {
     final today = DateRange.preset(UsageRangeType.today);
     expect(today.granularity, 'hour');

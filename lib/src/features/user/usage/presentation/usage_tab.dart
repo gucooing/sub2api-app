@@ -220,6 +220,9 @@ class _TrendChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
+            // 提示框夹在图表内,避免数据值大或点在边缘时溢出被裁切。
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipItems: (touched) => [
               for (final spot in touched)
                 LineTooltipItem(

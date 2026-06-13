@@ -133,7 +133,9 @@
     "input": "Input",
     "output": "Output",
     "cacheCreation": "Cache Write",
-    "cacheRead": "Cache Read"
+    "cacheRead": "Cache Read",
+    "cacheHitRate": "Cache Hit Rate",
+    "amount": "Amount"
   },
   "usage": {
     "today": "Today",

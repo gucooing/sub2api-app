@@ -133,7 +133,9 @@
     "input": "输入",
     "output": "输出",
     "cacheCreation": "缓存创建",
-    "cacheRead": "缓存读取"
+    "cacheRead": "缓存读取",
+    "cacheHitRate": "缓存命中率",
+    "amount": "金额"
   },
   "usage": {
     "today": "今天",
