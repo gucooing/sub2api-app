@@ -128,6 +128,13 @@
     "vsYesterday": "较昨日",
     "activeKeys": "活跃密钥"
   },
+  "tokens": {
+    "composition": "Token 构成",
+    "input": "输入",
+    "output": "输出",
+    "cacheCreation": "缓存创建",
+    "cacheRead": "缓存读取"
+  },
   "usage": {
     "today": "今天",
     "week": "7 天",

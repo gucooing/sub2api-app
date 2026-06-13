@@ -12,6 +12,7 @@ import '../../../../shared/widgets/kpi_tile.dart';
 import '../../../../shared/widgets/metric_trend_chart.dart';
 import '../../../../shared/widgets/pill_segmented.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../../shared/widgets/token_composition.dart';
 import '../data/dashboard_api.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -80,6 +81,17 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                       stats: data,
                       trend: trendList,
                       period: _period,
+                    ),
+                    const SizedBox(height: 20),
+                    SectionHeader(title: context.tr('tokens.composition')),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: _TokenCompositionView(
+                          stats: data,
+                          isToday: _period == _Period.today,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     SectionHeader(
@@ -356,6 +368,45 @@ class _MiniStat extends StatelessWidget {
                 .textTheme
                 .bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class _TokenCompositionView extends StatelessWidget {
+  const _TokenCompositionView({required this.stats, required this.isToday});
+
+  final UserDashboardStats stats;
+  final bool isToday;
+
+  @override
+  Widget build(BuildContext context) {
+    return TokenComposition(
+      segments: [
+        TokenSegment(
+          label: context.tr('tokens.input'),
+          value: isToday ? stats.todayInputTokens : stats.totalInputTokens,
+          color: AppColors.brandBlue,
+        ),
+        TokenSegment(
+          label: context.tr('tokens.output'),
+          value: isToday ? stats.todayOutputTokens : stats.totalOutputTokens,
+          color: AppColors.brandGreen,
+        ),
+        TokenSegment(
+          label: context.tr('tokens.cacheCreation'),
+          value: isToday
+              ? stats.todayCacheCreationTokens
+              : stats.totalCacheCreationTokens,
+          color: const Color(0xFFF59E0B),
+        ),
+        TokenSegment(
+          label: context.tr('tokens.cacheRead'),
+          value: isToday
+              ? stats.todayCacheReadTokens
+              : stats.totalCacheReadTokens,
+          color: const Color(0xFF8B5CF6),
+        ),
       ],
     );
   }

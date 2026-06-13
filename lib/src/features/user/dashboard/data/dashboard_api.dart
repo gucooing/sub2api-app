@@ -51,6 +51,14 @@ class UserDashboardStats {
     required this.averageDurationMs,
     required this.rpm,
     required this.tpm,
+    this.todayInputTokens = 0,
+    this.todayOutputTokens = 0,
+    this.todayCacheCreationTokens = 0,
+    this.todayCacheReadTokens = 0,
+    this.totalInputTokens = 0,
+    this.totalOutputTokens = 0,
+    this.totalCacheCreationTokens = 0,
+    this.totalCacheReadTokens = 0,
     this.byPlatform = const [],
   });
 
@@ -65,6 +73,19 @@ class UserDashboardStats {
   final double averageDurationMs;
   final double rpm;
   final double tpm;
+
+  /// 今日 token 构成。
+  final int todayInputTokens;
+  final int todayOutputTokens;
+  final int todayCacheCreationTokens;
+  final int todayCacheReadTokens;
+
+  /// 累计 token 构成。
+  final int totalInputTokens;
+  final int totalOutputTokens;
+  final int totalCacheCreationTokens;
+  final int totalCacheReadTokens;
+
   final List<PlatformStats> byPlatform;
 
   factory UserDashboardStats.fromJson(Map<String, dynamic> json) {
@@ -89,6 +110,14 @@ class UserDashboardStats {
       averageDurationMs: asDouble('average_duration_ms'),
       rpm: asDouble('rpm'),
       tpm: asDouble('tpm'),
+      todayInputTokens: asInt('today_input_tokens'),
+      todayOutputTokens: asInt('today_output_tokens'),
+      todayCacheCreationTokens: asInt('today_cache_creation_tokens'),
+      todayCacheReadTokens: asInt('today_cache_read_tokens'),
+      totalInputTokens: asInt('total_input_tokens'),
+      totalOutputTokens: asInt('total_output_tokens'),
+      totalCacheCreationTokens: asInt('total_cache_creation_tokens'),
+      totalCacheReadTokens: asInt('total_cache_read_tokens'),
       byPlatform: platforms,
     );
   }

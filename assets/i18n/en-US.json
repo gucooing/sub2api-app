@@ -128,6 +128,13 @@
     "vsYesterday": "vs yesterday",
     "activeKeys": "Active Keys"
   },
+  "tokens": {
+    "composition": "Token Composition",
+    "input": "Input",
+    "output": "Output",
+    "cacheCreation": "Cache Write",
+    "cacheRead": "Cache Read"
+  },
   "usage": {
     "today": "Today",
     "week": "7 days",
