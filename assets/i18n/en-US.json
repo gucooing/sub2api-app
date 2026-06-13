@@ -162,7 +162,9 @@
     "reset": "Reset",
     "apply": "Apply",
     "recordsEmpty": "No usage records yet",
-    "noMore": "No more"
+    "noMore": "No more",
+    "trend": "Usage Trend",
+    "recordsHint": "Filter & inspect every request"
   },
   "keys": {
     "create": "Create key",

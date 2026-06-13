@@ -162,7 +162,9 @@
     "reset": "重置",
     "apply": "应用",
     "recordsEmpty": "暂无使用记录",
-    "noMore": "没有更多了"
+    "noMore": "没有更多了",
+    "trend": "使用趋势",
+    "recordsHint": "多维筛选 · 查看每条请求明细"
   },
   "keys": {
     "create": "创建密钥",

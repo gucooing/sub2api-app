@@ -10,6 +10,10 @@ class TrendPoint {
     required this.requests,
     required this.totalTokens,
     required this.actualCost,
+    this.inputTokens = 0,
+    this.outputTokens = 0,
+    this.cacheCreationTokens = 0,
+    this.cacheReadTokens = 0,
   });
 
   /// day 粒度为 `YYYY-MM-DD`,hour 粒度为含小时的时间串。
@@ -18,14 +22,34 @@ class TrendPoint {
   final int totalTokens;
   final double actualCost;
 
-  factory TrendPoint.fromJson(Map<String, dynamic> json) => TrendPoint(
-        date: json['date'] as String? ?? '',
-        requests: (json['requests'] as num?)?.toInt() ?? 0,
-        totalTokens: (json['total_tokens'] as num?)?.toInt() ?? 0,
-        actualCost: (json['actual_cost'] as num?)?.toDouble() ??
-            (json['cost'] as num?)?.toDouble() ??
-            0,
-      );
+  /// 该点的 token 构成(供用量多线趋势图分线绘制,与总览一致)。
+  final int inputTokens;
+  final int outputTokens;
+  final int cacheCreationTokens;
+  final int cacheReadTokens;
+
+  /// 缓存命中率(%):cache_read /(input + cache_read + cache_creation);
+  /// 与总览 / web 同口径,无可缓存 token 时为 0。
+  double get cacheHitRate {
+    final prompt = inputTokens + cacheReadTokens + cacheCreationTokens;
+    return prompt > 0 ? cacheReadTokens / prompt * 100 : 0;
+  }
+
+  factory TrendPoint.fromJson(Map<String, dynamic> json) {
+    int asInt(String k) => (json[k] as num?)?.toInt() ?? 0;
+    return TrendPoint(
+      date: json['date'] as String? ?? '',
+      requests: asInt('requests'),
+      totalTokens: asInt('total_tokens'),
+      actualCost: (json['actual_cost'] as num?)?.toDouble() ??
+          (json['cost'] as num?)?.toDouble() ??
+          0,
+      inputTokens: asInt('input_tokens'),
+      outputTokens: asInt('output_tokens'),
+      cacheCreationTokens: asInt('cache_creation_tokens'),
+      cacheReadTokens: asInt('cache_read_tokens'),
+    );
+  }
 }
 
 /// `GET /usage/dashboard/models` 的单模型统计。

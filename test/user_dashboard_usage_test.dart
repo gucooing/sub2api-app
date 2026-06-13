@@ -33,8 +33,16 @@ void main() {
       'requests': 5,
       'total_tokens': 100,
       'cost': 0.5,
+      'input_tokens': 20,
+      'output_tokens': 10,
+      'cache_creation_tokens': 10,
+      'cache_read_tokens': 30,
     });
     expect(p.actualCost, 0.5);
+    expect(p.inputTokens, 20);
+    expect(p.cacheReadTokens, 30);
+    // 命中率 = 30 /(20+30+10) * 100 = 50
+    expect(p.cacheHitRate, closeTo(50, 1e-9));
 
     final m = ModelUsageStat.fromJson({
       'model': 'claude-fable-5',

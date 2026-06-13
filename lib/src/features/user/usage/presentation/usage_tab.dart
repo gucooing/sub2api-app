@@ -1,13 +1,19 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/data_table_card.dart';
+import '../../../../shared/widgets/multi_series_trend_chart.dart';
+import '../../../../shared/widgets/section_header.dart';
+import '../../../../shared/widgets/token_trend_series.dart';
 import '../data/usage_api.dart';
 import '../providers/usage_providers.dart';
 
-/// 「用量」tab:时间范围切换 + 消耗趋势图 + 按模型统计表。
+/// 「用量」tab:时间范围切换 + 使用记录入口 + 使用趋势(多线图,与总览一致,
+/// 随本页时间筛选联动)+ 按模型统计表(请求数 / token 数 / 消费)。
 class UsageTab extends ConsumerWidget {
   const UsageTab({super.key});
 
@@ -33,37 +39,109 @@ class UsageTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             _DateRangeSelector(currentRange: range),
+            const SizedBox(height: 12),
+            const _RecordsEntry(),
             const SizedBox(height: 16),
-            Text(
-              context.tr('usage.costTrend'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
+            SectionHeader(title: context.tr('usage.trend')),
             Card(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+                padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
                 child: SizedBox(
-                  height: 220,
+                  height: 280,
                   child: AsyncValueView(
                     value: trend,
                     onRetry: () => ref.invalidate(usageTrendProvider),
-                    builder: (context, points) => _TrendChart(points: points),
+                    builder: (context, points) => MultiSeriesTrendChart(
+                      labels: [for (final p in points) _shortLabel(p.date)],
+                      series: _series(context, points),
+                      emptyHint: context.tr('common.empty'),
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              context.tr('usage.byModel'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
+            SectionHeader(title: context.tr('usage.byModel')),
             AsyncValueView(
               value: models,
               onRetry: () => ref.invalidate(usageModelsProvider),
               builder: (context, list) => _ModelTable(stats: list),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  List<TrendSeries> _series(BuildContext context, List<TrendPoint> points) {
+    return tokenTrendSeries(
+      context,
+      input: [for (final p in points) p.inputTokens.toDouble()],
+      output: [for (final p in points) p.outputTokens.toDouble()],
+      cacheCreation: [for (final p in points) p.cacheCreationTokens.toDouble()],
+      cacheRead: [for (final p in points) p.cacheReadTokens.toDouble()],
+      cacheHitRate: [for (final p in points) p.cacheHitRate],
+      amount: [for (final p in points) p.actualCost],
+    );
+  }
+
+  /// `2026-06-13` → `06-13`;hour 粒度 `2026-06-13 08:00` → `08:00`。
+  static String _shortLabel(String date) {
+    if (date.contains(':')) {
+      final parts = date.split(' ');
+      return parts.length > 1 ? parts[1] : date;
+    }
+    final parts = date.split('-');
+    return parts.length >= 3 ? '${parts[1]}-${parts[2]}' : date;
+  }
+}
+
+/// 「使用记录」入口:进多维筛选 + 滚动加载的明细列表页。
+class _RecordsEntry extends StatelessWidget {
+  const _RecordsEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.push('/usage-logs'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                child: Icon(Icons.receipt_long_outlined,
+                    size: 19, color: scheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.tr('usageLogs.title'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      context.tr('usage.recordsHint'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );
@@ -118,7 +196,7 @@ class _DateRangeSelector extends ConsumerWidget {
         if (currentRange.type == UsageRangeType.custom) ...[
           const SizedBox(height: 8),
           Text(
-            '${_formatDate(currentRange.start)} - ${_formatDate(currentRange.end)}',
+            '${formatDate(currentRange.start)} - ${formatDate(currentRange.end)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -146,121 +224,9 @@ class _DateRangeSelector extends ConsumerWidget {
           );
     }
   }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-  }
 }
 
-class _TrendChart extends StatelessWidget {
-  const _TrendChart({required this.points});
-
-  final List<TrendPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    if (points.isEmpty) {
-      return Center(child: Text(context.tr('common.empty')));
-    }
-    final scheme = Theme.of(context).colorScheme;
-    final spots = [
-      for (var i = 0; i < points.length; i++)
-        FlSpot(i.toDouble(), points[i].actualCost),
-    ];
-    final maxY =
-        spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
-
-    return LineChart(
-      LineChartData(
-        minY: 0,
-        maxY: maxY <= 0 ? 1 : maxY * 1.2,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: scheme.outlineVariant.withValues(alpha: 0.4),
-            strokeWidth: 1,
-          ),
-        ),
-        titlesData: FlTitlesData(
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 44,
-              getTitlesWidget: (value, meta) => Text(
-                value >= 1
-                    ? value.toStringAsFixed(1)
-                    : value.toStringAsFixed(2),
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: (points.length / 4).ceilToDouble().clamp(1, 31),
-              getTitlesWidget: (value, meta) {
-                final i = value.toInt();
-                if (i < 0 || i >= points.length) return const SizedBox();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    _shortLabel(points[i].date),
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        borderData: FlBorderData(show: false),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            // 提示框夹在图表内,避免数据值大或点在边缘时溢出被裁切。
-            fitInsideHorizontally: true,
-            fitInsideVertically: true,
-            getTooltipItems: (touched) => [
-              for (final spot in touched)
-                LineTooltipItem(
-                  '${_shortLabel(points[spot.x.toInt()].date)}\n\$${spot.y.toStringAsFixed(4)}',
-                  TextStyle(color: scheme.onInverseSurface),
-                ),
-            ],
-          ),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            curveSmoothness: 0.25,
-            color: scheme.primary,
-            barWidth: 2.5,
-            dotData: FlDotData(show: points.length <= 14),
-            belowBarData: BarAreaData(
-              show: true,
-              color: scheme.primary.withValues(alpha: 0.12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// `2026-06-13` → `06-13`;hour 粒度 `2026-06-13 08:00` → `08:00`。
-  static String _shortLabel(String date) {
-    if (date.contains(':')) {
-      final parts = date.split(' ');
-      return parts.length > 1 ? parts[1] : date;
-    }
-    final parts = date.split('-');
-    return parts.length >= 3 ? '${parts[1]}-${parts[2]}' : date;
-  }
-}
-
+/// 按模型统计表:模型 / 请求数 / token 数 / 消费,按消费降序。
 class _ModelTable extends StatelessWidget {
   const _ModelTable({required this.stats});
 
@@ -268,84 +234,36 @@ class _ModelTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (stats.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(child: Text(context.tr('common.empty'))),
-        ),
-      );
-    }
     final sorted = [...stats]
       ..sort((a, b) => b.actualCost.compareTo(a.actualCost));
+    final theme = Theme.of(context);
 
-    return Card(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    context.tr('usage.model'),
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    context.tr('dashboard.requests'),
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    context.tr('dashboard.cost'),
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-              ],
-            ),
+    Widget cell(String text, {bool strong = false, Color? color}) => Text(
+          text,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: strong ? FontWeight.w600 : null,
+            color: color,
           ),
-          const Divider(height: 8),
-          for (final stat in sorted)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      stat.model,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      '${stat.requests}',
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '\$${stat.actualCost.toStringAsFixed(4)}',
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 8),
-        ],
-      ),
+          overflow: TextOverflow.ellipsis,
+        );
+
+    return DataTableCard(
+      emptyHint: context.tr('common.empty'),
+      columns: [
+        TableColumnSpec(context.tr('usage.model'), flex: 3),
+        TableColumnSpec(context.tr('dashboard.requests'), flex: 2, numeric: true),
+        TableColumnSpec(context.tr('dashboard.tokens'), flex: 2, numeric: true),
+        TableColumnSpec(context.tr('dashboard.cost'), flex: 2, numeric: true),
+      ],
+      rows: [
+        for (final s in sorted)
+          [
+            cell(s.model, strong: true),
+            cell(formatInt(s.requests)),
+            cell(formatCompact(s.totalTokens)),
+            cell(formatCost(s.actualCost), color: theme.colorScheme.primary),
+          ],
+      ],
     );
   }
 }

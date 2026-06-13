@@ -13,6 +13,7 @@ import '../../../../shared/widgets/multi_series_trend_chart.dart';
 import '../../../../shared/widgets/pill_segmented.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/token_composition.dart';
+import '../../../../shared/widgets/token_trend_series.dart';
 import '../data/dashboard_api.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -133,59 +134,20 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
   }
 }
 
-/// 多线趋势图的系列:input/output/缓存创建/缓存读取 四条 token 实线
-/// + 缓存命中率(%)+ 金额($)两条虚线;量纲各自归一化,图例可点按切换。
+/// 多线趋势图的系列:复用共享构造器,从总览趋势点取各字段。
 List<TrendSeries> _trendSeries(
   BuildContext context,
   List<DashboardTrendPoint> points,
 ) {
-  String compact(double v) => formatCompact(v.round());
-  return [
-    TrendSeries(
-      key: 'input',
-      label: context.tr('tokens.input'),
-      color: AppColors.brandBlue,
-      values: [for (final p in points) p.inputTokens.toDouble()],
-      format: compact,
-    ),
-    TrendSeries(
-      key: 'output',
-      label: context.tr('tokens.output'),
-      color: AppColors.brandGreen,
-      values: [for (final p in points) p.outputTokens.toDouble()],
-      format: compact,
-    ),
-    TrendSeries(
-      key: 'cacheCreation',
-      label: context.tr('tokens.cacheCreation'),
-      color: const Color(0xFFF59E0B),
-      values: [for (final p in points) p.cacheCreationTokens.toDouble()],
-      format: compact,
-    ),
-    TrendSeries(
-      key: 'cacheRead',
-      label: context.tr('tokens.cacheRead'),
-      color: const Color(0xFF06B6D4),
-      values: [for (final p in points) p.cacheReadTokens.toDouble()],
-      format: compact,
-    ),
-    TrendSeries(
-      key: 'cacheHitRate',
-      label: context.tr('tokens.cacheHitRate'),
-      color: const Color(0xFF8B5CF6),
-      dashed: true,
-      values: [for (final p in points) p.cacheHitRate],
-      format: (v) => '${v.toStringAsFixed(1)}%',
-    ),
-    TrendSeries(
-      key: 'amount',
-      label: context.tr('tokens.amount'),
-      color: Theme.of(context).colorScheme.primary,
-      dashed: true,
-      values: [for (final p in points) p.actualCost],
-      format: formatCost,
-    ),
-  ];
+  return tokenTrendSeries(
+    context,
+    input: [for (final p in points) p.inputTokens.toDouble()],
+    output: [for (final p in points) p.outputTokens.toDouble()],
+    cacheCreation: [for (final p in points) p.cacheCreationTokens.toDouble()],
+    cacheRead: [for (final p in points) p.cacheReadTokens.toDouble()],
+    cacheHitRate: [for (final p in points) p.cacheHitRate],
+    amount: [for (final p in points) p.actualCost],
+  );
 }
 
 class _Hero extends StatelessWidget {
