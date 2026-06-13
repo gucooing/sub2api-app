@@ -191,7 +191,49 @@ sub2api/
 
 > Linux 桌面启动器图标不在 flutter_launcher_icons 范围内,打包(deb/rpm/AppImage)时把 `assets/icon/app_icon.png` 写入 `.desktop` 文件即可。
 
-## 六、文档索引
+## 六、持续集成与发布(GitHub Actions)
+
+工作流:[`.github/workflows/build.yml`](.github/workflows/build.yml)
+
+- **每次提交 / PR**:运行 `flutter analyze` + `flutter test` 检查代码(构建/发布的前置门槛);
+- **推送 `vX.Y.Z` 形式的 tag**(即「填写版本号」):检查通过后构建五端产物并**自动创建 GitHub Release** 上传;
+- **手动触发**(workflow_dispatch):构建五端但不发布。
+
+构建覆盖的平台 / 架构:
+
+| 平台 | 架构 / 产物 |
+|---|---|
+| Android | `arm64-v8a` / `armeabi-v7a` / `x86_64` 三个 ABI 的 APK |
+| Windows | x64:便携 `zip` + Inno Setup `setup.exe` |
+| Linux | x64:`tar.gz` + `deb` + `AppImage` |
+| macOS | universal(arm64 + x64)`dmg` |
+| iOS | arm64 **未签名** ipa(未提供证书;自签 / 侧载用) |
+
+> 各平台基本是单架构(Android 3 个 ABI、macOS 为 arm64+x64 通用二进制);Windows/Linux 桌面 Flutter 目前主力为 x64。打包脚本见 `.github/version.sh`、`.github/package-linux.sh`。
+
+### Android 签名密钥(仓库 Settings → Secrets and variables → Actions)
+
+| Secret 名称 | 值 |
+|---|---|
+| `SIGN_KEYSTORE_BASE64` | keystore 文件的 Base64(`base64 -w0 your.jks`) |
+| `KEYSTORE_PASSWORD` | 生成 keystore 时的 **store** 密码 |
+| `KEY_ALIAS` | 生成时使用的 alias |
+| `KEY_PASSWORD` | key 密码(可与 store 相同) |
+
+CI 会把 `SIGN_KEYSTORE_BASE64` 解码为 `android/app/upload-keystore.jks` 并生成 `android/key.properties`;`android/app/build.gradle.kts` 在检测到 `key.properties` 时启用发布签名,否则回退 debug 签名(本地无需密钥即可 `flutter run --release`)。`key.properties` 与 `*.jks` 已在 `.gitignore` 中,切勿提交。
+
+### 发布一个版本
+
+```bash
+# 1. 在 pubspec.yaml 改版本号,如 version: 0.2.0+2,提交
+# 2. 打 tag 并推送(tag 名即 Release 名)
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+> 生成 keystore:`keytool -genkey -v -keystore your.jks -keyalg RSA -keysize 2048 -validity 10000 -alias your-key-alias`
+
+## 七、文档索引
 
 - [docs/TASKS.md](docs/TASKS.md) —— 开发任务清单(模块位置 / 优先级 / 完成状态),**开发前必读**;
 - 上游平台 API 参考:`D:\github\sub2api`(本地克隆)中 `frontend/src/api/*.ts` 为各端点的权威调用方式,`backend/internal/handler` 为服务端实现。
