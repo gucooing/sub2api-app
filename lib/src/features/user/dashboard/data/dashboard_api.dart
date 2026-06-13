@@ -196,8 +196,11 @@ class DashboardApi {
     return UserDashboardStats.fromJson((data as Map).cast<String, dynamic>());
   }
 
-  /// 用量趋势(默认最近 [days] 天,day 粒度)。
-  Future<List<DashboardTrendPoint>> trend({int days = 7}) async {
+  /// 用量趋势。默认最近 [days] 天、day 粒度;[granularity]='hour' 时按小时。
+  Future<List<DashboardTrendPoint>> trend({
+    int days = 7,
+    String granularity = 'day',
+  }) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
     String fmt(DateTime d) =>
@@ -205,7 +208,7 @@ class DashboardApi {
     final data = await _client.get<dynamic>('/usage/dashboard/trend', query: {
       'start_date': fmt(start),
       'end_date': fmt(now),
-      'granularity': 'day',
+      'granularity': granularity,
     });
     final list = (data as Map)['trend'] as List? ?? const [];
     return list
@@ -213,4 +216,8 @@ class DashboardApi {
         .map((e) => DashboardTrendPoint.fromJson(e.cast<String, dynamic>()))
         .toList();
   }
+
+  /// 当天用量趋势(小时粒度),供总览主趋势图使用。
+  Future<List<DashboardTrendPoint>> todayHourlyTrend() =>
+      trend(days: 1, granularity: 'hour');
 }

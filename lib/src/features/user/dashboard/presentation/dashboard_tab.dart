@@ -36,6 +36,7 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
   Widget build(BuildContext context) {
     final stats = ref.watch(dashboardStatsProvider);
     final trend = ref.watch(dashboardTrendProvider);
+    final hourlyTrend = ref.watch(dashboardHourlyTrendProvider);
     final user = ref.watch(sessionControllerProvider).user;
     final trendList = trend.value ?? const <DashboardTrendPoint>[];
 
@@ -44,10 +45,12 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
         onRefresh: () async {
           ref.invalidate(dashboardStatsProvider);
           ref.invalidate(dashboardTrendProvider);
+          ref.invalidate(dashboardHourlyTrendProvider);
           await ref.read(sessionControllerProvider.notifier).refreshUser();
           try {
             await ref.read(dashboardStatsProvider.future);
             await ref.read(dashboardTrendProvider.future);
+            await ref.read(dashboardHourlyTrendProvider.future);
           } on Exception {
             // 错误展示交给 AsyncValueView
           }
@@ -100,9 +103,9 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                         child: SizedBox(
                           height: 280,
                           child: AsyncValueView(
-                            value: trend,
+                            value: hourlyTrend,
                             onRetry: () =>
-                                ref.invalidate(dashboardTrendProvider),
+                                ref.invalidate(dashboardHourlyTrendProvider),
                             builder: (context, points) => MultiSeriesTrendChart(
                               labels: [for (final p in points) p.shortLabel],
                               series: _trendSeries(context, points),
