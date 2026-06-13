@@ -300,10 +300,14 @@
     "unbindConfirm": "Unbind \"{name}\"?",
     "unbound": "Unbound",
     "bindEmail": "Bind email",
-    "bindEmailHint": "Enter an email and get a code to bind",
-    "oauthBindHint": "Bind third-party logins on the web",
+    "bindEmailHint": "Enter email, code and your account password to bind",
+    "password": "Account password",
+    "oauthBindHint": "Binding a third-party login opens the browser to authorize",
+    "oauthOpening": "Opening browser to finish binding…",
+    "bindFailed": "Operation failed",
     "providerEmail": "Email",
-    "providerWechat": "WeChat"
+    "providerWechat": "WeChat",
+    "providerDingtalk": "DingTalk"
   },
   "redeem": {
     "title": "Redeem Code",

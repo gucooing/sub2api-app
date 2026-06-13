@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/preferences/external_browser_controller.dart';
+import '../../../../core/server/server_store.dart';
 import '../../../../core/session/auth_models.dart';
 import '../../../../core/session/session_controller.dart';
 import '../../../../i18n/app_localizations.dart';
@@ -12,8 +15,11 @@ import '../../../../shared/widgets/confirm_dialog.dart';
 import '../data/profile_api.dart';
 import '../providers/profile_providers.dart';
 
-/// 绑定设置:查询并修改登录方式绑定(邮箱可在应用内绑定;第三方登录可解绑,
-/// 绑定请前往网页端)。
+/// 绑定设置:查询并修改登录方式绑定(对齐 web 逻辑)。
+///
+/// - 邮箱:未绑定可在应用内绑定(邮箱 + 验证码 + 账号密码);邮箱为主登录方式,不可解绑。
+/// - 第三方(LinuxDO/钉钉/OIDC/微信):未绑定且已开启可绑定(打开浏览器授权);
+///   是否可解绑由后端 `can_unbind` 决定(保证至少保留一种登录方式)。
 class BindingsPage extends ConsumerWidget {
   const BindingsPage({super.key});
 
@@ -28,9 +34,11 @@ class BindingsPage extends ConsumerWidget {
         value: bindings,
         onRetry: () => ref.invalidate(identityBindingsProvider),
         builder: (context, list) {
-          final visible = list
-              .where((b) => b.bound || _enabled(b.provider, settings))
-              .toList();
+          // 邮箱始终展示;第三方:已绑定或已开启才展示。
+          final visible = list.where((b) {
+            if (b.provider == 'email') return true;
+            return b.bound || _enabled(b.provider, settings);
+          }).toList();
           return ListView(
             children: [
               Padding(
@@ -42,7 +50,11 @@ class BindingsPage extends ConsumerWidget {
                       ),
                 ),
               ),
-              for (final b in visible) _BindingTile(binding: b),
+              for (final b in visible)
+                _BindingTile(
+                  binding: b,
+                  enabled: _enabled(b.provider, settings),
+                ),
             ],
           );
         },
@@ -51,18 +63,14 @@ class BindingsPage extends ConsumerWidget {
   }
 
   bool _enabled(String provider, PublicSettingsLite? s) {
-    if (s == null) return provider == 'email';
+    if (s == null) return false;
     switch (provider) {
-      case 'email':
-        return true;
       case 'linuxdo':
         return s.linuxdoOauthEnabled;
+      case 'dingtalk':
+        return s.dingtalkOauthEnabled;
       case 'oidc':
         return s.oidcOauthEnabled;
-      case 'github':
-        return s.githubOauthEnabled;
-      case 'google':
-        return s.googleOauthEnabled;
       case 'wechat':
         return s.wechatOauthEnabled;
       default:
@@ -77,14 +85,12 @@ String _providerLabel(BuildContext context, String provider) {
       return context.tr('bindings.providerEmail');
     case 'wechat':
       return context.tr('bindings.providerWechat');
+    case 'dingtalk':
+      return context.tr('bindings.providerDingtalk');
     case 'linuxdo':
       return 'LinuxDO';
     case 'oidc':
       return 'OIDC';
-    case 'github':
-      return 'GitHub';
-    case 'google':
-      return 'Google';
     default:
       return provider;
   }
@@ -96,20 +102,47 @@ IconData _providerIcon(String provider) {
       return Icons.mail_outline;
     case 'wechat':
       return Icons.chat_outlined;
+    case 'dingtalk':
+      return Icons.business_outlined;
     default:
       return Icons.account_circle_outlined;
   }
 }
 
 class _BindingTile extends ConsumerWidget {
-  const _BindingTile({required this.binding});
+  const _BindingTile({required this.binding, required this.enabled});
 
   final IdentityBinding binding;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final name = _providerLabel(context, binding.provider);
+    final isEmail = binding.provider == 'email';
+    final canBindNow = !binding.bound &&
+        binding.canBind &&
+        (isEmail || enabled);
+
+    Widget? trailing;
+    if (binding.bound && binding.canUnbind) {
+      trailing = OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 36),
+          foregroundColor: scheme.error,
+        ),
+        onPressed: () => _unbind(context, ref, name),
+        child: Text(context.tr('bindings.unbind')),
+      );
+    } else if (canBindNow) {
+      trailing = FilledButton(
+        style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+        onPressed: () =>
+            isEmail ? _bindEmail(context, ref) : _bindOAuth(context, ref),
+        child: Text(context.tr('bindings.bind')),
+      );
+    }
+
     return ListTile(
       leading: Icon(_providerIcon(binding.provider)),
       title: Text(name),
@@ -121,22 +154,7 @@ class _BindingTile extends ConsumerWidget {
           color: binding.bound ? scheme.primary : scheme.onSurfaceVariant,
         ),
       ),
-      trailing: binding.bound
-          ? OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 36),
-                foregroundColor: scheme.error,
-              ),
-              onPressed: () => _unbind(context, ref, name),
-              child: Text(context.tr('bindings.unbind')),
-            )
-          : (binding.provider == 'email'
-              ? FilledButton(
-                  style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
-                  onPressed: () => _bindEmail(context, ref),
-                  child: Text(context.tr('bindings.bind')),
-                )
-              : null),
+      trailing: trailing,
     );
   }
 
@@ -154,10 +172,12 @@ class _BindingTile extends ConsumerWidget {
       await ref.read(profileApiProvider).unbindIdentity(binding.provider);
       ref.invalidate(identityBindingsProvider);
       await ref.read(sessionControllerProvider.notifier).refreshUser();
-      if (context.mounted) showAppToast(context, context.tr('bindings.unbound'));
+      if (context.mounted) {
+        showAppToast(context, context.tr('bindings.unbound'));
+      }
     } catch (_) {
       if (context.mounted) {
-        showAppToast(context, context.tr('common.unknownError'), error: true);
+        showAppToast(context, context.tr('bindings.bindFailed'), error: true);
       }
     }
   }
@@ -172,8 +192,39 @@ class _BindingTile extends ConsumerWidget {
       await ref.read(sessionControllerProvider.notifier).refreshUser();
     }
   }
+
+  /// 第三方绑定:对齐 web —— 先写入「绑定当前用户」临时令牌,再打开 bind/start 链接。
+  Future<void> _bindOAuth(BuildContext context, WidgetRef ref) async {
+    final server = ref.read(activeServerProvider);
+    final useExternal = ref.read(externalBrowserProvider);
+    try {
+      await ref.read(profileApiProvider).prepareOAuthBindToken();
+    } catch (_) {
+      // 令牌准备失败不阻断,后端会在浏览器内要求登录
+    }
+    final origin = server.baseUrl.endsWith('/')
+        ? server.baseUrl.substring(0, server.baseUrl.length - 1)
+        : server.baseUrl;
+    final uri = Uri.parse(
+      '$origin/api/v1/auth/oauth/${binding.provider}/bind/start'
+      '?redirect=/profile&intent=bind_current_user',
+    );
+    if (context.mounted) {
+      showAppToast(context, context.tr('bindings.oauthOpening'));
+    }
+    final ok = await launchUrl(
+      uri,
+      mode: useExternal
+          ? LaunchMode.externalApplication
+          : LaunchMode.inAppBrowserView,
+    );
+    if (!ok && context.mounted) {
+      showAppToast(context, context.tr('bindings.bindFailed'), error: true);
+    }
+  }
 }
 
+/// 邮箱绑定弹窗:邮箱 + 验证码(发送+倒计时)+ 账号密码。
 class _BindEmailDialog extends ConsumerStatefulWidget {
   const _BindEmailDialog();
 
@@ -184,7 +235,9 @@ class _BindEmailDialog extends ConsumerStatefulWidget {
 class _BindEmailDialogState extends ConsumerState<_BindEmailDialog> {
   final _email = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
   bool _busy = false;
+  bool _obscure = true;
   String? _error;
   int _resendIn = 0;
   Timer? _timer;
@@ -194,6 +247,7 @@ class _BindEmailDialogState extends ConsumerState<_BindEmailDialog> {
     _timer?.cancel();
     _email.dispose();
     _code.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -220,7 +274,7 @@ class _BindEmailDialogState extends ConsumerState<_BindEmailDialog> {
           if (_resendIn <= 0) t.cancel();
         });
       });
-    } catch (e) {
+    } catch (_) {
       if (mounted) setState(() => _error = context.tr('common.unknownError'));
     }
   }
@@ -228,19 +282,35 @@ class _BindEmailDialogState extends ConsumerState<_BindEmailDialog> {
   Future<void> _submit() async {
     final email = _email.text.trim();
     final code = _code.text.trim();
-    if (!email.contains('@') || code.isEmpty) return;
+    final password = _password.text;
+    if (!email.contains('@')) {
+      setState(() => _error = context.tr('auth.emailInvalid'));
+      return;
+    }
+    if (code.isEmpty) {
+      setState(() => _error = context.tr('auth.verifyCodeRequired'));
+      return;
+    }
+    if (password.length < 6) {
+      setState(() => _error = context.tr('auth.passwordTooShort'));
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(profileApiProvider).bindEmail(email: email, code: code);
+      await ref.read(profileApiProvider).bindEmail(
+            email: email,
+            verifyCode: code,
+            password: password,
+          );
       if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = context.tr('common.unknownError');
+          _error = context.tr('bindings.bindFailed');
         });
       }
     }
@@ -252,49 +322,66 @@ class _BindEmailDialogState extends ConsumerState<_BindEmailDialog> {
       title: Text(context.tr('bindings.bindEmail')),
       content: SizedBox(
         width: 320,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(context.tr('bindings.bindEmailHint')),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _email,
-              enabled: !_busy,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: context.tr('auth.email'),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _code,
-              enabled: !_busy,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: context.tr('auth.verifyCode'),
-                border: const OutlineInputBorder(),
-                suffixIcon: TextButton(
-                  onPressed:
-                      (_busy || _resendIn > 0) ? null : _sendCode,
-                  child: Text(_resendIn > 0
-                      ? context.tr('auth.resendIn',
-                          params: {'seconds': '$_resendIn'})
-                      : context.tr('auth.sendCode')),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(context.tr('bindings.bindEmailHint')),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _email,
+                enabled: !_busy,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.email'),
+                  border: const OutlineInputBorder(),
                 ),
-                suffixIconConstraints:
-                    const BoxConstraints(minWidth: 0, minHeight: 0),
               ),
-            ),
-            if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              TextField(
+                controller: _code,
+                enabled: !_busy,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: context.tr('auth.verifyCode'),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: TextButton(
+                    onPressed: (_busy || _resendIn > 0) ? null : _sendCode,
+                    child: Text(_resendIn > 0
+                        ? context.tr('auth.resendIn',
+                            params: {'seconds': '$_resendIn'})
+                        : context.tr('auth.sendCode')),
+                  ),
+                  suffixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
+                ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _password,
+                enabled: !_busy,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  labelText: context.tr('bindings.password'),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       actions: [

@@ -134,6 +134,7 @@ class PublicSettingsLite {
     this.githubOauthEnabled = false,
     this.googleOauthEnabled = false,
     this.wechatOauthEnabled = false,
+    this.dingtalkOauthEnabled = false,
     this.customMenuItems = const [],
     this.siteName = '',
     this.version = '',
@@ -160,6 +161,7 @@ class PublicSettingsLite {
   final bool githubOauthEnabled;
   final bool googleOauthEnabled;
   final bool wechatOauthEnabled;
+  final bool dingtalkOauthEnabled;
 
   /// 自定义页面(已含管理员配置的可见性/排序,使用时仍按角色过滤)。
   final List<CustomMenuItem> customMenuItems;
@@ -190,6 +192,7 @@ class PublicSettingsLite {
         githubOauthEnabled: json['github_oauth_enabled'] as bool? ?? false,
         googleOauthEnabled: json['google_oauth_enabled'] as bool? ?? false,
         wechatOauthEnabled: json['wechat_oauth_enabled'] as bool? ?? false,
+        dingtalkOauthEnabled: json['dingtalk_oauth_enabled'] as bool? ?? false,
         customMenuItems: (json['custom_menu_items'] as List<dynamic>?)
                 ?.whereType<Map<String, dynamic>>()
                 .map(CustomMenuItem.fromJson)

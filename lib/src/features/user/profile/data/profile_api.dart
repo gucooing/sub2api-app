@@ -39,15 +39,28 @@ class ProfileApi {
         data: {'email': email});
   }
 
-  /// 绑定邮箱身份。
-  Future<void> bindEmail({required String email, required String code}) async {
-    await _client.post<dynamic>('/user/account-bindings/email',
-        data: {'email': email, 'code': code});
+  /// 绑定邮箱身份(需验证码 + 当前账号密码,与 web 一致)。
+  Future<void> bindEmail({
+    required String email,
+    required String verifyCode,
+    required String password,
+  }) async {
+    await _client.post<dynamic>('/user/account-bindings/email', data: {
+      'email': email,
+      'verify_code': verifyCode,
+      'password': password,
+    });
   }
 
-  /// 解绑某登录方式(linuxdo/oidc/wechat/github/google/email)。
+  /// 解绑某登录方式(linuxdo/dingtalk/oidc/wechat/email)。
   Future<void> unbindIdentity(String provider) async {
     await _client.delete<dynamic>('/user/account-bindings/$provider');
+  }
+
+  /// 准备第三方绑定:在后端写入「绑定当前用户」的临时令牌(对齐 web
+  /// `prepareOAuthBindAccessTokenCookie`),随后再打开 bind/start 链接。
+  Future<void> prepareOAuthBindToken() async {
+    await _client.post<dynamic>('/auth/oauth/bind-token');
   }
 
   /// 修改密码。
@@ -115,27 +128,37 @@ class ProfileApi {
 
 /// 登录方式绑定状态。
 class IdentityBinding {
-  const IdentityBinding({required this.provider, required this.bound});
+  const IdentityBinding({
+    required this.provider,
+    required this.bound,
+    this.canBind = true,
+    this.canUnbind = false,
+  });
 
-  /// email / linuxdo / oidc / wechat / github / google
+  /// email / linuxdo / dingtalk / oidc / wechat
   final String provider;
   final bool bound;
 
-  /// 当前支持展示的登录方式(顺序即展示顺序)。
-  static const providers = [
-    'email',
-    'linuxdo',
-    'oidc',
-    'wechat',
-    'github',
-    'google',
-  ];
+  /// 服务端是否允许绑定/解绑(后端按「至少保留一种登录方式」等规则下发)。
+  final bool canBind;
+  final bool canUnbind;
+
+  /// 支持展示的登录方式(顺序即展示顺序),与 web 对齐。
+  static const providers = ['email', 'linuxdo', 'dingtalk', 'oidc', 'wechat'];
 
   static List<IdentityBinding> fromUserJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? detailOf(String p) {
+      final map = json['auth_bindings'] ?? json['identity_bindings'];
+      if (map is Map && map[p] is Map) {
+        return (map[p] as Map).cast<String, dynamic>();
+      }
+      return null;
+    }
+
     bool boundOf(String p) {
       final direct = json['${p}_bound'];
       if (direct is bool) return direct;
-      final map = json['identity_bindings'] ?? json['auth_bindings'];
+      final map = json['auth_bindings'] ?? json['identity_bindings'];
       if (map is Map) {
         final v = map[p];
         if (v is bool) return v;
@@ -146,7 +169,21 @@ class IdentityBinding {
 
     return [
       for (final p in providers)
-        IdentityBinding(provider: p, bound: boundOf(p)),
+        () {
+          final bound = boundOf(p);
+          final d = detailOf(p);
+          // email 由专用流程绑定、且不可解绑(主登录方式)。
+          if (p == 'email') {
+            return IdentityBinding(
+                provider: p, bound: bound, canBind: false, canUnbind: false);
+          }
+          return IdentityBinding(
+            provider: p,
+            bound: bound,
+            canBind: d?['can_bind'] as bool? ?? true,
+            canUnbind: bound && (d?['can_unbind'] as bool? ?? false),
+          );
+        }(),
     ];
   }
 }

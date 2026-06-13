@@ -294,7 +294,7 @@ class _BalanceNotifyTile extends ConsumerWidget {
             contentPadding: const EdgeInsets.only(left: 72, right: 16),
             title: Text(context.tr('profile.balanceNotifyThreshold')),
             trailing: Text(
-              threshold != null ? '\$${threshold.toStringAsFixed(2)}' : '—',
+              threshold != null ? '\$${threshold.toStringAsFixed(2)}' : '2',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             onTap: () => _editThreshold(context, ref, threshold),

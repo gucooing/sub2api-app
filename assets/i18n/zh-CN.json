@@ -300,10 +300,14 @@
     "unbindConfirm": "确定解绑「{name}」吗?",
     "unbound": "已解绑",
     "bindEmail": "绑定邮箱",
-    "bindEmailHint": "输入邮箱并获取验证码完成绑定",
-    "oauthBindHint": "第三方登录的绑定请前往网页端操作",
+    "bindEmailHint": "输入邮箱、验证码与账号密码完成绑定",
+    "password": "账号密码",
+    "oauthBindHint": "第三方登录绑定会打开浏览器完成授权",
+    "oauthOpening": "正在打开浏览器完成绑定…",
+    "bindFailed": "操作失败",
     "providerEmail": "邮箱",
-    "providerWechat": "微信"
+    "providerWechat": "微信",
+    "providerDingtalk": "钉钉"
   },
   "redeem": {
     "title": "兑换码",
