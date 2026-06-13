@@ -78,23 +78,84 @@ class ServersScreen extends ConsumerWidget {
 
   Future<void> _showEditDialog(BuildContext context, ServerStore store,
       {ServerProfile? server}) async {
-    final nameController = TextEditingController(text: server?.name ?? '');
-    final urlController = TextEditingController(text: server?.baseUrl ?? '');
-    final formKey = GlobalKey<FormState>();
-
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(server == null
-            ? context.tr('servers.add')
-            : context.tr('servers.edit')),
-        content: Form(
-          key: formKey,
+      builder: (context) => _ServerEditDialog(store: store, server: server),
+    );
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, ServerStore store, ServerProfile server) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: context.tr('common.delete'),
+      message:
+          context.tr('servers.deleteConfirm', params: {'name': server.name}),
+      confirmLabel: context.tr('common.delete'),
+      destructive: true,
+    );
+    if (confirmed) await store.remove(server.id);
+  }
+}
+
+/// 添加/编辑服务器对话框。控制器随对话框生命周期创建与释放,
+/// 避免 await showDialog 返回后立即 dispose 与关闭动画产生「used after disposed」。
+class _ServerEditDialog extends StatefulWidget {
+  const _ServerEditDialog({required this.store, this.server});
+
+  final ServerStore store;
+  final ServerProfile? server;
+
+  @override
+  State<_ServerEditDialog> createState() => _ServerEditDialogState();
+}
+
+class _ServerEditDialogState extends State<_ServerEditDialog> {
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.server?.name ?? '');
+  late final TextEditingController _urlController =
+      TextEditingController(text: widget.server?.baseUrl ?? '');
+  final _formKey = GlobalKey<FormState>();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  bool get _isBuiltIn => widget.server?.builtIn ?? false;
+
+  Future<void> _save() async {
+    if (!_isBuiltIn && !_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    if (widget.server == null) {
+      await widget.store.add(_nameController.text, _urlController.text);
+    } else {
+      await widget.store.update(
+        widget.server!.id,
+        name: _nameController.text,
+        baseUrl: _isBuiltIn ? null : _urlController.text,
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.server == null
+          ? context.tr('servers.add')
+          : context.tr('servers.edit')),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                controller: nameController,
+                controller: _nameController,
                 decoration: InputDecoration(
                   labelText: context.tr('servers.name'),
                   border: const OutlineInputBorder(),
@@ -102,8 +163,8 @@ class ServersScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: urlController,
-                enabled: !(server?.builtIn ?? false),
+                controller: _urlController,
+                enabled: !_isBuiltIn,
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
                   labelText: context.tr('servers.address'),
@@ -118,50 +179,20 @@ class ServersScreen extends ConsumerWidget {
             ],
           ),
         ),
-        actions: [
-          FilledButton(
-            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-            onPressed: () async {
-              if (!(server?.builtIn ?? false) &&
-                  !formKey.currentState!.validate()) {
-                return;
-              }
-              if (server == null) {
-                await store.add(nameController.text, urlController.text);
-              } else {
-                await store.update(
-                  server.id,
-                  name: nameController.text,
-                  baseUrl: server.builtIn ? null : urlController.text,
-                );
-              }
-              if (context.mounted) Navigator.of(context).pop();
-            },
-            child: Text(context.tr('common.save')),
-          ),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('common.cancel')),
-          ),
-        ],
       ),
+      actions: [
+        FilledButton(
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+          onPressed: _saving ? null : _save,
+          child: Text(context.tr('common.save')),
+        ),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.tr('common.cancel')),
+        ),
+      ],
     );
-    nameController.dispose();
-    urlController.dispose();
-  }
-
-  Future<void> _confirmDelete(
-      BuildContext context, ServerStore store, ServerProfile server) async {
-    final confirmed = await showConfirmDialog(
-      context,
-      title: context.tr('common.delete'),
-      message:
-          context.tr('servers.deleteConfirm', params: {'name': server.name}),
-      confirmLabel: context.tr('common.delete'),
-      destructive: true,
-    );
-    if (confirmed) await store.remove(server.id);
   }
 }
 
