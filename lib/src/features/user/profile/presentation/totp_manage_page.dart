@@ -337,8 +337,11 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(context.tr('profile.totpEnable')),
-      content: SingleChildScrollView(
-        child: _step == 1 ? _buildStep1() : _buildStep2(),
+      content: SizedBox(
+        width: 320,
+        child: SingleChildScrollView(
+          child: _step == 1 ? _buildStep1() : _buildStep2(),
+        ),
       ),
       actions: [
         TextButton(
@@ -367,25 +370,22 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
         Text(context.tr('profile.totpEnableStep1')),
         const SizedBox(height: 16),
         if (widget.verificationMethod == 'email') ...[
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _emailCodeController,
-                  decoration: InputDecoration(
-                    labelText: context.tr('auth.verifyCode'),
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  enabled: !_isLoading,
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
+          // 注意:AlertDialog 内容受 IntrinsicWidth 约束,这里不能用 Row+Expanded
+          // (会导致无界宽度崩溃),改用 TextField 的 suffix 承载「发送验证码」。
+          TextField(
+            controller: _emailCodeController,
+            decoration: InputDecoration(
+              labelText: context.tr('auth.verifyCode'),
+              border: const OutlineInputBorder(),
+              suffixIcon: TextButton(
                 onPressed: _isLoading ? null : _sendEmailCode,
                 child: Text(context.tr('auth.sendCode')),
               ),
-            ],
+              suffixIconConstraints:
+                  const BoxConstraints(minWidth: 0, minHeight: 0),
+            ),
+            keyboardType: TextInputType.number,
+            enabled: !_isLoading,
           ),
         ] else ...[
           TextField(
