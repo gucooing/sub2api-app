@@ -1,28 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/session/session_controller.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/brand_header.dart';
+import '../../../../shared/widgets/kpi_tile.dart';
+import '../../../../shared/widgets/metric_trend_chart.dart';
+import '../../../../shared/widgets/pill_segmented.dart';
+import '../../../../shared/widgets/section_header.dart';
+import '../data/dashboard_api.dart';
 import '../providers/dashboard_providers.dart';
 
-/// 「总览」tab:余额 + 今日/累计用量统计卡片。
-class DashboardTab extends ConsumerWidget {
+enum _Period { today, total }
+
+enum _Metric { cost, tokens }
+
+/// 「总览」tab:品牌 hero(余额 + RPM/TPM/活跃密钥)+ KPI 磁贴(迷你折线+涨跌)
+/// + 消耗/Tokens 双指标趋势图 + 平台分布 + 快捷入口。
+class DashboardTab extends ConsumerStatefulWidget {
   const DashboardTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends ConsumerState<DashboardTab> {
+  _Period _period = _Period.today;
+  _Metric _metric = _Metric.cost;
+
+  @override
+  Widget build(BuildContext context) {
     final stats = ref.watch(dashboardStatsProvider);
+    final trend = ref.watch(dashboardTrendProvider);
     final user = ref.watch(sessionControllerProvider).user;
+    final trendList = trend.value ?? const <DashboardTrendPoint>[];
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.dashboard'))),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(dashboardStatsProvider);
+          ref.invalidate(dashboardTrendProvider);
           await ref.read(sessionControllerProvider.notifier).refreshUser();
           try {
             await ref.read(dashboardStatsProvider.future);
+            await ref.read(dashboardTrendProvider.future);
           } on Exception {
             // 错误展示交给 AsyncValueView
           }
@@ -31,220 +56,287 @@ class DashboardTab extends ConsumerWidget {
           value: stats,
           onRetry: () => ref.invalidate(dashboardStatsProvider),
           builder: (context, data) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.zero,
             children: [
-              // 余额卡片
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('dashboard.balance'),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color:
-                                  Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '\$${(user?.balance ?? 0).toStringAsFixed(2)}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                context.tr('dashboard.today'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              _StatGrid(items: [
-                _StatItem(
-                  label: context.tr('dashboard.requests'),
-                  value: '${data.todayRequests}',
-                  icon: Icons.swap_vert,
-                ),
-                _StatItem(
-                  label: context.tr('dashboard.cost'),
-                  value: '\$${data.todayActualCost.toStringAsFixed(4)}',
-                  icon: Icons.payments_outlined,
-                ),
-                _StatItem(
-                  label: context.tr('dashboard.tokens'),
-                  value: _formatTokens(data.todayTokens),
-                  icon: Icons.token_outlined,
-                ),
-                _StatItem(
-                  label: 'RPM / TPM',
-                  value:
-                      '${data.rpm.toStringAsFixed(1)} / ${_formatTokens(data.tpm.round())}',
-                  icon: Icons.speed_outlined,
-                ),
-              ]),
-              const SizedBox(height: 16),
-              Text(
-                context.tr('dashboard.total'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              _StatGrid(items: [
-                _StatItem(
-                  label: context.tr('dashboard.requests'),
-                  value: '${data.totalRequests}',
-                  icon: Icons.swap_vert,
-                ),
-                _StatItem(
-                  label: context.tr('dashboard.cost'),
-                  value: '\$${data.totalActualCost.toStringAsFixed(2)}',
-                  icon: Icons.payments_outlined,
-                ),
-                _StatItem(
-                  label: context.tr('dashboard.tokens'),
-                  value: _formatTokens(data.totalTokens),
-                  icon: Icons.token_outlined,
-                ),
-                _StatItem(
-                  label: context.tr('dashboard.avgDuration'),
-                  value: '${data.averageDurationMs.toStringAsFixed(0)}ms',
-                  icon: Icons.timer_outlined,
-                ),
-              ]),
-              const SizedBox(height: 16),
-              Text(
-                context.tr('dashboard.keys'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.vpn_key,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 32),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${data.activeApiKeys} ${context.tr('dashboard.active')}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            '${context.tr('dashboard.totalKeys')}: ${data.totalApiKeys}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (data.byPlatform.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('dashboard.byPlatform'),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                for (final platform in data.byPlatform)
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.cloud_outlined,
-                                  size: 20,
-                                  color:
-                                      Theme.of(context).colorScheme.primary),
-                              const SizedBox(width: 8),
-                              Text(
-                                platform.platform,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _SmallStat(
-                                  label: context.tr('dashboard.requests'),
-                                  value: '${platform.totalRequests}',
-                                ),
-                              ),
-                              Expanded(
-                                child: _SmallStat(
-                                  label: context.tr('dashboard.cost'),
-                                  value:
-                                      '\$${platform.totalActualCost.toStringAsFixed(3)}',
-                                ),
-                              ),
-                              Expanded(
-                                child: _SmallStat(
-                                  label: context.tr('dashboard.tokens'),
-                                  value: _formatTokens(platform.totalTokens),
-                                ),
-                              ),
-                            ],
-                          ),
+              _Hero(balance: user?.balance ?? 0, stats: data),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: PillSegmented<_Period>(
+                        selected: _period,
+                        onChanged: (p) => setState(() => _period = p),
+                        options: [
+                          (_Period.today, context.tr('dashboard.today')),
+                          (_Period.total, context.tr('dashboard.total')),
                         ],
                       ),
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 12),
+                    _KpiGrid(
+                      stats: data,
+                      trend: trendList,
+                      period: _period,
+                    ),
+                    const SizedBox(height: 20),
+                    SectionHeader(
+                      title: context.tr('dashboard.trend'),
+                      trailing: PillSegmented<_Metric>(
+                        selected: _metric,
+                        onChanged: (m) => setState(() => _metric = m),
+                        options: [
+                          (_Metric.cost, context.tr('dashboard.cost')),
+                          (_Metric.tokens, context.tr('dashboard.tokens')),
+                        ],
+                      ),
+                    ),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
+                        child: SizedBox(
+                          height: 220,
+                          child: AsyncValueView(
+                            value: trend,
+                            onRetry: () =>
+                                ref.invalidate(dashboardTrendProvider),
+                            builder: (context, points) => MetricTrendChart(
+                              points: [
+                                for (final p in points)
+                                  TrendChartPoint(
+                                    label: p.shortLabel,
+                                    value: _metric == _Metric.cost
+                                        ? p.actualCost
+                                        : p.totalTokens.toDouble(),
+                                  ),
+                              ],
+                              color: _metric == _Metric.cost
+                                  ? Theme.of(context).colorScheme.primary
+                                  : AppColors.brandGreen,
+                              valueLabel: (v) => _metric == _Metric.cost
+                                  ? formatCost(v)
+                                  : formatCompact(v.round()),
+                              emptyHint: context.tr('common.empty'),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (data.byPlatform.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      SectionHeader(title: context.tr('dashboard.byPlatform')),
+                      for (final p in data.byPlatform)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _PlatformCard(stats: p, period: _period),
+                        ),
+                    ],
+                    const SizedBox(height: 20),
+                    SectionHeader(title: context.tr('dashboard.quickAccess')),
+                    const _QuickAccessRow(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  static String _formatTokens(int tokens) {
-    if (tokens >= 1000000000) {
-      return '${(tokens / 1000000000).toStringAsFixed(2)}B';
-    }
-    if (tokens >= 1000000) return '${(tokens / 1000000).toStringAsFixed(2)}M';
-    if (tokens >= 1000) return '${(tokens / 1000).toStringAsFixed(1)}K';
-    return '$tokens';
+class _Hero extends StatelessWidget {
+  const _Hero({required this.balance, required this.stats});
+
+  final double balance;
+  final UserDashboardStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    return BrandHeader(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.tr('dashboard.balance'),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            formatCost(balance),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 34,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _HeroStat(label: 'RPM', value: stats.rpm.toStringAsFixed(1)),
+              _HeroStat(label: 'TPM', value: formatCompact(stats.tpm.round())),
+              _HeroStat(
+                label: context.tr('dashboard.activeKeys'),
+                value: '${stats.activeApiKeys}/${stats.totalApiKeys}',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class _StatItem {
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({required this.label, required this.value});
 
   final String label;
   final String value;
-  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600)),
+          Text(label,
+              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        ],
+      ),
+    );
+  }
 }
 
-class _SmallStat extends StatelessWidget {
-  const _SmallStat({required this.label, required this.value});
+class _KpiGrid extends StatelessWidget {
+  const _KpiGrid({
+    required this.stats,
+    required this.trend,
+    required this.period,
+  });
+
+  final UserDashboardStats stats;
+  final List<DashboardTrendPoint> trend;
+  final _Period period;
+
+  /// 末位较前一位的涨跌(仅今日视角下展示)。
+  double? _delta(double Function(DashboardTrendPoint) sel) {
+    if (period != _Period.today || trend.length < 2) return null;
+    return deltaPercent(sel(trend.last), sel(trend[trend.length - 2]));
+  }
+
+  List<double> _spark(double Function(DashboardTrendPoint) sel) =>
+      [for (final p in trend) sel(p)];
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = period == _Period.today;
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.45,
+      children: [
+        KpiTile(
+          label: context.tr('dashboard.cost'),
+          icon: Icons.payments_outlined,
+          value: formatCost(isToday ? stats.todayActualCost : stats.totalActualCost),
+          deltaPercent: _delta((p) => p.actualCost),
+          spark: _spark((p) => p.actualCost),
+        ),
+        KpiTile(
+          label: context.tr('dashboard.requests'),
+          icon: Icons.swap_vert,
+          value: formatInt(isToday ? stats.todayRequests : stats.totalRequests),
+          deltaPercent: _delta((p) => p.requests.toDouble()),
+          spark: _spark((p) => p.requests.toDouble()),
+          accent: AppColors.brandBlue,
+        ),
+        KpiTile(
+          label: context.tr('dashboard.tokens'),
+          icon: Icons.token_outlined,
+          value: formatCompact(isToday ? stats.todayTokens : stats.totalTokens),
+          deltaPercent: _delta((p) => p.totalTokens.toDouble()),
+          spark: _spark((p) => p.totalTokens.toDouble()),
+          accent: AppColors.brandGreen,
+        ),
+        KpiTile(
+          label: context.tr('dashboard.avgDuration'),
+          icon: Icons.timer_outlined,
+          value: '${stats.averageDurationMs.toStringAsFixed(0)}ms',
+        ),
+      ],
+    );
+  }
+}
+
+class _PlatformCard extends StatelessWidget {
+  const _PlatformCard({required this.stats, required this.period});
+
+  final PlatformStats stats;
+  final _Period period;
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = period == _Period.today;
+    final requests = isToday ? stats.todayRequests : stats.totalRequests;
+    final cost = isToday ? stats.todayActualCost : stats.totalActualCost;
+    final tokens = isToday ? stats.todayTokens : stats.totalTokens;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.cloud_outlined,
+                    size: 18, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  stats.platform,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                    child: _MiniStat(
+                        label: context.tr('dashboard.requests'),
+                        value: formatInt(requests))),
+                Expanded(
+                    child: _MiniStat(
+                        label: context.tr('dashboard.cost'),
+                        value: formatCost(cost))),
+                Expanded(
+                    child: _MiniStat(
+                        label: context.tr('dashboard.tokens'),
+                        value: formatCompact(tokens))),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -254,87 +346,90 @@ class _SmallStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+        Text(label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                )),
+        const SizedBox(height: 2),
+        Text(value,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class _QuickAccessRow extends StatelessWidget {
+  const _QuickAccessRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickTile(
+            icon: Icons.list_alt_outlined,
+            label: context.tr('usageLogs.title'),
+            onTap: () => context.push('/usage-logs'),
+          ),
         ),
-        Text(
-          value,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w500),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickTile(
+            icon: Icons.card_membership_outlined,
+            label: context.tr('nav.subscriptions'),
+            onTap: () => context.push('/subscriptions'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickTile(
+            icon: Icons.notifications_outlined,
+            label: context.tr('announcements.title'),
+            onTap: () => context.push('/announcements'),
+          ),
         ),
       ],
     );
   }
 }
 
-class _StatGrid extends StatelessWidget {
-  const _StatGrid({required this.items});
+class _QuickTile extends StatelessWidget {
+  const _QuickTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
-  final List<_StatItem> items;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.9,
-      children: [
-        for (final item in items)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        item.icon,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          item.label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.value,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Column(
+            children: [
+              Icon(icon, color: scheme.primary),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-            ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }

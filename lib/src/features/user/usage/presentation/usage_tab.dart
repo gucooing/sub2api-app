@@ -18,7 +18,6 @@ class UsageTab extends ConsumerWidget {
     final models = ref.watch(usageModelsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.usage'))),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(usageTrendProvider);

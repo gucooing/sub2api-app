@@ -17,7 +17,6 @@ class MeTab extends ConsumerWidget {
     final user = session.user;
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.me'))),
       body: ListView(
         children: [
           if (user != null)

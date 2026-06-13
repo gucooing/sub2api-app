@@ -122,7 +122,11 @@
     "avgDuration": "Avg Duration",
     "active": "Active",
     "totalKeys": "Total",
-    "byPlatform": "By Platform"
+    "byPlatform": "By Platform",
+    "trend": "Usage Trend",
+    "quickAccess": "Quick Access",
+    "vsYesterday": "vs yesterday",
+    "activeKeys": "Active Keys"
   },
   "usage": {
     "today": "Today",

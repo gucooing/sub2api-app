@@ -122,7 +122,11 @@
     "avgDuration": "平均耗时",
     "active": "活跃",
     "totalKeys": "总数",
-    "byPlatform": "平台分布"
+    "byPlatform": "平台分布",
+    "trend": "用量趋势",
+    "quickAccess": "快捷入口",
+    "vsYesterday": "较昨日",
+    "activeKeys": "活跃密钥"
   },
   "usage": {
     "today": "今天",

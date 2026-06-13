@@ -18,7 +18,6 @@ class KeysTab extends ConsumerWidget {
     final keys = ref.watch(keysListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.keys'))),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'keys-fab',
         onPressed: () => showKeyEditSheet(context, ref),
