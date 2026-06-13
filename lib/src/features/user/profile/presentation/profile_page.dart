@@ -13,6 +13,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/section_header.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../providers/profile_providers.dart';
 
 /// 个人资料页:展示账户信息(余额/并发/注册时间),并可改用户名/头像/
@@ -249,7 +250,7 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final avatar = user.avatarUrl;
+    final avatarImage = avatarImageProvider(user.avatarUrl);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -262,10 +263,8 @@ class _InfoCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundImage: (avatar != null && avatar.isNotEmpty)
-                        ? NetworkImage(avatar)
-                        : null,
-                    child: (avatar == null || avatar.isEmpty)
+                    backgroundImage: avatarImage,
+                    child: avatarImage == null
                         ? Text(
                             (user.username.isNotEmpty
                                     ? user.username[0]

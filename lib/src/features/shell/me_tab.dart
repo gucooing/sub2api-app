@@ -9,6 +9,7 @@ import '../../i18n/app_localizations.dart';
 import '../user/features/data/user_features.dart';
 import '../user/features/presentation/custom_page_launcher.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/user_avatar.dart';
 
 /// 「我的」tab:用户信息卡 + 各入口(资料/服务器/设置/管理端)+ 退出登录。
 class MeTab extends ConsumerWidget {
@@ -43,12 +44,8 @@ class MeTab extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 28,
-                          backgroundImage: (user.avatarUrl != null &&
-                                  user.avatarUrl!.isNotEmpty)
-                              ? NetworkImage(user.avatarUrl!)
-                              : null,
-                          child: (user.avatarUrl == null ||
-                                  user.avatarUrl!.isEmpty)
+                          backgroundImage: avatarImageProvider(user.avatarUrl),
+                          child: avatarImageProvider(user.avatarUrl) == null
                               ? Text(
                                   (user.email.isNotEmpty ? user.email[0] : '?')
                                       .toUpperCase(),
