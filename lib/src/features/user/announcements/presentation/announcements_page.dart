@@ -79,7 +79,7 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tone = announcementTone(announcement.type);
+    final tone = announcementTone(announcement.notifyMode);
     final color = statusToneColor(tone);
     final unread = !announcement.isRead;
 
@@ -100,7 +100,7 @@ class _AnnouncementCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(announcementIcon(announcement.type),
+                child: Icon(announcementIcon(announcement.notifyMode),
                     color: color, size: 20),
               ),
               const SizedBox(width: 12),

@@ -45,7 +45,7 @@ class _AnnouncementDetailPageState
   Widget build(BuildContext context) {
     final a = widget.announcement;
     final scheme = Theme.of(context).colorScheme;
-    final tone = announcementTone(a.type);
+    final tone = announcementTone(a.notifyMode);
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('announcements.detail'))),
@@ -61,12 +61,12 @@ class _AnnouncementDetailPageState
                   color: statusToneColor(tone).withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(announcementIcon(a.type),
+                child: Icon(announcementIcon(a.notifyMode),
                     color: statusToneColor(tone), size: 22),
               ),
               const SizedBox(width: 12),
               StatusPill(
-                label: context.tr(announcementTypeLabelKey(a.type)),
+                label: context.tr(announcementModeLabelKey(a.notifyMode)),
                 tone: tone,
               ),
             ],

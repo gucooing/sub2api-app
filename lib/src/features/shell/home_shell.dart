@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/markdown_text.dart';
+import '../user/announcements/data/announcements_api.dart';
 import '../user/announcements/providers/announcements_providers.dart';
 
 /// 登录后的主导航壳:底部导航 总览/密钥/用量/我的。
@@ -18,33 +19,45 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  bool _hasShownDialog = false;
+  /// 已弹过的 popup 公告 id(避免重复弹出)。
+  final Set<int> _shownPopupIds = {};
+  bool _popupShowing = false;
 
   @override
   void initState() {
     super.initState();
-    // 延迟检查未读公告
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUnreadAnnouncements();
-    });
+    // 启动即在总览页时检查 popup 公告。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
   }
 
-  Future<void> _checkUnreadAnnouncements() async {
-    if (_hasShownDialog) return;
-
+  /// 切到总览页时:若有未读且为 popup 的公告,自动弹出(每条仅一次)。
+  Future<void> _maybeShowPopup() async {
+    if (_popupShowing) return;
+    if (widget.navigationShell.currentIndex != 0) return;
     try {
       final unread = await ref.read(unreadAnnouncementsProvider.future);
-      if (unread.isNotEmpty && mounted) {
-        _hasShownDialog = true;
-        _showAnnouncementDialog(unread.first);
+      if (!mounted || widget.navigationShell.currentIndex != 0) return;
+      UserAnnouncement? target;
+      for (final a in unread) {
+        if (a.isPopup && !_shownPopupIds.contains(a.id)) {
+          target = a;
+          break;
+        }
       }
+      if (target == null) return;
+      _shownPopupIds.add(target.id);
+      _popupShowing = true;
+      await _showAnnouncementDialog(target);
+      _popupShowing = false;
+      // 关闭后若还有下一条 popup,继续弹。
+      if (mounted) _maybeShowPopup();
     } catch (_) {
-      // 静默失败
+      _popupShowing = false;
     }
   }
 
-  void _showAnnouncementDialog(announcement) {
-    showDialog(
+  Future<void> _showAnnouncementDialog(UserAnnouncement announcement) {
+    return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
@@ -61,11 +74,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              // 标记为已读
               try {
                 await ref
                     .read(announcementsApiProvider)
                     .markRead(announcement.id);
+                ref.invalidate(announcementsListProvider);
                 ref.invalidate(unreadAnnouncementsProvider);
               } catch (_) {}
             },
@@ -78,32 +91,28 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = ref.watch(unreadAnnouncementsCountProvider);
+    final hasUnread = ref.watch(unreadAnnouncementsCountProvider).maybeWhen(
+          data: (count) => count > 0,
+          orElse: () => false,
+        );
+    // 在总览页时尝试弹出 popup 公告(set 去重,不会重复)。
+    if (widget.navigationShell.currentIndex == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_getTitle(context)),
         actions: [
-          unreadCount.when(
-            data: (count) => count > 0
-                ? Badge(
-                    label: Text('$count'),
-                    child: IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () => context.push('/announcements'),
-                    ),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () => context.push('/announcements'),
-                  ),
-            loading: () => IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.push('/announcements'),
-            ),
-            error: (_, __) => IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => context.push('/announcements'),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Badge(
+              // 无 label:有未读时显示小红点。
+              isLabelVisible: hasUnread,
+              child: IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () => context.push('/announcements'),
+              ),
             ),
           ),
         ],

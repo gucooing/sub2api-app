@@ -9,7 +9,7 @@ class UserAnnouncement {
     required this.id,
     required this.title,
     required this.content,
-    required this.type,
+    required this.notifyMode,
     required this.isRead,
     this.createdAt,
   });
@@ -17,17 +17,23 @@ class UserAnnouncement {
   final int id;
   final String title;
   final String content;
-  final String type;
+
+  /// 'silent' | 'popup'(popup 进入总览时自动弹窗)。
+  final String notifyMode;
   final bool isRead;
   final DateTime? createdAt;
+
+  /// 是否为弹窗公告。
+  bool get isPopup => notifyMode == 'popup';
 
   factory UserAnnouncement.fromJson(Map<String, dynamic> json) =>
       UserAnnouncement(
         id: (json['id'] as num).toInt(),
         title: json['title'] as String? ?? '',
         content: json['content'] as String? ?? '',
-        type: json['type'] as String? ?? 'info',
-        isRead: json['is_read'] as bool? ?? false,
+        notifyMode: json['notify_mode'] as String? ?? 'silent',
+        // 后端用 read_at(已读时间)表示已读;兼容旧 is_read 字段。
+        isRead: json['read_at'] != null || json['is_read'] == true,
         createdAt: json['created_at'] != null
             ? DateTime.tryParse(json['created_at'] as String)?.toLocal()
             : null,

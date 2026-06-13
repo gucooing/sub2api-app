@@ -430,10 +430,8 @@
     "title": "Announcements",
     "empty": "No announcements",
     "detail": "Announcement",
-    "typeInfo": "Notice",
-    "typeWarning": "Warning",
-    "typeSuccess": "Good news",
-    "typeError": "Important"
+    "modePopup": "Important",
+    "modeNotice": "Notice"
   },
   "subscriptions": {
     "title": "My Subscriptions",

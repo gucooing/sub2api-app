@@ -430,10 +430,8 @@
     "title": "公告",
     "empty": "暂无公告",
     "detail": "公告详情",
-    "typeInfo": "通知",
-    "typeWarning": "提醒",
-    "typeSuccess": "好消息",
-    "typeError": "重要"
+    "modePopup": "重要通知",
+    "modeNotice": "通知"
   },
   "subscriptions": {
     "title": "我的订阅",
