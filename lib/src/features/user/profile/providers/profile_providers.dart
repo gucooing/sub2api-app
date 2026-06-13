@@ -13,3 +13,10 @@ final totpStatusProvider = FutureProvider.autoDispose<TotpStatus>((ref) async {
   final api = ref.watch(profileApiProvider);
   return await api.getTotpStatus();
 });
+
+/// 登录方式绑定状态。
+final identityBindingsProvider =
+    FutureProvider.autoDispose<List<IdentityBinding>>((ref) async {
+  final api = ref.watch(profileApiProvider);
+  return await api.identityBindings();
+});

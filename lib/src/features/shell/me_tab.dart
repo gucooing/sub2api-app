@@ -34,78 +34,93 @@ class MeTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 28,
-                        child: Text(
-                          (user.email.isNotEmpty ? user.email[0] : '?')
-                              .toUpperCase(),
-                          style: Theme.of(context).textTheme.titleLarge,
+                child: InkWell(
+                  onTap: () => context.push('/profile'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundImage: (user.avatarUrl != null &&
+                                  user.avatarUrl!.isNotEmpty)
+                              ? NetworkImage(user.avatarUrl!)
+                              : null,
+                          child: (user.avatarUrl == null ||
+                                  user.avatarUrl!.isEmpty)
+                              ? Text(
+                                  (user.email.isNotEmpty ? user.email[0] : '?')
+                                      .toUpperCase(),
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                )
+                              : null,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user.email,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                if (user.isAdmin) ...[
-                                  _RoleChip(
-                                      label: context.tr('me.roleAdmin')),
-                                  const SizedBox(width: 8),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user.email,
+                                style:
+                                    Theme.of(context).textTheme.titleMedium,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  if (user.isAdmin) ...[
+                                    _RoleChip(
+                                        label: context.tr('me.roleAdmin')),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Flexible(
+                                    child: Text(
+                                      server.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                                 ],
-                                Flexible(
-                                  child: Text(
-                                    server.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              context.tr('me.balance', params: {
-                                'amount': user.balance.toStringAsFixed(2)
-                              }),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  ),
-                            ),
-                          ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                context.tr('me.balance', params: {
+                                  'amount': user.balance.toStringAsFixed(2)
+                                }),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ListTile(
-            leading: const Icon(Icons.badge_outlined),
-            title: Text(context.tr('me.profile')),
+            leading: const Icon(Icons.link_outlined),
+            title: Text(context.tr('bindings.title')),
+            subtitle: Text(context.tr('bindings.subtitle')),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/profile'),
+            onTap: () => context.push('/profile/bindings'),
           ),
           ListTile(
             leading: const Icon(Icons.card_membership_outlined),

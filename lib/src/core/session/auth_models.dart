@@ -12,6 +12,9 @@ class AppUser {
     this.concurrency = 0,
     this.status = 'active',
     this.createdAt,
+    this.avatarUrl,
+    this.balanceNotifyEnabled = false,
+    this.balanceNotifyThreshold,
   });
 
   final int id;
@@ -24,6 +27,11 @@ class AppUser {
   final int concurrency;
   final String status;
   final DateTime? createdAt;
+  final String? avatarUrl;
+
+  /// 余额不足提醒开关与阈值。
+  final bool balanceNotifyEnabled;
+  final double? balanceNotifyThreshold;
 
   bool get isAdmin => role == 'admin';
 
@@ -38,6 +46,10 @@ class AppUser {
         createdAt: json['created_at'] != null
             ? DateTime.tryParse(json['created_at'] as String)
             : null,
+        avatarUrl: json['avatar_url'] as String?,
+        balanceNotifyEnabled: json['balance_notify_enabled'] as bool? ?? false,
+        balanceNotifyThreshold:
+            (json['balance_notify_threshold'] as num?)?.toDouble(),
       );
 }
 
@@ -117,6 +129,11 @@ class PublicSettingsLite {
     this.channelMonitorEnabled = false,
     this.serviceQuotaEnabled = false,
     this.allowUserViewErrorRequests = false,
+    this.linuxdoOauthEnabled = false,
+    this.oidcOauthEnabled = false,
+    this.githubOauthEnabled = false,
+    this.googleOauthEnabled = false,
+    this.wechatOauthEnabled = false,
     this.customMenuItems = const [],
     this.siteName = '',
     this.version = '',
@@ -136,6 +153,13 @@ class PublicSettingsLite {
   final bool channelMonitorEnabled;
   final bool serviceQuotaEnabled;
   final bool allowUserViewErrorRequests;
+
+  // 第三方登录是否开启(决定绑定设置展示哪些登录方式)。
+  final bool linuxdoOauthEnabled;
+  final bool oidcOauthEnabled;
+  final bool githubOauthEnabled;
+  final bool googleOauthEnabled;
+  final bool wechatOauthEnabled;
 
   /// 自定义页面(已含管理员配置的可见性/排序,使用时仍按角色过滤)。
   final List<CustomMenuItem> customMenuItems;
@@ -161,6 +185,11 @@ class PublicSettingsLite {
         serviceQuotaEnabled: json['service_quota_enabled'] as bool? ?? false,
         allowUserViewErrorRequests:
             json['allow_user_view_error_requests'] as bool? ?? false,
+        linuxdoOauthEnabled: json['linuxdo_oauth_enabled'] as bool? ?? false,
+        oidcOauthEnabled: json['oidc_oauth_enabled'] as bool? ?? false,
+        githubOauthEnabled: json['github_oauth_enabled'] as bool? ?? false,
+        googleOauthEnabled: json['google_oauth_enabled'] as bool? ?? false,
+        wechatOauthEnabled: json['wechat_oauth_enabled'] as bool? ?? false,
         customMenuItems: (json['custom_menu_items'] as List<dynamic>?)
                 ?.whereType<Map<String, dynamic>>()
                 .map(CustomMenuItem.fromJson)

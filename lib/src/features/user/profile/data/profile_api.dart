@@ -1,10 +1,54 @@
 import '../../../../core/network/api_client.dart';
 
+/// 区分「不修改该字段」与「显式置空」的哨兵。
+const Object _unset = Object();
+
 /// 个人资料相关 API(修改密码、TOTP 管理)。
 class ProfileApi {
   ProfileApi(this._client);
 
   final ApiClient _client;
+
+  /// 更新资料(用户名/头像/余额提醒)。只传非 null 字段。
+  Future<void> updateProfile({
+    String? username,
+    Object? avatarUrl = _unset,
+    bool? balanceNotifyEnabled,
+    Object? balanceNotifyThreshold = _unset,
+  }) async {
+    final body = <String, dynamic>{
+      'username': ?username,
+      if (!identical(avatarUrl, _unset)) 'avatar_url': avatarUrl,
+      'balance_notify_enabled': ?balanceNotifyEnabled,
+      if (!identical(balanceNotifyThreshold, _unset))
+        'balance_notify_threshold': balanceNotifyThreshold,
+    };
+    await _client.put<dynamic>('/user', data: body);
+  }
+
+  /// 当前账号的登录方式绑定状态。
+  Future<List<IdentityBinding>> identityBindings() async {
+    final data = await _client.get<dynamic>('/user/profile');
+    final map = (data as Map).cast<String, dynamic>();
+    return IdentityBinding.fromUserJson(map);
+  }
+
+  /// 发送邮箱绑定验证码。
+  Future<void> sendEmailBindingCode(String email) async {
+    await _client.post<dynamic>('/user/account-bindings/email/send-code',
+        data: {'email': email});
+  }
+
+  /// 绑定邮箱身份。
+  Future<void> bindEmail({required String email, required String code}) async {
+    await _client.post<dynamic>('/user/account-bindings/email',
+        data: {'email': email, 'code': code});
+  }
+
+  /// 解绑某登录方式(linuxdo/oidc/wechat/github/google/email)。
+  Future<void> unbindIdentity(String provider) async {
+    await _client.delete<dynamic>('/user/account-bindings/$provider');
+  }
 
   /// 修改密码。
   Future<void> changePassword({
@@ -66,6 +110,44 @@ class ProfileApi {
       if (emailCode != null) 'email_code': emailCode,
       if (password != null) 'password': password,
     });
+  }
+}
+
+/// 登录方式绑定状态。
+class IdentityBinding {
+  const IdentityBinding({required this.provider, required this.bound});
+
+  /// email / linuxdo / oidc / wechat / github / google
+  final String provider;
+  final bool bound;
+
+  /// 当前支持展示的登录方式(顺序即展示顺序)。
+  static const providers = [
+    'email',
+    'linuxdo',
+    'oidc',
+    'wechat',
+    'github',
+    'google',
+  ];
+
+  static List<IdentityBinding> fromUserJson(Map<String, dynamic> json) {
+    bool boundOf(String p) {
+      final direct = json['${p}_bound'];
+      if (direct is bool) return direct;
+      final map = json['identity_bindings'] ?? json['auth_bindings'];
+      if (map is Map) {
+        final v = map[p];
+        if (v is bool) return v;
+        if (v is Map) return v['bound'] == true;
+      }
+      return false;
+    }
+
+    return [
+      for (final p in providers)
+        IdentityBinding(provider: p, bound: boundOf(p)),
+    ];
   }
 }
 

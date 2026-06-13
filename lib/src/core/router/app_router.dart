@@ -13,6 +13,7 @@ import '../../features/user/dashboard/presentation/dashboard_tab.dart';
 import '../../features/user/keys/presentation/keys_tab.dart';
 import '../../features/user/keys/presentation/key_detail_page.dart';
 import '../../features/user/profile/presentation/change_password_page.dart';
+import '../../features/user/profile/presentation/bindings_page.dart';
 import '../../features/user/profile/presentation/profile_page.dart';
 import '../../features/user/profile/presentation/totp_manage_page.dart';
 import '../../features/user/announcements/presentation/announcements_page.dart';
@@ -96,6 +97,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'totp',
             builder: (context, state) => const TotpManagePage(),
+          ),
+          GoRoute(
+            path: 'bindings',
+            builder: (context, state) => const BindingsPage(),
           ),
         ],
       ),
