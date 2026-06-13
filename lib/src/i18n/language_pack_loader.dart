@@ -78,4 +78,48 @@ class LanguagePackLoader {
     final external = await loadExternal();
     return [...builtIn, ...external];
   }
+
+  /// 从用户选择的 .json 文件导入一个外置语言包。
+  ///
+  /// 先解析校验(非法 JSON / 缺 `@@locale` 会抛 [FormatException]),
+  /// 再以 `<tag>.json` 写入外置目录(同语言覆盖)。返回导入的语言包。
+  Future<LanguagePack> importPackFromFile(String sourcePath) async {
+    final raw = await File(sourcePath).readAsString();
+    final pack = LanguagePack.fromJsonString(raw); // 校验,失败抛异常
+    final dir = await externalDir();
+    await File('${dir.path}/${pack.tag}.json').writeAsString(raw);
+    return pack;
+  }
+
+  /// 已导入的外置语言包(标签 → 文件路径)。
+  Future<Map<String, String>> externalPackPaths() async {
+    final result = <String, String>{};
+    try {
+      final dir = await externalDir();
+      await for (final entity in dir.list()) {
+        if (entity is File && entity.path.toLowerCase().endsWith('.json')) {
+          try {
+            final pack =
+                LanguagePack.fromJsonString(await entity.readAsString());
+            result[pack.tag] = entity.path;
+          } catch (_) {
+            // 损坏文件忽略
+          }
+        }
+      }
+    } catch (_) {
+      // 目录不可读视为无外置包
+    }
+    return result;
+  }
+
+  /// 删除指定标签的外置语言包文件。
+  Future<void> deleteExternalByTag(String tag) async {
+    final paths = await externalPackPaths();
+    final path = paths[tag];
+    if (path != null) {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    }
+  }
 }

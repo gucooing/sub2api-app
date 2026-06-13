@@ -24,6 +24,8 @@ dependencies:
   shared_preferences: ^2.5.5
   # 应用数据目录(外置语言包等)
   path_provider: ^2.1.5
+  # 应用内导入语言包文件
+  file_picker: ^8.1.2
   # 仪表盘图表
   fl_chart: ^1.2.0
   # 日期/数字本地化格式

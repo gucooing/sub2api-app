@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,8 +8,9 @@ import '../../core/preferences/external_browser_controller.dart';
 import '../../core/server/server_store.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../i18n/app_localizations.dart';
-import '../../i18n/language_pack_loader.dart';
 import '../../i18n/locale_controller.dart';
+import '../../shared/widgets/app_toast.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 
 /// 设置页:演示并驱动主题切换、语言切换、外置语言包热重载。
 class SettingsScreen extends ConsumerWidget {
@@ -155,64 +157,102 @@ class _ExternalPacksTile extends ConsumerStatefulWidget {
 }
 
 class _ExternalPacksTileState extends ConsumerState<_ExternalPacksTile> {
-  String? _dirPath;
+  /// 内置语言包标签(不可删除)。
+  static const _builtInTags = {'zh-CN', 'en-US'};
   bool _busy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    LanguagePackLoader().externalDir().then((dir) {
-      if (mounted) setState(() => _dirPath = dir.path);
-    });
+  Future<void> _import() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+    );
+    final path = result?.files.single.path;
+    if (path == null) return;
+    setState(() => _busy = true);
+    try {
+      final name =
+          await ref.read(localeControllerProvider.notifier).importPack(path);
+      if (mounted) {
+        showAppToast(
+          context,
+          context.tr('settings.packImported', params: {'name': name}),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showAppToast(context, context.tr('settings.importFailed'),
+            error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
-  Future<void> _reload() async {
-    setState(() => _busy = true);
-    await ref.read(localeControllerProvider.notifier).reloadPacks();
-    if (!mounted) return;
-    setState(() => _busy = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr('settings.packReloaded'))),
+  Future<void> _delete(String tag, String name) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: context.tr('settings.deletePack'),
+      message: context.tr('settings.deletePackConfirm', params: {'name': name}),
+      confirmLabel: context.tr('common.delete'),
+      destructive: true,
     );
+    if (!ok) return;
+    await ref.read(localeControllerProvider.notifier).deletePack(tag);
+    if (mounted) showAppToast(context, context.tr('settings.packDeleted'));
   }
 
   @override
   Widget build(BuildContext context) {
+    final packs = ref.watch(localeControllerProvider).packs;
+    final imported =
+        packs.where((p) => !_builtInTags.contains(p.tag)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            context.tr('settings.externalPackHint'),
+            context.tr('settings.importPackHint'),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
-        if (_dirPath != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: SelectableText(
-              _dirPath!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: OutlinedButton.icon(
-            onPressed: _busy ? null : _reload,
+            onPressed: _busy ? null : _import,
             icon: _busy
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.refresh),
-            label: Text(context.tr('settings.reloadPacks')),
+                : const Icon(Icons.file_upload_outlined),
+            label: Text(context.tr('settings.importPack')),
           ),
         ),
+        if (imported.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              context.tr('settings.noImportedPacks'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          )
+        else
+          for (final p in imported)
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.translate_outlined),
+              title: Text(p.nativeName),
+              subtitle: Text(p.tag),
+              trailing: IconButton(
+                icon: Icon(Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error),
+                onPressed: () => _delete(p.tag, p.nativeName),
+              ),
+            ),
       ],
     );
   }

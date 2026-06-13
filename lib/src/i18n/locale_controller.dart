@@ -105,6 +105,36 @@ class LocaleController extends Notifier<LocaleState> {
     state = _stateFor(registry, desired,
         followSystem: state.followSystem, revision: state.revision + 1);
   }
+
+  /// 从用户选择的文件导入语言包,成功后热更新。返回导入语言的本地名。
+  Future<String> importPack(String filePath) async {
+    final loader = ref.read(languagePackLoaderProvider);
+    final pack = await loader.importPackFromFile(filePath);
+    await reloadPacks();
+    return pack.nativeName;
+  }
+
+  /// 删除一个已导入的外置语言包;若删除的是当前语言则回退到系统语言。
+  Future<void> deletePack(String tag) async {
+    final loader = ref.read(languagePackLoaderProvider);
+    await loader.deleteExternalByTag(tag);
+    if (!state.followSystem && state.currentTag == tag) {
+      final prefs = ref.read(sharedPreferencesProvider);
+      await prefs.remove(PrefKeys.localeTag);
+      await reloadPacks();
+      final registry = ref.read(languagePackRegistryProvider);
+      state = _stateFor(registry, _systemLocale(),
+          followSystem: true, revision: state.revision);
+    } else {
+      await reloadPacks();
+    }
+  }
+
+  /// 已导入的外置语言包标签集合(用于设置页判断哪些可删除)。
+  Future<Set<String>> externalTags() async {
+    final loader = ref.read(languagePackLoaderProvider);
+    return (await loader.externalPackPaths()).keys.toSet();
+  }
 }
 
 final localeControllerProvider =
