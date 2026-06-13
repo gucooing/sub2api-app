@@ -344,11 +344,6 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
         ),
       ),
       actions: [
-        OutlinedButton(
-          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: Text(context.tr('common.cancel')),
-        ),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
           onPressed: _isLoading ? null : (_step == 1 ? _initiate : _enable),
@@ -359,6 +354,11 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Text(context.tr(_step == 1 ? 'common.confirm' : 'profile.totpEnable')),
+        ),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: Text(context.tr('common.cancel')),
         ),
       ],
     );
@@ -616,11 +616,6 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
         ),
       ),
       actions: [
-        OutlinedButton(
-          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: Text(context.tr('common.cancel')),
-        ),
         FilledButton(
           onPressed: _isLoading ? null : _disable,
           style: FilledButton.styleFrom(
@@ -635,6 +630,11 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Text(context.tr('profile.totpDisable')),
+        ),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: Text(context.tr('common.cancel')),
         ),
       ],
     );

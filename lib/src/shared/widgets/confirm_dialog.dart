@@ -50,16 +50,6 @@ Future<bool> showConfirmDialog(
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 48),
-                        ),
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(cancelLabel ?? ctx.tr('common.cancel')),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           minimumSize: const Size(0, 48),
@@ -68,6 +58,16 @@ Future<bool> showConfirmDialog(
                         ),
                         onPressed: () => Navigator.of(ctx).pop(true),
                         child: Text(confirmLabel ?? ctx.tr('common.confirm')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                        ),
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(cancelLabel ?? ctx.tr('common.cancel')),
                       ),
                     ),
                   ],

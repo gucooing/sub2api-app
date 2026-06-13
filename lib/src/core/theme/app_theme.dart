@@ -35,6 +35,21 @@ class AppTheme {
           minimumSize: const Size.fromHeight(48),
         ),
       ),
+      // 描边/文本按钮沿用与实心按钮一致的圆角,避免同一弹窗里按钮圆角不一致
+      // (M3 默认 OutlinedButton/TextButton 为全圆角 StadiumBorder)。
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          minimumSize: const Size.fromHeight(48),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 }

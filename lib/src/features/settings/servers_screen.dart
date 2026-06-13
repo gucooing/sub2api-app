@@ -119,11 +119,6 @@ class ServersScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('common.cancel')),
-          ),
           FilledButton(
             style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
             onPressed: () async {
@@ -143,6 +138,11 @@ class ServersScreen extends ConsumerWidget {
               if (context.mounted) Navigator.of(context).pop();
             },
             child: Text(context.tr('common.save')),
+          ),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.tr('common.cancel')),
           ),
         ],
       ),
