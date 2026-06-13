@@ -21,6 +21,8 @@ class AppTheme {
       cardTheme: CardThemeData(
         clipBehavior: Clip.antiAlias,
         elevation: 0,
+        // 间距由各页面显式控制(密集 Pro 布局),不依赖默认外边距。
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: scheme.outlineVariant),
