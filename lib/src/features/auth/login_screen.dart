@@ -12,6 +12,7 @@ import '../../core/storage/prefs_store.dart';
 import '../../core/storage/secure_store.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/brand_mark.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 import '../settings/servers_screen.dart';
 import 'login_agreement.dart';
 import 'turnstile_widget.dart';
@@ -420,57 +421,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  /// 弹出底部选择器(列表项省略显示,避免下拉超出屏幕)。
+  /// 弹出底部选择器(列表项省略显示,支持删除非内置服务器)。
   Future<void> _pickServer() async {
-    final servers = ref.read(serverStoreProvider).servers;
     final scheme = Theme.of(context).colorScheme;
     final selected = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(context.tr('auth.selectServer'),
-                    style: Theme.of(sheetContext).textTheme.titleMedium),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final s in servers)
-                    ListTile(
-                      leading: Icon(
-                        s.id == _serverId
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_unchecked,
-                        color: s.id == _serverId
-                            ? scheme.primary
-                            : scheme.outline,
-                      ),
-                      title: Text(s.name,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: Text(s.baseUrl,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      onTap: () => Navigator.of(sheetContext).pop(s.id),
-                    ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.add, color: scheme.primary),
-                    title: Text(context.tr('servers.add'),
-                        style: TextStyle(color: scheme.primary)),
-                    onTap: () => Navigator.of(sheetContext).pop('__add__'),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final servers = ref.read(serverStoreProvider).servers;
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(context.tr('auth.selectServer'),
+                        style: Theme.of(sheetContext).textTheme.titleMedium),
                   ),
-                ],
-              ),
+                ),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final s in servers)
+                        ListTile(
+                          leading: Icon(
+                            s.id == _serverId
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: s.id == _serverId
+                                ? scheme.primary
+                                : scheme.outline,
+                          ),
+                          title: Text(s.name,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(s.baseUrl,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          trailing: s.builtIn
+                              ? null
+                              : IconButton(
+                                  icon: Icon(Icons.delete_outline,
+                                      color: scheme.error),
+                                  tooltip: context.tr('common.delete'),
+                                  onPressed: () async {
+                                    final ok =
+                                        await _deleteServer(s.id, s.name);
+                                    if (ok) setSheetState(() {});
+                                  },
+                                ),
+                          onTap: () => Navigator.of(sheetContext).pop(s.id),
+                        ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: Icon(Icons.add, color: scheme.primary),
+                        title: Text(context.tr('servers.add'),
+                            style: TextStyle(color: scheme.primary)),
+                        onTap: () => Navigator.of(sheetContext).pop('__add__'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
     if (selected == null || !mounted) return;
@@ -481,6 +498,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() {
           _serverId = newId;
           _agreementAcceptedLocal = false;
+          _turnstileToken = null;
         });
         _loadSavedCredentials();
       }
@@ -492,6 +510,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _turnstileToken = null;
     });
     _loadSavedCredentials();
+  }
+
+  /// 删除非内置服务器(若是当前选中/激活则先回退到内置)。返回是否已删除。
+  Future<bool> _deleteServer(String id, String name) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: context.tr('common.delete'),
+      message: context.tr('servers.deleteConfirm', params: {'name': name}),
+      confirmLabel: context.tr('common.delete'),
+      destructive: true,
+    );
+    if (!confirmed) return false;
+    final store = ref.read(serverStoreProvider.notifier);
+    // ServerStore 不允许删除「激活服务器」,删除前先切回内置。
+    if (ref.read(serverStoreProvider).activeId == id) {
+      await store.setActive('default');
+    }
+    await store.remove(id);
+    if (_serverId == id && mounted) {
+      setState(() {
+        _serverId = _defaultServerId();
+        _agreementAcceptedLocal = false;
+        _turnstileToken = null;
+      });
+      _loadSavedCredentials();
+    }
+    return true;
   }
 
   Widget _buildTotpForm() {

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/availability_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -16,17 +17,6 @@ import 'monitor_visuals.dart';
 
 /// 时间轴展示的固定点数(对齐 web:最近 60 次)。
 const int kMonitorHistoryPoints = 60;
-
-/// 把监控时间轴(后端最新在前)整理成左旧右新、补足到 60 个的色调序列。
-List<MonitorTone> buildTimelineTicks(List<MonitorTimelinePoint> timeline) {
-  final recent =
-      timeline.take(kMonitorHistoryPoints).toList().reversed.toList();
-  final pad = kMonitorHistoryPoints - recent.length;
-  return [
-    for (var i = 0; i < pad; i++) MonitorTone.unknown,
-    for (final p in recent) monitorTone(p.status),
-  ];
-}
 
 /// 渠道状态页:监控列表(状态/可用率/延迟/最近 60 次时间轴),自动刷新,点击进详情。
 class ChannelStatusPage extends ConsumerStatefulWidget {
@@ -126,7 +116,6 @@ class _MonitorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final ticks = buildTimelineTicks(monitor.timeline);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
@@ -192,7 +181,7 @@ class _MonitorCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              UptimeTimeline(ticks: ticks, spacing: 1),
+              MonitorTimelineBars(timeline: monitor.timeline),
               const SizedBox(height: 10),
               AvailabilityBar(percent: monitor.availability7d, label: '7d'),
             ],
@@ -200,5 +189,86 @@ class _MonitorCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 对齐 web 的监控时间轴:60 根高度+颜色双重编码的柱(底对齐,最新在右,
+/// 左侧空位补齐),点按显示「时间·状态·延迟」。
+class MonitorTimelineBars extends StatelessWidget {
+  const MonitorTimelineBars({
+    super.key,
+    required this.timeline,
+    this.trackHeight = 32,
+    this.points = kMonitorHistoryPoints,
+  });
+
+  final List<MonitorTimelinePoint> timeline;
+  final double trackHeight;
+  final int points;
+
+  /// 各状态柱高百分比(对齐 web)。
+  double _heightPct(MonitorStatus s) => switch (s) {
+        MonitorStatus.operational => 1.0,
+        MonitorStatus.degraded => 0.65,
+        MonitorStatus.failed => 0.35,
+        MonitorStatus.unknown => 0.15,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    // 后端最新在前 → 取最近 points 个,反转为左旧右新。
+    final real = timeline.take(points).toList().reversed.toList();
+    final pad = points - real.length;
+    final emptyColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+
+    return SizedBox(
+      height: trackHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var i = 0; i < pad; i++)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0.5),
+                child: FractionallySizedBox(
+                  heightFactor: 0.15,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: emptyColor,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          for (final p in real)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0.5),
+                child: Tooltip(
+                  message: _tooltip(context, p),
+                  triggerMode: TooltipTriggerMode.tap,
+                  child: FractionallySizedBox(
+                    heightFactor: _heightPct(p.status),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: monitorToneColor(monitorTone(p.status)),
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _tooltip(BuildContext context, MonitorTimelinePoint p) {
+    final time = p.checkedAt != null ? formatDateTime(p.checkedAt!) : '';
+    final label = monitorStatusLabel(context, p.status);
+    final latency = p.latencyMs != null ? '${p.latencyMs}ms' : '-';
+    return [if (time.isNotEmpty) time, label, latency].join(' · ');
   }
 }
