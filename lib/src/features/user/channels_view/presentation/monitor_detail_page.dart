@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/availability_bar.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/channels_api.dart';
 import '../providers/channels_providers.dart';
@@ -21,7 +22,8 @@ class MonitorDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.channelStatus'))),
-      body: AsyncValueView(
+      body: ResponsiveCenter(
+        child: AsyncValueView(
         value: detailAsync,
         onRetry: () => ref.invalidate(monitorStatusProvider(monitorId)),
         builder: (context, detail) => ListView(
@@ -43,6 +45,7 @@ class MonitorDetailPage extends ConsumerWidget {
             for (final m in detail.models) _ModelCard(model: m),
           ],
         ),
+      ),
       ),
     );
   }

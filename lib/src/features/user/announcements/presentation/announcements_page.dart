@@ -6,6 +6,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../data/announcements_api.dart';
 import '../providers/announcements_providers.dart';
 import 'announcement_detail_page.dart';
@@ -29,7 +30,8 @@ class AnnouncementsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: ResponsiveCenter(
+        child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(announcementsListProvider);
           await ref.read(announcementsListProvider.future);
@@ -64,6 +66,7 @@ class AnnouncementsPage extends ConsumerWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

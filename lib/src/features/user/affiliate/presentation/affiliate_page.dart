@@ -12,6 +12,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/brand_header.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../data/affiliate_api.dart';
 import '../providers/affiliate_providers.dart';
@@ -26,7 +27,8 @@ class AffiliatePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.affiliate'))),
-      body: AsyncValueView(
+      body: ResponsiveCenter(
+        child: AsyncValueView(
         value: detailAsync,
         onRetry: () => ref.invalidate(affiliateDetailProvider),
         builder: (context, detail) => RefreshIndicator(
@@ -45,6 +47,7 @@ class AffiliatePage extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

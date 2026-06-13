@@ -244,21 +244,26 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isToday = period == _Period.today;
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.45,
-      children: [
-        KpiTile(
-          label: context.tr('dashboard.cost'),
-          icon: Icons.payments_outlined,
-          value: formatCost(isToday ? stats.todayActualCost : stats.totalActualCost),
-          deltaPercent: _delta((p) => p.actualCost),
-          spark: _spark((p) => p.actualCost),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 按可用宽度自适应列数,并用固定磁贴高度,避免桌面宽屏下方块被拉得过大。
+        final columns = (constraints.maxWidth / 200).floor().clamp(2, 4);
+        return GridView.count(
+          crossAxisCount: columns,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          mainAxisExtent: 118,
+          children: [
+            KpiTile(
+              label: context.tr('dashboard.cost'),
+              icon: Icons.payments_outlined,
+              value:
+                  formatCost(isToday ? stats.todayActualCost : stats.totalActualCost),
+              deltaPercent: _delta((p) => p.actualCost),
+              spark: _spark((p) => p.actualCost),
+            ),
         KpiTile(
           label: context.tr('dashboard.requests'),
           icon: Icons.swap_vert,
@@ -280,7 +285,9 @@ class _KpiGrid extends StatelessWidget {
           icon: Icons.timer_outlined,
           value: '${stats.averageDurationMs.toStringAsFixed(0)}ms',
         ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

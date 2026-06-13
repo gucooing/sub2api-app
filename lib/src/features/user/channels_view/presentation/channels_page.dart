@@ -6,6 +6,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/channels_api.dart';
 import '../providers/channels_providers.dart';
@@ -20,7 +21,8 @@ class ChannelsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.availableChannels'))),
-      body: RefreshIndicator(
+      body: ResponsiveCenter(
+        child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(availableChannelsProvider);
           await ref.read(availableChannelsProvider.future);
@@ -47,6 +49,7 @@ class ChannelsPage extends ConsumerWidget {
             );
           },
         ),
+      ),
       ),
     );
   }

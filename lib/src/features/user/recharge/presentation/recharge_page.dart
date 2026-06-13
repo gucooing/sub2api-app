@@ -10,6 +10,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/brand_header.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/recharge_api.dart';
@@ -49,7 +50,8 @@ class _RechargePageState extends ConsumerState<RechargePage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('recharge.title'))),
-      body: AsyncValueView(
+      body: ResponsiveCenter(
+        child: AsyncValueView(
         value: infoAsync,
         onRetry: () => ref.invalidate(checkoutInfoProvider),
         builder: (context, info) {
@@ -100,6 +102,7 @@ class _RechargePageState extends ConsumerState<RechargePage> {
             ),
           );
         },
+        ),
       ),
     );
   }

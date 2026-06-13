@@ -13,6 +13,7 @@ import '../../i18n/app_localizations.dart';
 import '../../i18n/locale_controller.dart';
 import '../../shared/widgets/app_toast.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/responsive_center.dart';
 import 'update_check.dart';
 
 /// 设置页:演示并驱动主题切换、语言切换、外置语言包热重载。
@@ -27,7 +28,8 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('settings.title'))),
-      body: ListView(
+      body: ResponsiveCenter(
+        child: ListView(
         children: [
           _SectionHeader(context.tr('settings.appearance')),
 
@@ -131,6 +133,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => runUpdateCheck(context, ref),
           ),
         ],
+      ),
       ),
     );
   }

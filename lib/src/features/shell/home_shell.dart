@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/markdown_text.dart';
+import '../../shared/widgets/responsive_center.dart';
 import '../settings/update_check.dart';
 import '../user/announcements/data/announcements_api.dart';
 import '../user/announcements/providers/announcements_providers.dart';
@@ -121,7 +122,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
         ],
       ),
-      body: widget.navigationShell,
+      body: ResponsiveCenter(child: widget.navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: widget.navigationShell.currentIndex,
         onDestinationSelected: (index) => widget.navigationShell.goBranch(

@@ -9,6 +9,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/availability_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/responsive_center.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../../../../shared/widgets/uptime_timeline.dart';
 import '../data/channels_api.dart';
@@ -76,7 +77,8 @@ class _ChannelStatusPageState extends ConsumerState<ChannelStatusPage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: ResponsiveCenter(
+        child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(channelMonitorsProvider);
           await ref.read(channelMonitorsProvider.future);
@@ -103,6 +105,7 @@ class _ChannelStatusPageState extends ConsumerState<ChannelStatusPage> {
             );
           },
         ),
+      ),
       ),
     );
   }
