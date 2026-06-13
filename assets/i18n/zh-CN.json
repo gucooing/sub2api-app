@@ -132,14 +132,24 @@
   "channels": {
     "empty": "暂无可用渠道",
     "statusEmpty": "暂无监控数据",
-    "priceIn": "输入",
-    "priceOut": "输出",
-    "priced": "已定价",
+    "noPricing": "暂无定价",
+    "billingToken": "按 Token 计费",
+    "billingPerRequest": "按次计费",
+    "billingImage": "按图计费",
+    "priceInput": "输入(每百万)",
+    "priceOutput": "输出(每百万)",
+    "priceCacheWrite": "缓存输入(每百万)",
+    "priceCacheRead": "缓存输出(每百万)",
+    "priceImage": "图片输出",
+    "pricePerRequest": "每次请求",
     "statusOperational": "正常",
     "statusDegraded": "降级",
     "statusFailed": "故障",
     "statusUnknown": "未知",
-    "avgLatency": "7 天平均延迟 {ms} ms"
+    "avgLatency": "7 天平均延迟 {ms} ms",
+    "recentHistory": "最近 {n} 次",
+    "autoRefreshOn": "自动刷新:开",
+    "autoRefreshOff": "自动刷新:关"
   },
   "features": {
     "section": "服务",

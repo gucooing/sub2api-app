@@ -370,81 +370,106 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildServerSelector() {
-    final servers = ref.watch(serverStoreProvider).servers;
-    const addValue = '__add_server__';
-    final scheme = Theme.of(context).colorScheme;
-    return DropdownButtonFormField<String>(
-      initialValue: _serverId,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: context.tr('auth.selectServer'),
-        prefixIcon: const Icon(Icons.dns_outlined),
-        border: const OutlineInputBorder(),
-      ),
-      // 收起态只显示服务器名,避免被完整 URL 撑长。
-      selectedItemBuilder: (context) => [
-        for (final s in servers)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(s.name, overflow: TextOverflow.ellipsis),
-          ),
-        const SizedBox.shrink(),
-      ],
-      items: [
-        for (final s in servers)
-          DropdownMenuItem(
-            value: s.id,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(s.name, overflow: TextOverflow.ellipsis, maxLines: 1),
-                Text(
-                  s.baseUrl,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        DropdownMenuItem(
-          value: addValue,
-          child: Row(
-            children: [
-              Icon(Icons.add, size: 18, color: scheme.primary),
-              const SizedBox(width: 6),
-              Text(context.tr('servers.add'),
-                  style: TextStyle(color: scheme.primary)),
-            ],
-          ),
+    final server = _selectedServer();
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: _busy ? null : _pickServer,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: context.tr('auth.selectServer'),
+          prefixIcon: const Icon(Icons.dns_outlined),
+          border: const OutlineInputBorder(),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
-      ],
-      onChanged: _busy
-          ? null
-          : (value) async {
-              if (value == null) return;
-              if (value == addValue) {
-                final store = ref.read(serverStoreProvider.notifier);
-                final newId = await showServerEditDialog(context, store);
-                if (newId != null) {
-                  setState(() {
-                    _serverId = newId;
-                    _agreementAcceptedLocal = false;
-                  });
-                  _loadSavedCredentials();
-                }
-                return;
-              }
-              setState(() {
-                _serverId = value;
-                _agreementAcceptedLocal = false;
-              });
-              _loadSavedCredentials();
-            },
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                server.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
+      ),
     );
+  }
+
+  /// 弹出底部选择器(列表项省略显示,避免下拉超出屏幕)。
+  Future<void> _pickServer() async {
+    final servers = ref.read(serverStoreProvider).servers;
+    final scheme = Theme.of(context).colorScheme;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(context.tr('auth.selectServer'),
+                    style: Theme.of(sheetContext).textTheme.titleMedium),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final s in servers)
+                    ListTile(
+                      leading: Icon(
+                        s.id == _serverId
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                        color: s.id == _serverId
+                            ? scheme.primary
+                            : scheme.outline,
+                      ),
+                      title: Text(s.name,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(s.baseUrl,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      onTap: () => Navigator.of(sheetContext).pop(s.id),
+                    ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.add, color: scheme.primary),
+                    title: Text(context.tr('servers.add'),
+                        style: TextStyle(color: scheme.primary)),
+                    onTap: () => Navigator.of(sheetContext).pop('__add__'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    if (selected == '__add__') {
+      final store = ref.read(serverStoreProvider.notifier);
+      final newId = await showServerEditDialog(context, store);
+      if (newId != null) {
+        setState(() {
+          _serverId = newId;
+          _agreementAcceptedLocal = false;
+        });
+        _loadSavedCredentials();
+      }
+      return;
+    }
+    setState(() {
+      _serverId = selected;
+      _agreementAcceptedLocal = false;
+    });
+    _loadSavedCredentials();
   }
 
   Widget _buildTotpForm() {

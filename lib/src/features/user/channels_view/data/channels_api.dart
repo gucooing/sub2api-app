@@ -38,26 +38,45 @@ class AvailableChannelGroup {
       );
 }
 
-/// 支持的模型(含定价摘要)。
+/// 支持的模型(含定价摘要)。价格为后端 per-token 原值,展示时按需缩放。
 @immutable
 class SupportedModel {
   const SupportedModel({
     required this.name,
     required this.platform,
+    this.billingMode = 'token',
     this.inputPrice,
     this.outputPrice,
+    this.cacheWritePrice,
     this.cacheReadPrice,
+    this.imageOutputPrice,
     this.perRequestPrice,
   });
 
   final String name;
   final String platform;
 
-  /// 单位与后端一致(通常为每 1M tokens 价格);为空表示未定价。
+  /// 'token' | 'per_request' | 'image'。
+  final String billingMode;
   final double? inputPrice;
   final double? outputPrice;
+
+  /// 缓存输入(写入/创建)。
+  final double? cacheWritePrice;
+
+  /// 缓存输出(读取)。
   final double? cacheReadPrice;
+  final double? imageOutputPrice;
   final double? perRequestPrice;
+
+  /// 是否有任意定价信息(决定是否展示「无定价」)。
+  bool get hasPricing =>
+      inputPrice != null ||
+      outputPrice != null ||
+      cacheWritePrice != null ||
+      cacheReadPrice != null ||
+      imageOutputPrice != null ||
+      perRequestPrice != null;
 
   factory SupportedModel.fromJson(Map<String, dynamic> json) {
     final pricing = json['pricing'];
@@ -66,9 +85,13 @@ class SupportedModel {
     return SupportedModel(
       name: json['name'] as String? ?? '',
       platform: json['platform'] as String? ?? '',
+      billingMode:
+          pricing is Map ? (pricing['billing_mode'] as String? ?? 'token') : 'token',
       inputPrice: p('input_price'),
       outputPrice: p('output_price'),
+      cacheWritePrice: p('cache_write_price'),
       cacheReadPrice: p('cache_read_price'),
+      imageOutputPrice: p('image_output_price'),
       perRequestPrice: p('per_request_price'),
     );
   }

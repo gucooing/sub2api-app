@@ -65,3 +65,16 @@ double? deltaPercent(num current, num previous) {
   if (previous == 0) return null;
   return (current - previous) / previous.abs() * 100;
 }
+
+/// 按比例缩放后的价格展示(对齐 web `formatScaled`:后端存 per-token,
+/// 展示乘以 scale,如每百万 token 用 1e6)。null → '-';去掉尾随 0。
+String formatScaledPrice(double? value, num scale) {
+  if (value == null) return '-';
+  final scaled = value * scale;
+  var s = scaled.toStringAsPrecision(10);
+  if (s.contains('e') || s.contains('E')) s = scaled.toString();
+  if (s.contains('.')) {
+    s = s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+  }
+  return '\$$s';
+}

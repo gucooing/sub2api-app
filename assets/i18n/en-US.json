@@ -132,14 +132,24 @@
   "channels": {
     "empty": "No available channels",
     "statusEmpty": "No monitor data",
-    "priceIn": "In",
-    "priceOut": "Out",
-    "priced": "Priced",
+    "noPricing": "No pricing",
+    "billingToken": "Per-token billing",
+    "billingPerRequest": "Per-request billing",
+    "billingImage": "Per-image billing",
+    "priceInput": "Input (per 1M)",
+    "priceOutput": "Output (per 1M)",
+    "priceCacheWrite": "Cache write (per 1M)",
+    "priceCacheRead": "Cache read (per 1M)",
+    "priceImage": "Image output",
+    "pricePerRequest": "Per request",
     "statusOperational": "Operational",
     "statusDegraded": "Degraded",
     "statusFailed": "Failed",
     "statusUnknown": "Unknown",
-    "avgLatency": "Avg latency (7d) {ms} ms"
+    "avgLatency": "Avg latency (7d) {ms} ms",
+    "recentHistory": "Last {n}",
+    "autoRefreshOn": "Auto-refresh: on",
+    "autoRefreshOff": "Auto-refresh: off"
   },
   "features": {
     "section": "Services",

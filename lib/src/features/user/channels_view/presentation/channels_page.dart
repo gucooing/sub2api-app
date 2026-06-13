@@ -170,40 +170,129 @@ class _ModelRow extends StatelessWidget {
 
   final SupportedModel model;
 
+  static const _perMillion = 1000000;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final parts = <String>[];
-    if (model.inputPrice != null) {
-      parts.add('${context.tr('channels.priceIn')} ${formatCost(model.inputPrice!)}');
-    }
-    if (model.outputPrice != null) {
-      parts.add(
-          '${context.tr('channels.priceOut')} ${formatCost(model.outputPrice!)}');
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(model.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          if (parts.isNotEmpty)
-            Text(
-              parts.join('  '),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            )
-          else
+    if (!model.hasPricing) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(model.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium),
+            ),
             StatusPill(
-              label: context.tr('channels.priced'),
+              label: context.tr('channels.noPricing'),
               tone: StatusTone.neutral,
               dense: true,
             ),
+          ],
+        ),
+      );
+    }
+    return Theme(
+      // 去掉 ExpansionTile 默认分隔线。
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 8, bottom: 8),
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        title: Text(model.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium),
+        subtitle: Text(
+          _billingModeLabel(context),
+          style: Theme.of(context)
+              .textTheme
+              .labelSmall
+              ?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        children: _priceRows(context),
+      ),
+    );
+  }
+
+  String _billingModeLabel(BuildContext context) {
+    switch (model.billingMode) {
+      case 'per_request':
+        return context.tr('channels.billingPerRequest');
+      case 'image':
+        return context.tr('channels.billingImage');
+      default:
+        return context.tr('channels.billingToken');
+    }
+  }
+
+  List<Widget> _priceRows(BuildContext context) {
+    if (model.billingMode == 'per_request') {
+      return [
+        _PriceLine(
+            label: context.tr('channels.pricePerRequest'),
+            value: formatScaledPrice(model.perRequestPrice, 1)),
+      ];
+    }
+    if (model.billingMode == 'image') {
+      return [
+        _PriceLine(
+            label: context.tr('channels.priceImage'),
+            value: formatScaledPrice(model.imageOutputPrice, 1)),
+      ];
+    }
+    // token 计费:每百万 token。
+    return [
+      _PriceLine(
+          label: context.tr('channels.priceInput'),
+          value: formatScaledPrice(model.inputPrice, _perMillion)),
+      _PriceLine(
+          label: context.tr('channels.priceOutput'),
+          value: formatScaledPrice(model.outputPrice, _perMillion)),
+      _PriceLine(
+          label: context.tr('channels.priceCacheWrite'),
+          value: formatScaledPrice(model.cacheWritePrice, _perMillion)),
+      _PriceLine(
+          label: context.tr('channels.priceCacheRead'),
+          value: formatScaledPrice(model.cacheReadPrice, _perMillion)),
+      if (model.imageOutputPrice != null && model.imageOutputPrice! > 0)
+        _PriceLine(
+            label: context.tr('channels.priceImage'),
+            value: formatScaledPrice(model.imageOutputPrice, _perMillion)),
+    ];
+  }
+}
+
+/// 定价单行:标签 + 值(每百万 token)。
+class _PriceLine extends StatelessWidget {
+  const _PriceLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: scheme.onSurfaceVariant)),
+          ),
+          Text(value,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(fontWeight: FontWeight.w600)),
         ],
       ),
     );
