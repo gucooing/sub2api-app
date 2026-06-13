@@ -6,6 +6,8 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_retry.dart';
+import '../../../../shared/widgets/model_icon.dart';
+import '../../keys/providers/keys_providers.dart';
 import '../data/usage_logs_api.dart';
 import '../providers/usage_logs_providers.dart';
 import 'records_filter_sheet.dart';
@@ -86,10 +88,24 @@ class _UsageRecordsViewState extends ConsumerState<UsageRecordsView> {
         separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (context, i) {
           if (i == state.items.length) return _Footer(state: state);
-          return _RecordTile(log: state.items[i]);
+          final log = state.items[i];
+          return _RecordTile(log: log, groupName: _groupName(log));
         },
       ),
     );
+  }
+
+  /// 优先用日志内嵌分组名,否则按 group_id 在可用分组表里查。
+  String? _groupName(UsageLog log) {
+    if (log.groupName != null && log.groupName!.isNotEmpty) {
+      return log.groupName;
+    }
+    if (log.groupId == null) return null;
+    final groups = ref.watch(availableGroupsProvider).value ?? const [];
+    for (final g in groups) {
+      if (g.id == log.groupId) return g.name;
+    }
+    return null;
   }
 }
 
@@ -157,9 +173,10 @@ class _Footer extends StatelessWidget {
 }
 
 class _RecordTile extends StatelessWidget {
-  const _RecordTile({required this.log});
+  const _RecordTile({required this.log, this.groupName});
 
   final UsageLog log;
+  final String? groupName;
 
   @override
   Widget build(BuildContext context) {
@@ -180,18 +197,26 @@ class _RecordTile extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: color.withValues(alpha: 0.12),
-                    child: Icon(
-                      log.status == 'success'
-                          ? Icons.check
-                          : log.status == 'error'
-                              ? Icons.error_outline
-                              : Icons.remove,
-                      size: 16,
-                      color: color,
-                    ),
+                  // 模型品牌图标 + 右下角状态点
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ModelIcon(model: log.model, size: 30),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          width: 11,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: Theme.of(context).cardColor, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -218,10 +243,17 @@ class _RecordTile extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 4,
                 children: [
+                  if (groupName != null)
+                    _Meta(icon: Icons.layers_outlined, text: groupName!),
                   if (log.totalTokens != null)
                     _Meta(
                         icon: Icons.token_outlined,
                         text: formatCompact(log.totalTokens!)),
+                  if (log.firstTokenMs != null)
+                    _Meta(
+                        icon: Icons.bolt_outlined,
+                        text: '${context.tr('usage.firstToken')} '
+                            '${log.firstTokenMs}ms'),
                   if (log.durationMs != null)
                     _Meta(
                         icon: Icons.timer_outlined,

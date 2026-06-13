@@ -56,15 +56,15 @@
 
 ## 里程碑 M3 · 管理端(P1)
 
-| 任务 | 模块位置 | 优先级 | 状态 |
-|---|---|---|---|
-| 管理仪表盘:平台总览指标 | `lib/src/features/admin/dashboard/` | P1 | ⬜ |
-| 上游账号池:列表/详情/启停/删除(创建走网页端) | `lib/src/features/admin/accounts/` | P1 | ⬜ |
-| 用户管理:列表/搜索/余额调整/启停 | `lib/src/features/admin/users/` | P1 | ⬜ |
-| 分组管理:列表/启停/权重 | `lib/src/features/admin/groups/` | P1 | ⬜ |
-| 兑换码管理:批量生成/列表/作废 | `lib/src/features/admin/redeem/` | P1 | ⬜ |
-| 渠道监控:状态一览 | `lib/src/features/admin/monitor/` | P2 | ⬜ |
-| 优惠码、订阅计划、系统设置管理 | `lib/src/features/admin/…` | P2 | ⬜ |
+| 任务                   | 模块位置 | 优先级 | 状态 |
+|----------------------|---|---|---|
+| 管理仪表盘:平台总览指标         | `lib/src/features/admin/dashboard/` | P1 | ⬜ |
+| 上游账号池:列表/详情/启停/删除/创建 | `lib/src/features/admin/accounts/` | P1 | ⬜ |
+| 用户管理:列表/搜索/余额调整/启停   | `lib/src/features/admin/users/` | P1 | ⬜ |
+| 分组管理:列表/启停/权重        | `lib/src/features/admin/groups/` | P1 | ⬜ |
+| 兑换码管理:批量生成/列表/作废     | `lib/src/features/admin/redeem/` | P1 | ⬜ |
+| 渠道监控:状态一览            | `lib/src/features/admin/monitor/` | P2 | ⬜ |
+| 优惠码、订阅计划、系统设置管理      | `lib/src/features/admin/…` | P2 | ⬜ |
 
 ## 里程碑 M4 · 体验与工程化(P2)
 

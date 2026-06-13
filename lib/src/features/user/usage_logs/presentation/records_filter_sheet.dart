@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
+import '../../../../shared/widgets/model_icon.dart';
 import '../../keys/providers/keys_providers.dart';
 import '../providers/usage_logs_providers.dart';
 
@@ -33,6 +34,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   String? _startDate;
   String? _endDate;
   late final TextEditingController _model;
+  final _modelFocus = FocusNode();
 
   @override
   void initState() {
@@ -48,6 +50,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   @override
   void dispose() {
     _model.dispose();
+    _modelFocus.dispose();
     super.dispose();
   }
 
@@ -141,13 +144,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               onChanged: (v) => setState(() => _groupId = v),
             ),
             const SizedBox(height: 14),
-            // 模型
-            TextFormField(
+            // 模型(输入联想:候选来自近期用过的模型)
+            _ModelAutocomplete(
               controller: _model,
-              decoration: InputDecoration(
-                labelText: context.tr('usage.model'),
-                border: const OutlineInputBorder(),
-              ),
+              focusNode: _modelFocus,
+              models: ref.watch(usedModelsProvider).value ?? const [],
             ),
             const SizedBox(height: 14),
             // 流式
@@ -209,6 +210,79 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 模型输入联想:用 [RawAutocomplete] 复用外部 controller(便于 _apply 读取),
+/// 候选为近期用过的模型(包含匹配),输入为空时展示全部前若干个。
+class _ModelAutocomplete extends StatelessWidget {
+  const _ModelAutocomplete({
+    required this.controller,
+    required this.focusNode,
+    required this.models,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final List<String> models;
+
+  @override
+  Widget build(BuildContext context) {
+    return RawAutocomplete<String>(
+      textEditingController: controller,
+      focusNode: focusNode,
+      optionsBuilder: (value) {
+        final q = value.text.trim().toLowerCase();
+        if (q.isEmpty) return models.take(50);
+        return models.where((m) => m.toLowerCase().contains(q));
+      },
+      onSelected: (s) => controller.text = s,
+      fieldViewBuilder: (context, ctrl, node, onSubmit) => TextFormField(
+        controller: ctrl,
+        focusNode: node,
+        onFieldSubmitted: (_) => onSubmit(),
+        decoration: InputDecoration(
+          labelText: context.tr('usage.model'),
+          border: const OutlineInputBorder(),
+          suffixIcon: ctrl.text.isEmpty
+              ? const Icon(Icons.search, size: 20)
+              : IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => ctrl.clear(),
+                ),
+        ),
+      ),
+      optionsViewBuilder: (context, onSelected, options) {
+        final width = MediaQuery.of(context).size.width - 40;
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: width,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 240),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, i) {
+                    final opt = options.elementAt(i);
+                    return ListTile(
+                      dense: true,
+                      leading: ModelIcon(model: opt, size: 20),
+                      title: Text(opt, overflow: TextOverflow.ellipsis),
+                      onTap: () => onSelected(opt),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -2,11 +2,29 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client_provider.dart';
+import '../../../../shared/format/formatters.dart';
+import '../../usage/providers/usage_providers.dart';
 import '../data/usage_logs_api.dart';
 
 final usageLogsApiProvider = Provider<UsageLogsApi>((ref) {
   final client = ref.watch(apiClientProvider);
   return UsageLogsApi(client);
+});
+
+/// 用户近期(90 天)用过的模型名,去重排序;供记录筛选「模型」输入联想。
+final usedModelsProvider = FutureProvider.autoDispose<List<String>>((ref) async {
+  final now = DateTime.now();
+  final start = now.subtract(const Duration(days: 90));
+  final list = await ref.watch(usageApiProvider).models(
+        startDate: formatDate(start),
+        endDate: formatDate(now),
+      );
+  final names = <String>{
+    for (final m in list)
+      if (m.model.isNotEmpty) m.model,
+  }.toList()
+    ..sort();
+  return names;
 });
 
 /// 使用记录多维筛选条件。
