@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/account/account_store.dart';
 import '../../core/server/server_store.dart';
 import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
@@ -19,6 +20,17 @@ class MeTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionControllerProvider);
     final server = ref.watch(activeServerProvider);
+    final account = ref.watch(activeAccountProvider);
+    final servers = ref.watch(serverStoreProvider).servers;
+    // 当前账号所在服务器名(账号与服务器解耦,优先按账号取)。
+    final accountServerName = account == null
+        ? server.name
+        : servers
+            .firstWhere(
+              (s) => s.id == account.serverId,
+              orElse: () => server,
+            )
+            .name;
     final user = session.user;
     final publicSettings = ref.watch(publicSettingsProvider).value;
     final features = publicSettings == null
@@ -74,7 +86,7 @@ class MeTab extends ConsumerWidget {
                                   ],
                                   Flexible(
                                     child: Text(
-                                      server.name,
+                                      accountServerName,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -176,11 +188,13 @@ class MeTab extends ConsumerWidget {
             ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.dns_outlined),
-            title: Text(context.tr('servers.title')),
-            subtitle: Text(server.name),
+            leading: const Icon(Icons.manage_accounts_outlined),
+            title: Text(context.tr('accounts.title')),
+            subtitle: Text(user != null
+                ? '${user.email} · $accountServerName'
+                : accountServerName),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/servers'),
+            onTap: () => context.push('/accounts'),
           ),
           ListTile(
             leading: const Icon(Icons.settings_outlined),
