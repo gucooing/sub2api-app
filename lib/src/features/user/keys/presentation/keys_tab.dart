@@ -9,6 +9,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/progress_meter.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../../../../shared/widgets/confirm_dialog.dart';
 import '../data/keys_api.dart';
@@ -72,11 +73,17 @@ class KeysTab extends ConsumerWidget {
                 ],
               );
             }
-            return ListView.separated(
+            return ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-              itemCount: list.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, i) => _KeyCard(info: list[i]),
+              children: [
+                ResponsiveCenter(
+                  maxWidth: 1100,
+                  child: ResponsiveGrid(
+                    minTileWidth: 360,
+                    children: [for (final k in list) _KeyCard(info: k)],
+                  ),
+                ),
+              ],
             );
           },
         ),

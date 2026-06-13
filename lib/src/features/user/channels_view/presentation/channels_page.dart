@@ -22,6 +22,7 @@ class ChannelsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.availableChannels'))),
       body: ResponsiveCenter(
+        maxWidth: 1100,
         child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(availableChannelsProvider);
@@ -42,10 +43,16 @@ class ChannelsPage extends ConsumerWidget {
                 ),
               ]);
             }
-            return ListView.builder(
+            return ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              itemCount: channels.length,
-              itemBuilder: (context, i) => _ChannelCard(channel: channels[i]),
+              children: [
+                ResponsiveGrid(
+                  minTileWidth: 380,
+                  children: [
+                    for (final c in channels) _ChannelCard(channel: c),
+                  ],
+                ),
+              ],
             );
           },
         ),
@@ -64,7 +71,7 @@ class _ChannelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Column(

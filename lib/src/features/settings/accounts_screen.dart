@@ -9,6 +9,7 @@ import '../../core/session/session_controller.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/responsive.dart';
 import '../../shared/widgets/user_avatar.dart';
 
 /// 账号管理页:多账号列表(切换/登出/删除)+ 添加账号。
@@ -43,19 +44,27 @@ class AccountsScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
               children: [
-                for (final account in accounts)
-                  _AccountCard(
-                    account: account,
-                    serverName: serverName(account.serverId),
-                    active: account.id == accountState.activeId,
-                    onTap: account.id == accountState.activeId
-                        ? null
-                        : () => ref
-                            .read(sessionControllerProvider.notifier)
-                            .switchAccount(account.id),
-                    onLogout: () => _logout(context, ref),
-                    onRemove: () => _remove(context, ref, account),
+                ResponsiveCenter(
+                  maxWidth: 1100,
+                  child: ResponsiveGrid(
+                    minTileWidth: 360,
+                    children: [
+                      for (final account in accounts)
+                        _AccountCard(
+                          account: account,
+                          serverName: serverName(account.serverId),
+                          active: account.id == accountState.activeId,
+                          onTap: account.id == accountState.activeId
+                              ? null
+                              : () => ref
+                                  .read(sessionControllerProvider.notifier)
+                                  .switchAccount(account.id),
+                          onLogout: () => _logout(context, ref),
+                          onRemove: () => _remove(context, ref, account),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
     );
@@ -113,7 +122,7 @@ class _AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(

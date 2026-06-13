@@ -78,6 +78,7 @@ class _ChannelStatusPageState extends ConsumerState<ChannelStatusPage> {
         ],
       ),
       body: ResponsiveCenter(
+        maxWidth: 1100,
         child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(channelMonitorsProvider);
@@ -98,10 +99,16 @@ class _ChannelStatusPageState extends ConsumerState<ChannelStatusPage> {
                 ),
               ]);
             }
-            return ListView.builder(
+            return ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              itemCount: monitors.length,
-              itemBuilder: (context, i) => _MonitorCard(monitor: monitors[i]),
+              children: [
+                ResponsiveGrid(
+                  minTileWidth: 360,
+                  children: [
+                    for (final m in monitors) _MonitorCard(monitor: m),
+                  ],
+                ),
+              ],
             );
           },
         ),
@@ -120,7 +127,7 @@ class _MonitorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: () => context.push('/channel-status/${monitor.id}'),
         borderRadius: BorderRadius.circular(12),

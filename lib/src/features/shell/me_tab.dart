@@ -10,6 +10,7 @@ import '../../i18n/app_localizations.dart';
 import '../user/features/data/user_features.dart';
 import '../user/features/presentation/custom_page_launcher.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/responsive.dart';
 import '../../shared/widgets/user_avatar.dart';
 
 /// 「我的」tab:用户信息卡 + 各入口(资料/服务器/设置/管理端)+ 退出登录。
@@ -41,7 +42,9 @@ class MeTab extends ConsumerWidget {
         : visibleCustomPages(publicSettings, isAdmin: session.isAdmin);
 
     return Scaffold(
-      body: ListView(
+      body: ResponsiveCenter(
+        maxWidth: 640,
+        child: ListView(
         children: [
           if (user != null)
             Padding(
@@ -215,6 +218,7 @@ class MeTab extends ConsumerWidget {
             onTap: () => _confirmLogout(context, ref),
           ),
         ],
+      ),
       ),
     );
   }

@@ -23,6 +23,7 @@ class MonitorDetailPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.channelStatus'))),
       body: ResponsiveCenter(
+        maxWidth: 1100,
         child: AsyncValueView(
         value: detailAsync,
         onRetry: () => ref.invalidate(monitorStatusProvider(monitorId)),
@@ -42,7 +43,10 @@ class MonitorDetailPage extends ConsumerWidget {
                   ),
             ),
             const SizedBox(height: 16),
-            for (final m in detail.models) _ModelCard(model: m),
+            ResponsiveGrid(
+              minTileWidth: 320,
+              children: [for (final m in detail.models) _ModelCard(model: m)],
+            ),
           ],
         ),
       ),
@@ -60,7 +64,7 @@ class _ModelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(

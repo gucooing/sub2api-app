@@ -31,6 +31,7 @@ class AnnouncementsPage extends ConsumerWidget {
         ],
       ),
       body: ResponsiveCenter(
+        maxWidth: 1100,
         child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(announcementsListProvider);
@@ -53,16 +54,24 @@ class AnnouncementsPage extends ConsumerWidget {
                 ],
               );
             }
-            return ListView.builder(
+            return ListView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              itemCount: items.length,
-              itemBuilder: (context, index) => _AnnouncementCard(
-                announcement: items[index],
-                onTap: () => context.push(
-                  '/announcements/${items[index].id}',
-                  extra: items[index],
+              children: [
+                ResponsiveGrid(
+                  minTileWidth: 460,
+                  maxColumns: 2,
+                  children: [
+                    for (final a in items)
+                      _AnnouncementCard(
+                        announcement: a,
+                        onTap: () => context.push(
+                          '/announcements/${a.id}',
+                          extra: a,
+                        ),
+                      ),
+                  ],
                 ),
-              ),
+              ],
             );
           },
         ),
@@ -87,7 +96,7 @@ class _AnnouncementCard extends StatelessWidget {
     final unread = !announcement.isRead;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
