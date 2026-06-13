@@ -115,6 +115,20 @@
     "reject": "拒绝",
     "gateHint": "同意条款后才能登录。"
   },
+  "affiliate": {
+    "rebateRate": "返利比例",
+    "inviteCount": "已邀请 {count} 人",
+    "inviteCode": "邀请码",
+    "inviteLink": "邀请链接",
+    "quotaAvailable": "可用返利",
+    "quotaFrozen": "冻结中",
+    "quotaHistory": "历史累计",
+    "transfer": "转入余额",
+    "transferred": "已转入 {amount}",
+    "transferEmpty": "暂无可转入额度",
+    "invitees": "被邀请人",
+    "inviteesEmpty": "还没有邀请记录"
+  },
   "features": {
     "section": "服务",
     "customPages": "更多",

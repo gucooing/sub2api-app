@@ -22,6 +22,7 @@ import '../../features/user/announcements/presentation/announcement_detail_page.
 import '../../features/user/announcements/data/announcements_api.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
 import '../../features/user/recharge/presentation/recharge_page.dart';
+import '../../features/user/affiliate/presentation/affiliate_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
@@ -138,8 +139,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/affiliate',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'features.affiliate'),
+        builder: (context, state) => const AffiliatePage(),
       ),
       GoRoute(
         path: '/channels',

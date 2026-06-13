@@ -115,6 +115,20 @@
     "reject": "Decline",
     "gateHint": "You must agree to the terms to sign in."
   },
+  "affiliate": {
+    "rebateRate": "Rebate rate",
+    "inviteCount": "{count} invited",
+    "inviteCode": "Invite code",
+    "inviteLink": "Invite link",
+    "quotaAvailable": "Available",
+    "quotaFrozen": "Frozen",
+    "quotaHistory": "Lifetime",
+    "transfer": "Transfer to balance",
+    "transferred": "Transferred {amount}",
+    "transferEmpty": "No quota to transfer",
+    "invitees": "Invitees",
+    "inviteesEmpty": "No invitations yet"
+  },
   "features": {
     "section": "Services",
     "customPages": "More",
