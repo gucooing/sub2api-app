@@ -22,4 +22,7 @@ class PrefKeys {
 
   /// 当前激活的服务器 ID。
   static const String activeServerId = 'pref.active_server_id';
+
+  /// 是否使用外置浏览器打开链接;false(默认)表示应用内浏览器。
+  static const String externalBrowser = 'pref.external_browser';
 }

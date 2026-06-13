@@ -14,6 +14,7 @@ import '../../../../shared/widgets/pill_segmented.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/token_composition.dart';
 import '../../../../shared/widgets/token_trend_series.dart';
+import '../../features/data/user_features.dart';
 import '../data/dashboard_api.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -403,39 +404,83 @@ class _TokenCompositionView extends StatelessWidget {
   }
 }
 
-class _QuickAccessRow extends StatelessWidget {
+class _QuickAccessRow extends ConsumerWidget {
   const _QuickAccessRow();
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickTile(
-            icon: Icons.list_alt_outlined,
-            label: context.tr('usageLogs.title'),
-            onTap: () => context.push('/usage-logs'),
-          ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(publicSettingsProvider).value;
+    final features = settings == null
+        ? const <UserFeature>[]
+        : enabledUserFeatures(settings);
+
+    // 已开启的可选功能优先,再用常用入口补足到 4 个。
+    final tiles = <_QuickTileData>[
+      for (final f in features)
+        _QuickTileData(
+          icon: f.icon,
+          label: context.tr(f.labelKey),
+          onTap: () => context.push(f.route),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickTile(
-            icon: Icons.card_membership_outlined,
-            label: context.tr('nav.subscriptions'),
-            onTap: () => context.push('/subscriptions'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickTile(
-            icon: Icons.notifications_outlined,
-            label: context.tr('announcements.title'),
-            onTap: () => context.push('/announcements'),
-          ),
-        ),
-      ],
+    ];
+    final defaults = <_QuickTileData>[
+      _QuickTileData(
+        icon: Icons.list_alt_outlined,
+        label: context.tr('usageLogs.title'),
+        onTap: () => context.push('/usage-logs'),
+      ),
+      _QuickTileData(
+        icon: Icons.card_membership_outlined,
+        label: context.tr('nav.subscriptions'),
+        onTap: () => context.push('/subscriptions'),
+      ),
+      _QuickTileData(
+        icon: Icons.notifications_outlined,
+        label: context.tr('announcements.title'),
+        onTap: () => context.push('/announcements'),
+      ),
+    ];
+    for (final d in defaults) {
+      if (tiles.length >= 4) break;
+      tiles.add(d);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 10.0;
+        final perRow = tiles.length <= 3 ? tiles.length : 4;
+        final width =
+            (constraints.maxWidth - spacing * (perRow - 1)) / perRow;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final t in tiles)
+              SizedBox(
+                width: width,
+                child: _QuickTile(
+                  icon: t.icon,
+                  label: t.label,
+                  onTap: t.onTap,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
+}
+
+class _QuickTileData {
+  const _QuickTileData({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 }
 
 class _QuickTile extends StatelessWidget {

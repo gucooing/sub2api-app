@@ -107,6 +107,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/announcements',
         builder: (context, state) => const AnnouncementsPage(),
       ),
+      // 可选开启的功能页面(占位,完整页见 P5–P7)。入口仅在管理员开启对应开关时展示。
+      GoRoute(
+        path: '/recharge',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'features.recharge'),
+      ),
+      GoRoute(
+        path: '/affiliate',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'features.affiliate'),
+      ),
+      GoRoute(
+        path: '/channels',
+        builder: (context, state) => const ModulePlaceholderScreen(
+            titleKey: 'features.availableChannels'),
+      ),
+      GoRoute(
+        path: '/channel-status',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'features.channelStatus'),
+      ),
       GoRoute(
         path: '/subscriptions',
         builder: (context, state) => const SubscriptionsPage(),

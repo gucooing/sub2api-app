@@ -146,6 +146,52 @@ void main() {
     expect(s.registrationEnabled, isTrue);
     expect(s.turnstileEnabled, isTrue);
     expect(s.emailVerifyEnabled, isFalse);
+    // 功能开关与自定义页面默认关闭/为空。
+    expect(s.paymentEnabled, isFalse);
+    expect(s.affiliateEnabled, isFalse);
+    expect(s.customMenuItems, isEmpty);
+  });
+
+  test('PublicSettingsLite 解析功能开关与自定义页面', () {
+    final s = PublicSettingsLite.fromJson({
+      'payment_enabled': true,
+      'affiliate_enabled': true,
+      'available_channels_enabled': true,
+      'channel_monitor_enabled': true,
+      'custom_menu_items': [
+        {
+          'id': 'docs',
+          'label': '文档',
+          'url': 'https://example.com/docs',
+          'visibility': 'user',
+          'sort_order': 2,
+        },
+        {
+          'id': 'guide',
+          'label': '指南',
+          'page_slug': 'guide',
+          'visibility': 'user',
+          'sort_order': 1,
+        },
+        {
+          'id': 'secret',
+          'label': '管理',
+          'url': 'https://example.com/admin',
+          'visibility': 'admin',
+          'sort_order': 0,
+        },
+      ],
+    });
+    expect(s.paymentEnabled, isTrue);
+    expect(s.affiliateEnabled, isTrue);
+    expect(s.availableChannelsEnabled, isTrue);
+    expect(s.channelMonitorEnabled, isTrue);
+    expect(s.customMenuItems.length, 3);
+
+    final external = s.customMenuItems.firstWhere((e) => e.id == 'docs');
+    expect(external.isMarkdown, isFalse);
+    final md = s.customMenuItems.firstWhere((e) => e.id == 'guide');
+    expect(md.isMarkdown, isTrue);
   });
 
   test('无令牌:恢复为未登录', () async {

@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/server/server_store.dart';
+import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
 import '../../i18n/app_localizations.dart';
+import '../user/features/data/user_features.dart';
+import '../user/features/presentation/custom_page_launcher.dart';
 
 /// 「我的」tab:用户信息卡 + 各入口(资料/服务器/设置/管理端)+ 退出登录。
 class MeTab extends ConsumerWidget {
@@ -15,6 +18,13 @@ class MeTab extends ConsumerWidget {
     final session = ref.watch(sessionControllerProvider);
     final server = ref.watch(activeServerProvider);
     final user = session.user;
+    final publicSettings = ref.watch(publicSettingsProvider).value;
+    final features = publicSettings == null
+        ? const <UserFeature>[]
+        : enabledUserFeatures(publicSettings);
+    final customPages = publicSettings == null
+        ? const <CustomMenuItem>[]
+        : visibleCustomPages(publicSettings, isAdmin: session.isAdmin);
 
     return Scaffold(
       body: ListView(
@@ -120,6 +130,30 @@ class MeTab extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/usage-logs'),
           ),
+          // 管理员开启的可选功能入口。
+          if (features.isNotEmpty) ...[
+            const Divider(),
+            _GroupHeader(context.tr('features.section')),
+            for (final f in features)
+              ListTile(
+                leading: Icon(f.icon),
+                title: Text(context.tr(f.labelKey)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(f.route),
+              ),
+          ],
+          // 管理员配置的自定义页面(点击在浏览器中打开)。
+          if (customPages.isNotEmpty) ...[
+            const Divider(),
+            _GroupHeader(context.tr('features.customPages')),
+            for (final p in customPages)
+              ListTile(
+                leading: const Icon(Icons.public_outlined),
+                title: Text(p.label),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => openCustomPage(context, ref, p),
+              ),
+          ],
           if (session.isAdmin)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),
@@ -182,6 +216,26 @@ class MeTab extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(sessionControllerProvider.notifier).logout();
     }
+  }
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/preferences/external_browser_controller.dart';
 import '../../core/server/server_store.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../i18n/app_localizations.dart';
@@ -17,6 +18,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final localeState = ref.watch(localeControllerProvider);
     final themeMode = ref.watch(themeControllerProvider);
+    final useExternalBrowser = ref.watch(externalBrowserProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('settings.title'))),
@@ -65,6 +67,17 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 32),
           _SectionHeader(context.tr('settings.languagePacks')),
           _ExternalPacksTile(),
+
+          const Divider(height: 32),
+          _SectionHeader(context.tr('settings.browser')),
+          SwitchListTile(
+            secondary: const Icon(Icons.open_in_browser_outlined),
+            title: Text(context.tr('settings.externalBrowser')),
+            subtitle: Text(context.tr('settings.externalBrowserHint')),
+            value: useExternalBrowser,
+            onChanged: (v) =>
+                ref.read(externalBrowserProvider.notifier).set(v),
+          ),
 
           const Divider(height: 32),
           _SectionHeader(context.tr('servers.title')),

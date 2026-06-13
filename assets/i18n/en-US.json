@@ -90,6 +90,15 @@
     "balance": "Balance ${amount}",
     "logoutConfirm": "Sign out of the current account?"
   },
+  "features": {
+    "section": "Services",
+    "customPages": "More",
+    "recharge": "Recharge",
+    "affiliate": "Affiliate",
+    "availableChannels": "Available channels",
+    "channelStatus": "Channel status",
+    "openFailed": "Cannot open this link"
+  },
   "home": {
     "welcome": "Welcome to {name}",
     "subtitle": "Manage your AI gateway on the go",
@@ -108,6 +117,9 @@
     "reloadPacks": "Reload external packs",
     "externalPackHint": "Drop .json language packs into this folder, then reload — no reinstall needed:",
     "packReloaded": "Language packs reloaded",
+    "browser": "Browsing",
+    "externalBrowser": "Open links in external browser",
+    "externalBrowserHint": "When off, links open in an in-app browser that carries your login automatically — no re-login needed.",
     "about": "About",
     "version": "Version"
   },
