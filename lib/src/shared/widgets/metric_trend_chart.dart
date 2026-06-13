@@ -68,9 +68,13 @@ class MetricTrendChart extends StatelessWidget {
         titlesData: FlTitlesData(
           topTitles:
               const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          // 右侧预留少量空白,避免 x 轴最后一个标签被边缘裁切(左侧已有 y 轴占位)。
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+          // 右侧仅占位(给 x 轴最后一个标签留横向空间),不渲染数值。
+          rightTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 16,
+              getTitlesWidget: (_, _) => const SizedBox.shrink(),
+            ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(

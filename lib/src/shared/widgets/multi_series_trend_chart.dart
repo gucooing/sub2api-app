@@ -122,12 +122,21 @@ class _MultiSeriesTrendChartState extends State<MultiSeriesTrendChart> {
               titlesData: FlTitlesData(
                 topTitles:
                     const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                // 左右各预留一点空白,让 x 轴首尾标签不被图表边缘裁切。
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+                // 左右各预留一点空白让 x 轴首尾标签不被裁切;各线独立归一化,
+                // y 绝对值无意义,故只占位、不渲染数值(否则会逐字竖排)。
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 16,
+                    getTitlesWidget: (_, _) => const SizedBox.shrink(),
+                  ),
                 ),
-                leftTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 16,
+                    getTitlesWidget: (_, _) => const SizedBox.shrink(),
+                  ),
                 ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
