@@ -196,8 +196,11 @@ sub2api/
 工作流:[`.github/workflows/build.yml`](.github/workflows/build.yml)
 
 - **每次提交 / PR**:运行 `flutter analyze` + `flutter test` 检查代码(构建/发布的前置门槛);
-- **推送 `vX.Y.Z` 形式的 tag**(即「填写版本号」):检查通过后构建五端产物并**自动创建 GitHub Release** 上传;
-- **手动触发**(workflow_dispatch):构建五端但不发布。
+- **手动触发**(Actions → build → Run workflow):
+  - **填写「版本号」**(如 `0.2.0`):检查通过后构建五端产物并**自动创建该版本号的 GitHub Release** 上传;
+  - **留空**:仅构建五端产物(可在 Artifacts 下载),不发布 Release。
+
+> 发布以「运行工作流时填写的版本号」为准,无需手动打 tag;Release 会以该版本号为 tag 名在当前提交上创建。构建时版本号经 `--build-name` 写入应用,可在「设置 → 关于」查看;构建时间经 `--dart-define=APP_BUILD_TIME` 注入。
 
 构建覆盖的平台 / 架构:
 
@@ -222,14 +225,11 @@ sub2api/
 
 CI 会把 `SIGN_KEYSTORE_BASE64` 解码为 `android/app/upload-keystore.jks` 并生成 `android/key.properties`;`android/app/build.gradle.kts` 在检测到 `key.properties` 时启用发布签名,否则回退 debug 签名(本地无需密钥即可 `flutter run --release`)。`key.properties` 与 `*.jks` 已在 `.gitignore` 中,切勿提交。
 
-### 发布一个版本
+### 发布一个版本 / 应用内更新
 
-```bash
-# 1. 在 pubspec.yaml 改版本号,如 version: 0.2.0+2,提交
-# 2. 打 tag 并推送(tag 名即 Release 名)
-git tag v0.2.0
-git push origin v0.2.0
-```
+发布:打开 GitHub → **Actions → build → Run workflow**,在「版本号」里填 `0.2.0` 后运行,即自动构建五端并发布名为 `0.2.0` 的 Release(留空则只构建不发布)。
+
+应用内更新检查:启动时静默检查、设置页可手动「检查更新」,均比对 GitHub 最新 Release;有新版本时弹窗,按当前平台/架构匹配 Release 资产直接前往下载(匹配不到则打开 Releases 页)。
 
 > 生成 keystore:`keytool -genkey -v -keystore your.jks -keyalg RSA -keysize 2048 -validity 10000 -alias your-key-alias`
 
