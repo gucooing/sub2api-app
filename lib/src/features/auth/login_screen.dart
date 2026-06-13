@@ -6,6 +6,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/server/server_store.dart';
 import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
+import '../../core/storage/secure_store.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/brand_mark.dart';
 
@@ -27,8 +28,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _busy = false;
   String? _error;
 
+  bool _obscurePassword = true;
+  bool _rememberAccount = false;
+  bool _rememberPassword = false;
+
   /// 非空表示处于 TOTP 第二步。
   LoginNeedsTotp? _totpChallenge;
+
+  @override
+  void initState() {
+    super.initState();
+    // 回填已记住的账号/密码(按当前服务器)。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedCredentials());
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final secure = ref.read(secureStoreProvider);
+    final serverId = ref.read(activeServerProvider).id;
+    final email = await secure.readSavedEmail(serverId);
+    final password = await secure.readSavedPassword(serverId);
+    if (!mounted || email == null || email.isEmpty) return;
+    setState(() {
+      _email.text = email;
+      _rememberAccount = true;
+      if (password != null && password.isNotEmpty) {
+        _password.text = password;
+        _rememberPassword = true;
+      }
+    });
+  }
+
+  Future<void> _persistCredentials() async {
+    final secure = ref.read(secureStoreProvider);
+    final serverId = ref.read(activeServerProvider).id;
+    if (_rememberAccount) {
+      await secure.saveCredentials(
+        serverId,
+        email: _email.text.trim(),
+        password: _rememberPassword ? _password.text : null,
+      );
+    } else {
+      await secure.clearCredentials(serverId);
+    }
+  }
 
   @override
   void dispose() {
@@ -58,6 +100,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final outcome = await ref
           .read(sessionControllerProvider.notifier)
           .login(_email.text.trim(), _password.text);
+      // 走到这里说明密码已通过校验(成功或进入 TOTP 第二步),按勾选持久化凭据。
+      await _persistCredentials();
       if (outcome is LoginNeedsTotp && mounted) {
         setState(() => _totpChallenge = outcome);
       }
@@ -150,19 +194,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextFormField(
             controller: _password,
             enabled: !_busy,
-            obscureText: true,
+            obscureText: _obscurePassword,
             autofillHints: const [AutofillHints.password],
             onFieldSubmitted: (_) => _submitLogin(),
             decoration: InputDecoration(
               labelText: context.tr('auth.password'),
               prefixIcon: const Icon(Icons.lock_outline),
+              suffixIcon: IconButton(
+                tooltip: context.tr(
+                    _obscurePassword ? 'auth.showPassword' : 'auth.hidePassword'),
+                icon: Icon(_obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined),
+                onPressed: _busy
+                    ? null
+                    : () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+              ),
               border: const OutlineInputBorder(),
             ),
             validator: (v) => (v == null || v.isEmpty)
                 ? context.tr('auth.passwordRequired')
                 : null,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          // 记住账号 / 记住密码(记住密码隐含记住账号)。
+          Row(
+            children: [
+              Expanded(
+                child: _RememberCheck(
+                  label: context.tr('auth.rememberAccount'),
+                  value: _rememberAccount,
+                  onChanged: _busy
+                      ? null
+                      : (v) => setState(() {
+                            _rememberAccount = v;
+                            if (!v) _rememberPassword = false;
+                          }),
+                ),
+              ),
+              Expanded(
+                child: _RememberCheck(
+                  label: context.tr('auth.rememberPassword'),
+                  value: _rememberPassword,
+                  onChanged: _busy
+                      ? null
+                      : (v) => setState(() {
+                            _rememberPassword = v;
+                            if (v) _rememberAccount = true;
+                          }),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy ? null : _submitLogin,
             child: _busy
@@ -276,6 +361,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Text(context.tr('common.ok')),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RememberCheck extends StatelessWidget {
+  const _RememberCheck({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onChanged == null ? null : () => onChanged!(!value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: value,
+                onChanged: onChanged == null
+                    ? null
+                    : (v) => onChanged!(v ?? false),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
