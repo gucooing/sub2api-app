@@ -57,7 +57,8 @@ class FakeAuthApi implements AuthApi {
       };
 
   @override
-  Future<Map<String, dynamic>> login(String email, String password) async =>
+  Future<Map<String, dynamic>> login(String email, String password,
+          {String? turnstileToken}) async =>
       onLogin!(email, password);
 
   @override

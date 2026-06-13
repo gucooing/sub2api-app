@@ -40,6 +40,8 @@ dependencies:
   gpt_markdown: ^1.1.7
   image_picker: ^1.2.2
   image: ^4.9.1
+  # 人机验证(Cloudflare Turnstile)挑战页内嵌渲染
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:

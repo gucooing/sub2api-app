@@ -141,6 +141,7 @@ class PublicSettingsLite {
     required this.registrationEnabled,
     required this.emailVerifyEnabled,
     required this.turnstileEnabled,
+    this.turnstileSiteKey = '',
     required this.passwordResetEnabled,
     required this.promoCodeEnabled,
     required this.invitationCodeEnabled,
@@ -168,6 +169,9 @@ class PublicSettingsLite {
   final bool registrationEnabled;
   final bool emailVerifyEnabled;
   final bool turnstileEnabled;
+
+  /// Turnstile 站点密钥(turnstile_enabled 时用于渲染挑战)。
+  final String turnstileSiteKey;
   final bool passwordResetEnabled;
   final bool promoCodeEnabled;
   final bool invitationCodeEnabled;
@@ -218,6 +222,7 @@ class PublicSettingsLite {
         registrationEnabled: json['registration_enabled'] as bool? ?? false,
         emailVerifyEnabled: json['email_verify_enabled'] as bool? ?? false,
         turnstileEnabled: json['turnstile_enabled'] as bool? ?? false,
+        turnstileSiteKey: json['turnstile_site_key'] as String? ?? '',
         passwordResetEnabled: json['password_reset_enabled'] as bool? ?? false,
         promoCodeEnabled: json['promo_code_enabled'] as bool? ?? false,
         invitationCodeEnabled:

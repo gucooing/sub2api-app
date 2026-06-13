@@ -125,9 +125,11 @@ class SessionController extends Notifier<SessionState> {
 
   /// 登录第一步(指定目标服务器)。返回成功或「需要 TOTP」。
   Future<LoginOutcome> login(
-      ServerProfile server, String email, String password) async {
+      ServerProfile server, String email, String password,
+      {String? turnstileToken}) async {
     final api = ref.read(authApiForServerProvider(server));
-    final data = await api.login(email, password);
+    final data =
+        await api.login(email, password, turnstileToken: turnstileToken);
     if (data['requires_2fa'] == true) {
       return LoginNeedsTotp(
         tempToken: data['temp_token'] as String? ?? '',

@@ -14,6 +14,7 @@ import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/brand_mark.dart';
 import '../settings/servers_screen.dart';
 import 'login_agreement.dart';
+import 'turnstile_widget.dart';
 
 /// 登录页:选择服务器 + 邮箱密码登录(后端要求时进入 TOTP)。
 /// 服务器在下拉中选择/新增;登录条款支持 checkbox 与 modal 两种形式。
@@ -48,6 +49,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _modalShownForServerId;
 
   LoginNeedsTotp? _totpChallenge;
+
+  /// Turnstile 人机验证 token(开启时必须取得后才能登录)。
+  String? _turnstileToken;
 
   @override
   void initState() {
@@ -137,7 +141,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _guarded(() async {
       final outcome = await ref
           .read(sessionControllerProvider.notifier)
-          .login(server, _email.text.trim(), _password.text);
+          .login(server, _email.text.trim(), _password.text,
+              turnstileToken: _turnstileToken);
       await _persistCredentials(server.id);
       if (outcome is LoginNeedsTotp && mounted) {
         setState(() => _totpChallenge = outcome);
@@ -216,11 +221,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ServerProfile server, AsyncValue<PublicSettingsLite> settingsAsync) {
     final settings = settingsAsync.value;
     final turnstileEnabled = settings?.turnstileEnabled ?? false;
+    final turnstileSiteKey = settings?.turnstileSiteKey ?? '';
+    final turnstileActive = turnstileEnabled && turnstileSiteKey.isNotEmpty;
     final registrationEnabled = settings?.registrationEnabled ?? false;
     final gateActive = settings?.agreementGateActive ?? false;
     final accepted =
         settings == null ? true : _agreementAccepted(settings, server.id);
-    final authDisabled = _busy || (gateActive && !accepted);
+    final authDisabled = _busy ||
+        (gateActive && !accepted) ||
+        (turnstileActive && _turnstileToken == null);
 
     if (settings != null) _maybeShowModal(settings, server.id);
 
@@ -233,7 +242,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 20),
           _buildServerSelector(),
           const SizedBox(height: 20),
-          if (turnstileEnabled) ...[
+          // 开启 Turnstile 但服务端未提供站点密钥时,回退为提示。
+          if (turnstileEnabled && !turnstileActive) ...[
             _InfoBanner(text: context.tr('auth.turnstileWarning')),
             const SizedBox(height: 16),
           ],
@@ -333,6 +343,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   if (ok == true) _acceptAgreement(settings, server.id);
                 }),
               ),
+          ],
+          if (turnstileActive) ...[
+            const SizedBox(height: 12),
+            TurnstileWidget(
+              key: ValueKey('turnstile-${server.id}-$turnstileSiteKey'),
+              siteKey: turnstileSiteKey,
+              origin: server.baseUrl,
+              onToken: (t) => setState(() => _turnstileToken = t),
+              onExpire: () => setState(() => _turnstileToken = null),
+              onError: () => setState(() => _turnstileToken = null),
+            ),
           ],
           const SizedBox(height: 16),
           FilledButton(
@@ -468,6 +489,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _serverId = selected;
       _agreementAcceptedLocal = false;
+      _turnstileToken = null;
     });
     _loadSavedCredentials();
   }

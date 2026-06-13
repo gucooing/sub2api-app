@@ -6,7 +6,8 @@ import '../server/server_profile.dart';
 
 /// 认证相关端点的薄封装(返回原始 Map,由会话层解析为模型,便于分别测试)。
 abstract class AuthApi {
-  Future<Map<String, dynamic>> login(String email, String password);
+  Future<Map<String, dynamic>> login(String email, String password,
+      {String? turnstileToken});
 
   Future<Map<String, dynamic>> login2fa(String tempToken, String totpCode);
 
@@ -33,9 +34,13 @@ class HttpAuthApi implements AuthApi {
   final ApiClient _client;
 
   @override
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final data = await _client.post<dynamic>('/auth/login',
-        data: {'email': email, 'password': password});
+  Future<Map<String, dynamic>> login(String email, String password,
+      {String? turnstileToken}) async {
+    final data = await _client.post<dynamic>('/auth/login', data: {
+      'email': email,
+      'password': password,
+      'turnstile_token': ?turnstileToken,
+    });
     return (data as Map).cast<String, dynamic>();
   }
 
