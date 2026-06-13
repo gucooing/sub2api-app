@@ -13,7 +13,7 @@ import '../../i18n/app_localizations.dart';
 import '../../i18n/locale_controller.dart';
 import '../../shared/widgets/app_toast.dart';
 import '../../shared/widgets/confirm_dialog.dart';
-import '../../shared/widgets/responsive_center.dart';
+import '../../shared/widgets/responsive.dart';
 import 'update_check.dart';
 
 /// 设置页:演示并驱动主题切换、语言切换、外置语言包热重载。

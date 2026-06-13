@@ -10,7 +10,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/app_toast.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/brand_header.dart';
-import '../../../../shared/widgets/responsive_center.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/recharge_api.dart';

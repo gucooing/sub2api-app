@@ -6,7 +6,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../../shared/widgets/responsive_center.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../data/announcements_api.dart';
 import '../providers/announcements_providers.dart';
 import 'announcement_detail_page.dart';

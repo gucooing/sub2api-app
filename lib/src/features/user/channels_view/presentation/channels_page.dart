@@ -6,7 +6,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../../shared/widgets/responsive_center.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/channels_api.dart';
 import '../providers/channels_providers.dart';

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/markdown_text.dart';
-import '../../shared/widgets/responsive_center.dart';
+import '../../shared/widgets/responsive.dart';
 import '../settings/update_check.dart';
 import '../user/announcements/data/announcements_api.dart';
 import '../user/announcements/providers/announcements_providers.dart';

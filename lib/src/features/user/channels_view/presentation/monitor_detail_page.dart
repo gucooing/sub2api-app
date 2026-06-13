@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/availability_bar.dart';
-import '../../../../shared/widgets/responsive_center.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/channels_api.dart';
 import '../providers/channels_providers.dart';
