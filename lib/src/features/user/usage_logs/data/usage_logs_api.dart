@@ -109,17 +109,37 @@ class UsageLogsApi {
 
   final ApiClient _client;
 
-  /// 获取使用记录列表。
+  /// 获取使用记录列表(支持多维筛选)。
   Future<PaginatedUsageLogs> list({
     int page = 1,
     int pageSize = 20,
     int? apiKeyId,
+    int? groupId,
+    String? model,
+    int? requestType,
+    bool? stream,
+    String? startDate,
+    String? endDate,
+    String sortOrder = 'desc',
   }) async {
     final data = await _client.get<dynamic>('/usage', query: {
       'page': page,
       'page_size': pageSize,
-      if (apiKeyId != null) 'api_key_id': apiKeyId,
+      'api_key_id': ?apiKeyId,
+      'group_id': ?groupId,
+      if (model != null && model.isNotEmpty) 'model': model,
+      'request_type': ?requestType,
+      'stream': ?stream,
+      'start_date': ?startDate,
+      'end_date': ?endDate,
+      'sort_order': sortOrder,
     });
     return PaginatedUsageLogs.fromJson((data as Map).cast<String, dynamic>());
+  }
+
+  /// 单条使用记录详情。
+  Future<UsageLog> getById(int id) async {
+    final data = await _client.get<dynamic>('/usage/$id');
+    return UsageLog.fromJson((data as Map).cast<String, dynamic>());
   }
 }

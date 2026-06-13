@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client_provider.dart';
@@ -8,50 +9,166 @@ final usageLogsApiProvider = Provider<UsageLogsApi>((ref) {
   return UsageLogsApi(client);
 });
 
-/// 使用记录列表提供者(支持分页)。
-final usageLogsProvider = FutureProvider.autoDispose
-    .family<PaginatedUsageLogs, UsageLogsParams>((ref, params) async {
-  final api = ref.watch(usageLogsApiProvider);
-  return await api.list(
-    page: params.page,
-    pageSize: params.pageSize,
-    apiKeyId: params.apiKeyId,
-  );
-});
-
-/// 使用记录查询参数。
-class UsageLogsParams {
-  const UsageLogsParams({
-    this.page = 1,
-    this.pageSize = 20,
+/// 使用记录多维筛选条件。
+@immutable
+class UsageLogFilter {
+  const UsageLogFilter({
     this.apiKeyId,
+    this.groupId,
+    this.model,
+    this.requestType,
+    this.stream,
+    this.startDate,
+    this.endDate,
   });
 
-  final int page;
-  final int pageSize;
   final int? apiKeyId;
+  final int? groupId;
+  final String? model;
 
-  UsageLogsParams copyWith({
-    int? page,
-    int? pageSize,
-    int? apiKeyId,
-  }) {
-    return UsageLogsParams(
-      page: page ?? this.page,
-      pageSize: pageSize ?? this.pageSize,
-      apiKeyId: apiKeyId ?? this.apiKeyId,
-    );
+  /// 请求类型(后端 request_type 数值);null = 不限。
+  final int? requestType;
+  final bool? stream;
+  final String? startDate;
+  final String? endDate;
+
+  /// 生效中的筛选项数量(用于筛选按钮角标)。
+  int get activeCount {
+    var n = 0;
+    if (apiKeyId != null) n++;
+    if (groupId != null) n++;
+    if (model != null && model!.isNotEmpty) n++;
+    if (requestType != null) n++;
+    if (stream != null) n++;
+    if (startDate != null || endDate != null) n++;
+    return n;
   }
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is UsageLogsParams &&
-          runtimeType == other.runtimeType &&
-          page == other.page &&
-          pageSize == other.pageSize &&
-          apiKeyId == other.apiKeyId;
+      other is UsageLogFilter &&
+      apiKeyId == other.apiKeyId &&
+      groupId == other.groupId &&
+      model == other.model &&
+      requestType == other.requestType &&
+      stream == other.stream &&
+      startDate == other.startDate &&
+      endDate == other.endDate;
 
   @override
-  int get hashCode => Object.hash(page, pageSize, apiKeyId);
+  int get hashCode => Object.hash(
+      apiKeyId, groupId, model, requestType, stream, startDate, endDate);
 }
+
+/// 使用记录列表状态(滚动加载)。
+@immutable
+class UsageRecordsState {
+  const UsageRecordsState({
+    this.items = const [],
+    this.page = 0,
+    this.total = 0,
+    this.isLoading = false,
+    this.isLoadingMore = false,
+    this.error,
+    this.filter = const UsageLogFilter(),
+  });
+
+  final List<UsageLog> items;
+  final int page;
+  final int total;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final Object? error;
+  final UsageLogFilter filter;
+
+  bool get hasMore => items.length < total;
+}
+
+final usageRecordsProvider =
+    NotifierProvider.autoDispose<UsageRecordsNotifier, UsageRecordsState>(
+  UsageRecordsNotifier.new,
+);
+
+/// 使用记录控制器:首屏加载、滚动加载更多、应用筛选、刷新。
+class UsageRecordsNotifier extends Notifier<UsageRecordsState> {
+  static const _pageSize = 20;
+
+  @override
+  UsageRecordsState build() {
+    Future.microtask(_loadFirst);
+    return const UsageRecordsState(isLoading: true);
+  }
+
+  UsageLogsApi get _api => ref.read(usageLogsApiProvider);
+
+  Future<PaginatedUsageLogs> _fetch(UsageLogFilter f, int page) => _api.list(
+        page: page,
+        pageSize: _pageSize,
+        apiKeyId: f.apiKeyId,
+        groupId: f.groupId,
+        model: f.model,
+        requestType: f.requestType,
+        stream: f.stream,
+        startDate: f.startDate,
+        endDate: f.endDate,
+      );
+
+  Future<void> _loadFirst() async {
+    final filter = state.filter;
+    state = UsageRecordsState(isLoading: true, filter: filter);
+    try {
+      final res = await _fetch(filter, 1);
+      state = UsageRecordsState(
+        items: res.items,
+        page: 1,
+        total: res.total,
+        filter: filter,
+      );
+    } catch (e) {
+      state = UsageRecordsState(error: e, filter: filter);
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    final filter = state.filter;
+    state = UsageRecordsState(
+      items: state.items,
+      page: state.page,
+      total: state.total,
+      isLoadingMore: true,
+      filter: filter,
+    );
+    try {
+      final next = state.page + 1;
+      final res = await _fetch(filter, next);
+      state = UsageRecordsState(
+        items: [...state.items, ...res.items],
+        page: next,
+        total: res.total,
+        filter: filter,
+      );
+    } catch (e) {
+      // 加载更多失败:保留已加载项,仅复位加载态
+      state = UsageRecordsState(
+        items: state.items,
+        page: state.page,
+        total: state.total,
+        filter: filter,
+      );
+    }
+  }
+
+  Future<void> applyFilter(UsageLogFilter filter) async {
+    state = UsageRecordsState(isLoading: true, filter: filter);
+    await _loadFirst();
+  }
+
+  Future<void> refresh() => _loadFirst();
+}
+
+/// 单条使用记录详情(详情页)。
+final usageLogDetailProvider =
+    FutureProvider.autoDispose.family<UsageLog, int>(
+  (ref, id) => ref.watch(usageLogsApiProvider).getById(id),
+);

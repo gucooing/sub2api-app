@@ -95,3 +95,12 @@ final usageModelsProvider =
       .watch(usageApiProvider)
       .models(startDate: range.startDate, endDate: range.endDate);
 });
+
+/// 区间汇总(token 构成 + 消耗 + 请求);随日期范围联动。
+final usageStatsProvider =
+    FutureProvider.autoDispose<UsageStatsSummary>((ref) {
+  final range = ref.watch(usageDateRangeProvider);
+  return ref
+      .watch(usageApiProvider)
+      .stats(startDate: range.startDate, endDate: range.endDate);
+});

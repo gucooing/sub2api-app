@@ -54,10 +54,63 @@ class ModelUsageStat {
       );
 }
 
+/// `GET /usage/stats` 的区间汇总(含 token 构成,用于「缓存情况」展示)。
+@immutable
+class UsageStatsSummary {
+  const UsageStatsSummary({
+    required this.requests,
+    required this.inputTokens,
+    required this.outputTokens,
+    required this.cacheCreationTokens,
+    required this.cacheReadTokens,
+    required this.totalTokens,
+    required this.actualCost,
+    required this.avgDurationMs,
+  });
+
+  final int requests;
+  final int inputTokens;
+  final int outputTokens;
+  final int cacheCreationTokens;
+  final int cacheReadTokens;
+  final int totalTokens;
+  final double actualCost;
+  final double avgDurationMs;
+
+  factory UsageStatsSummary.fromJson(Map<String, dynamic> json) {
+    int i(String k) => (json[k] as num?)?.toInt() ?? 0;
+    double d(String k) => (json[k] as num?)?.toDouble() ?? 0;
+    return UsageStatsSummary(
+      requests: i('total_requests'),
+      inputTokens: i('total_input_tokens'),
+      outputTokens: i('total_output_tokens'),
+      cacheCreationTokens: i('total_cache_creation_tokens'),
+      cacheReadTokens: i('total_cache_read_tokens'),
+      totalTokens: i('total_tokens'),
+      actualCost: d('total_actual_cost') == 0 && json['total_cost'] != null
+          ? d('total_cost')
+          : d('total_actual_cost'),
+      avgDurationMs: d('average_duration_ms'),
+    );
+  }
+}
+
 class UsageApi {
   UsageApi(this._client);
 
   final ApiClient _client;
+
+  /// 区间汇总统计(token 构成 + 消耗 + 请求)。
+  Future<UsageStatsSummary> stats({
+    required String startDate,
+    required String endDate,
+  }) async {
+    final data = await _client.get<dynamic>('/usage/stats', query: {
+      'start_date': startDate,
+      'end_date': endDate,
+    });
+    return UsageStatsSummary.fromJson((data as Map).cast<String, dynamic>());
+  }
 
   /// 趋势数据。日期为 `YYYY-MM-DD`;[granularity] 为 `day` 或 `hour`。
   Future<List<TrendPoint>> trend({

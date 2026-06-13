@@ -20,6 +20,7 @@ import '../../features/user/redeem/presentation/redeem_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
+import '../../features/user/usage_logs/presentation/log_detail_page.dart';
 import '../../shared/widgets/module_placeholder.dart';
 import '../session/session_controller.dart';
 
@@ -113,6 +114,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/usage-logs',
         builder: (context, state) => const UsageLogsPage(),
+      ),
+      GoRoute(
+        path: '/usage/logs/:id',
+        builder: (context, state) => LogDetailPage(
+          logId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
       ),
       GoRoute(
         path: '/keys/:id',
