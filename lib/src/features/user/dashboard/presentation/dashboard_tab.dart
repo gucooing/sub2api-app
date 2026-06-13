@@ -11,6 +11,7 @@ import '../../../../shared/widgets/brand_header.dart';
 import '../../../../shared/widgets/kpi_tile.dart';
 import '../../../../shared/widgets/multi_series_trend_chart.dart';
 import '../../../../shared/widgets/pill_segmented.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/token_composition.dart';
 import '../../../../shared/widgets/token_trend_series.dart';
@@ -62,7 +63,9 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
             padding: EdgeInsets.zero,
             children: [
               _Hero(balance: user?.balance ?? 0, stats: data),
-              Padding(
+              ResponsiveCenter(
+                maxWidth: 1100,
+                child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,17 +88,6 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                       period: _period,
                     ),
                     const SizedBox(height: 20),
-                    SectionHeader(title: context.tr('tokens.composition')),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: _TokenCompositionView(
-                          stats: data,
-                          isToday: _period == _Period.today,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
                     SectionHeader(title: context.tr('dashboard.trend')),
                     Card(
                       child: Padding(
@@ -115,19 +107,26 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                         ),
                       ),
                     ),
-                    if (data.byPlatform.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      SectionHeader(title: context.tr('dashboard.byPlatform')),
-                      for (final p in data.byPlatform)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _PlatformCard(stats: p, period: _period),
+                    const SizedBox(height: 20),
+                    // Token 构成 + 平台分布:宽屏并排两栏,窄屏堆叠。
+                    if (data.byPlatform.isNotEmpty)
+                      ResponsiveTwoPane(
+                        start: _TokenCompositionSection(
+                          stats: data,
+                          isToday: _period == _Period.today,
                         ),
-                    ],
+                        end: _PlatformSection(stats: data, period: _period),
+                      )
+                    else
+                      _TokenCompositionSection(
+                        stats: data,
+                        isToday: _period == _Period.today,
+                      ),
                     const SizedBox(height: 20),
                     SectionHeader(title: context.tr('dashboard.quickAccess')),
                     const _QuickAccessRow(),
                   ],
+                ),
                 ),
               ),
             ],
@@ -288,6 +287,53 @@ class _KpiGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Token 构成分区(标题 + 卡片),供总览两栏布局左栏。
+class _TokenCompositionSection extends StatelessWidget {
+  const _TokenCompositionSection({required this.stats, required this.isToday});
+
+  final UserDashboardStats stats;
+  final bool isToday;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(title: context.tr('tokens.composition')),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _TokenCompositionView(stats: stats, isToday: isToday),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 平台分布分区(标题 + 各平台卡片),供总览两栏布局右栏。
+class _PlatformSection extends StatelessWidget {
+  const _PlatformSection({required this.stats, required this.period});
+
+  final UserDashboardStats stats;
+  final _Period period;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(title: context.tr('dashboard.byPlatform')),
+        for (final p in stats.byPlatform)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _PlatformCard(stats: p, period: period),
+          ),
+      ],
     );
   }
 }

@@ -92,12 +92,18 @@ class _RechargePageState extends ConsumerState<RechargePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (!info.balanceDisabled) _buildAmountCard(context, info),
-                if (info.plans.isNotEmpty) _buildPlansSection(context, info),
-                _buildMethodCard(context, info),
-                _buildPayButton(context, info),
-                const SizedBox(height: 20),
-                _buildHistory(context),
+                ResponsiveTwoPane(
+                  start: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!info.balanceDisabled) _buildAmountCard(context, info),
+                      if (info.plans.isNotEmpty) _buildPlansSection(context, info),
+                      _buildMethodCard(context, info),
+                      _buildPayButton(context, info),
+                    ],
+                  ),
+                  end: _buildHistory(context),
+                ),
               ],
             ),
           );

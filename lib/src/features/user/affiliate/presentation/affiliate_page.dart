@@ -28,6 +28,7 @@ class AffiliatePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('features.affiliate'))),
       body: ResponsiveCenter(
+        maxWidth: 1100,
         child: AsyncValueView(
         value: detailAsync,
         onRetry: () => ref.invalidate(affiliateDetailProvider),
@@ -41,9 +42,16 @@ class AffiliatePage extends ConsumerWidget {
             children: [
               _header(context, detail),
               const SizedBox(height: 12),
-              _inviteCard(context, ref, detail),
-              _quotaCard(context, ref, detail),
-              _invitees(context, detail),
+              ResponsiveTwoPane(
+                start: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _inviteCard(context, ref, detail),
+                    _quotaCard(context, ref, detail),
+                  ],
+                ),
+                end: _invitees(context, detail),
+              ),
             ],
           ),
         ),

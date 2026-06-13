@@ -7,6 +7,7 @@ import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/data_table_card.dart';
 import '../../../../shared/widgets/multi_series_trend_chart.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/token_trend_series.dart';
 import '../data/usage_api.dart';
@@ -38,34 +39,57 @@ class UsageTab extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _DateRangeSelector(currentRange: range),
-            const SizedBox(height: 12),
-            const _RecordsEntry(),
-            const SizedBox(height: 16),
-            SectionHeader(title: context.tr('usage.trend')),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
-                child: SizedBox(
-                  height: 280,
-                  child: AsyncValueView(
-                    value: trend,
-                    onRetry: () => ref.invalidate(usageTrendProvider),
-                    builder: (context, points) => MultiSeriesTrendChart(
-                      labels: [for (final p in points) _shortLabel(p.date)],
-                      series: _series(context, points),
-                      emptyHint: context.tr('common.empty'),
+            ResponsiveCenter(
+              maxWidth: 1100,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _DateRangeSelector(currentRange: range),
+                  const SizedBox(height: 12),
+                  const _RecordsEntry(),
+                  const SizedBox(height: 16),
+                  ResponsiveTwoPane(
+                    start: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SectionHeader(title: context.tr('usage.trend')),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
+                            child: SizedBox(
+                              height: 280,
+                              child: AsyncValueView(
+                                value: trend,
+                                onRetry: () =>
+                                    ref.invalidate(usageTrendProvider),
+                                builder: (context, points) =>
+                                    MultiSeriesTrendChart(
+                                  labels: [
+                                    for (final p in points) _shortLabel(p.date)
+                                  ],
+                                  series: _series(context, points),
+                                  emptyHint: context.tr('common.empty'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    end: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SectionHeader(title: context.tr('usage.byModel')),
+                        AsyncValueView(
+                          value: models,
+                          onRetry: () => ref.invalidate(usageModelsProvider),
+                          builder: (context, list) => _ModelTable(stats: list),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            SectionHeader(title: context.tr('usage.byModel')),
-            AsyncValueView(
-              value: models,
-              onRetry: () => ref.invalidate(usageModelsProvider),
-              builder: (context, list) => _ModelTable(stats: list),
             ),
           ],
         ),
