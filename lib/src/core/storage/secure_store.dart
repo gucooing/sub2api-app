@@ -1,40 +1,44 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// 令牌安全存储。按服务器 ID 分键保存,支持多后端各自维持登录态。
+/// 令牌安全存储。
 ///
-/// 键形如 `token.<serverId>.access` / `token.<serverId>.refresh`。
+/// 令牌按**账号 id** 分键保存,支持同一服务器多个账号各自维持登录态;
+/// 键形如 `token.<accountId>.access` / `token.<accountId>.refresh`。
+/// 键格式与旧版「按服务器 id」一致,故旧令牌可用同一组方法读取以做迁移。
+///
+/// 「记住账号/密码」凭据仍按**服务器 id** 分键(登录页选服务器即可预填,与账号无关)。
 class SecureStore {
   SecureStore([FlutterSecureStorage? storage])
       : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
-  String _accessKey(String serverId) => 'token.$serverId.access';
-  String _refreshKey(String serverId) => 'token.$serverId.refresh';
+  String _accessKey(String accountId) => 'token.$accountId.access';
+  String _refreshKey(String accountId) => 'token.$accountId.refresh';
   String _emailKey(String serverId) => 'cred.$serverId.email';
   String _passwordKey(String serverId) => 'cred.$serverId.password';
 
-  Future<String?> readAccessToken(String serverId) =>
-      _storage.read(key: _accessKey(serverId));
+  Future<String?> readAccessToken(String accountId) =>
+      _storage.read(key: _accessKey(accountId));
 
-  Future<String?> readRefreshToken(String serverId) =>
-      _storage.read(key: _refreshKey(serverId));
+  Future<String?> readRefreshToken(String accountId) =>
+      _storage.read(key: _refreshKey(accountId));
 
   Future<void> writeTokens(
-    String serverId, {
+    String accountId, {
     required String accessToken,
     String? refreshToken,
   }) async {
-    await _storage.write(key: _accessKey(serverId), value: accessToken);
+    await _storage.write(key: _accessKey(accountId), value: accessToken);
     if (refreshToken != null) {
-      await _storage.write(key: _refreshKey(serverId), value: refreshToken);
+      await _storage.write(key: _refreshKey(accountId), value: refreshToken);
     }
   }
 
-  Future<void> clearTokens(String serverId) async {
-    await _storage.delete(key: _accessKey(serverId));
-    await _storage.delete(key: _refreshKey(serverId));
+  Future<void> clearTokens(String accountId) async {
+    await _storage.delete(key: _accessKey(accountId));
+    await _storage.delete(key: _refreshKey(accountId));
   }
 
   // —— 登录页「记住账号/密码」凭据(按服务器分键) ——

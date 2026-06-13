@@ -23,6 +23,15 @@ class PrefKeys {
   /// 当前激活的服务器 ID。
   static const String activeServerId = 'pref.active_server_id';
 
+  /// 已登录账号列表(AccountProfile JSON 数组)。
+  static const String accounts = 'pref.accounts';
+
+  /// 当前激活的账号 ID。
+  static const String activeAccountId = 'pref.active_account_id';
+
+  /// 登录条款已同意的修订号前缀:`pref.agreement.<serverId>` = revision。
+  static const String agreementPrefix = 'pref.agreement.';
+
   /// 是否使用外置浏览器打开链接;false(默认)表示应用内浏览器。
   static const String externalBrowser = 'pref.external_browser';
 }
