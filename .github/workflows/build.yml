@@ -177,7 +177,9 @@ jobs:
       - name: 安装桌面构建依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev clang cmake pkg-config liblzma-dev file
+          # libsecret-1-dev / libjsoncpp-dev:flutter_secure_storage 的 Linux 原生依赖
+          sudo apt-get install -y ninja-build libgtk-3-dev clang cmake pkg-config \
+            liblzma-dev file libsecret-1-dev libjsoncpp-dev
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
