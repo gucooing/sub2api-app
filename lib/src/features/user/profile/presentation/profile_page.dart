@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:isolate';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -149,8 +148,8 @@ class ProfilePage extends ConsumerWidget {
     );
     if (picked == null || !context.mounted) return;
     final bytes = await picked.readAsBytes();
-    // 解码/压缩在后台 isolate 进行,避免卡 UI。
-    final dataUrl = await Isolate.run(() => _avatarToDataUrl(bytes));
+    // 解码/压缩在后台 isolate 进行(compute 仅发送 bytes,不捕获 UI 上下文)。
+    final dataUrl = await compute(_avatarToDataUrl, bytes);
     if (!context.mounted) return;
     if (dataUrl == null) {
       showAppToast(context, context.tr('profile.avatarFailed'), error: true);
