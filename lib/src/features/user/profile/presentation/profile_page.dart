@@ -12,6 +12,7 @@ import '../../../../core/session/session_controller.dart';
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/app_toast.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../providers/profile_providers.dart';
@@ -28,7 +29,9 @@ class ProfilePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('profile.title'))),
-      body: user == null
+      body: ResponsiveCenter(
+        maxWidth: 640,
+        child: user == null
           ? const SizedBox.shrink()
           : ListView(
               children: [
@@ -90,6 +93,7 @@ class ProfilePage extends ConsumerWidget {
                 const SizedBox(height: 16),
               ],
             ),
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/metric_trend_chart.dart';
 import '../../../../shared/widgets/progress_meter.dart';
 import '../../../../shared/widgets/section_header.dart';
@@ -42,7 +43,9 @@ class _KeyDetailPageState extends ConsumerState<KeyDetailPage> {
       appBar: AppBar(
         title: Text(context.tr('keys.detail')),
       ),
-      body: AsyncValueView(
+      body: ResponsiveCenter(
+        maxWidth: 840,
+        child: AsyncValueView(
         value: keys,
         onRetry: () => ref.invalidate(keysListProvider),
         builder: (context, list) {
@@ -59,6 +62,7 @@ class _KeyDetailPageState extends ConsumerState<KeyDetailPage> {
             onMetric: (m) => setState(() => _metric = m),
           );
         },
+      ),
       ),
     );
   }

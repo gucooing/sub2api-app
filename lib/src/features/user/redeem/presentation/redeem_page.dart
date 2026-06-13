@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/session/session_controller.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../data/redeem_api.dart';
 import '../providers/redeem_providers.dart';
 
@@ -69,7 +70,9 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('redeem.title'))),
-      body: Column(
+      body: ResponsiveCenter(
+        maxWidth: 640,
+        child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -162,6 +165,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../../../../shared/widgets/token_composition.dart';
@@ -30,10 +31,13 @@ class LogDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('usage.recordDetail'))),
-      body: AsyncValueView(
-        value: log,
-        onRetry: () => ref.invalidate(usageLogDetailProvider(logId)),
-        builder: (context, l) => _Body(log: l),
+      body: ResponsiveCenter(
+        maxWidth: 720,
+        child: AsyncValueView(
+          value: log,
+          onRetry: () => ref.invalidate(usageLogDetailProvider(logId)),
+          builder: (context, l) => _Body(log: l),
+        ),
       ),
     );
   }

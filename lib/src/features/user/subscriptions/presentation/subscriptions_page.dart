@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/widgets/responsive.dart';
 import '../data/subscriptions_api.dart';
 import '../providers/subscriptions_providers.dart';
 
@@ -28,7 +29,9 @@ class SubscriptionsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: subscriptionsAsync.when(
+      body: ResponsiveCenter(
+        maxWidth: 720,
+        child: subscriptionsAsync.when(
         data: (subscriptions) {
           if (subscriptions.isEmpty) {
             return Center(
@@ -89,6 +92,7 @@ class SubscriptionsPage extends ConsumerWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
