@@ -68,8 +68,10 @@ class MetricTrendChart extends StatelessWidget {
         titlesData: FlTitlesData(
           topTitles:
               const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          // 右侧预留少量空白,避免 x 轴最后一个标签被边缘裁切(左侧已有 y 轴占位)。
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+          ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -90,8 +92,9 @@ class MetricTrendChart extends StatelessWidget {
               getTitlesWidget: (value, meta) {
                 final i = value.toInt();
                 if (i < 0 || i >= points.length) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 4,
                   child: Text(
                     points[i].label,
                     style: Theme.of(context).textTheme.labelSmall,

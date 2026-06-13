@@ -122,10 +122,13 @@ class _MultiSeriesTrendChartState extends State<MultiSeriesTrendChart> {
               titlesData: FlTitlesData(
                 topTitles:
                     const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                leftTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                // 左右各预留一点空白,让 x 轴首尾标签不被图表边缘裁切。
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+                ),
+                leftTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: true, reservedSize: 16),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -133,8 +136,9 @@ class _MultiSeriesTrendChartState extends State<MultiSeriesTrendChart> {
                     getTitlesWidget: (value, meta) {
                       final i = value.toInt();
                       if (i < 0 || i >= n) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                      return SideTitleWidget(
+                        meta: meta,
+                        space: 4,
                         child: Text(
                           widget.labels[i],
                           style: theme.textTheme.labelSmall,
