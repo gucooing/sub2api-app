@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../i18n/app_localizations.dart';
-import '../../../../shared/widgets/markdown_text.dart';
+import '../../../../shared/format/formatters.dart';
+import '../../../../shared/widgets/async_value_view.dart';
+import '../../../../shared/widgets/empty_state.dart';
 import '../data/announcements_api.dart';
 import '../providers/announcements_providers.dart';
+import 'announcement_detail_page.dart';
+import 'announcement_visuals.dart';
 
-/// 公告列表页面。
+/// 公告列表页面(Pro 风格卡片;点击进入沉浸详情页)。
 class AnnouncementsPage extends ConsumerWidget {
   const AnnouncementsPage({super.key});
 
@@ -25,193 +29,138 @@ class AnnouncementsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: announcementsAsync.when(
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(announcementsListProvider);
+          await ref.read(announcementsListProvider.future);
+        },
+        child: AsyncValueView(
+          value: announcementsAsync,
+          onRetry: () => ref.invalidate(announcementsListProvider),
+          builder: (context, items) {
+            if (items.isEmpty) {
+              return ListView(
                 children: [
-                  Icon(
-                    Icons.inbox_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.tr('announcements.empty'),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: EmptyState(
+                      icon: Icons.campaign_outlined,
+                      message: context.tr('announcements.empty'),
+                    ),
                   ),
                 ],
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+              itemCount: items.length,
+              itemBuilder: (context, index) => _AnnouncementCard(
+                announcement: items[index],
+                onTap: () => context.push(
+                  '/announcements/${items[index].id}',
+                  extra: items[index],
+                ),
               ),
             );
-          }
-          return ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) => _AnnouncementTile(
-              announcement: items[index],
-              onTap: () => _showDetail(context, ref, items[index]),
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: Theme.of(context).colorScheme.error),
-              const SizedBox(height: 16),
-              Text(
-                error is ApiException
-                    ? error.serverMessage ?? context.tr('common.unknownError')
-                    : context.tr('common.unknownError'),
-              ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () => ref.invalidate(announcementsListProvider),
-                icon: const Icon(Icons.refresh),
-                label: Text(context.tr('common.retry')),
-              ),
-            ],
-          ),
+          },
         ),
-      ),
-    );
-  }
-
-  void _showDetail(
-      BuildContext context, WidgetRef ref, UserAnnouncement announcement) {
-    showDialog(
-      context: context,
-      builder: (context) => _AnnouncementDetailDialog(
-        announcement: announcement,
-        onClose: () {
-          // 标记为已读
-          if (!announcement.isRead) {
-            ref
-                .read(announcementsApiProvider)
-                .markRead(announcement.id)
-                .then((_) => ref.invalidate(announcementsListProvider));
-          }
-        },
       ),
     );
   }
 }
 
-/// 公告列表项。
-class _AnnouncementTile extends StatelessWidget {
-  const _AnnouncementTile({
-    required this.announcement,
-    required this.onTap,
-  });
+/// 公告列表卡片。
+class _AnnouncementCard extends StatelessWidget {
+  const _AnnouncementCard({required this.announcement, required this.onTap});
 
   final UserAnnouncement announcement;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: announcement.isRead
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : Theme.of(context).colorScheme.primaryContainer,
-        child: Icon(
-          _getIcon(),
-          color: announcement.isRead
-              ? Theme.of(context).colorScheme.onSurfaceVariant
-              : Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
-      ),
-      title: Row(
-        children: [
-          Expanded(child: Text(announcement.title)),
-          if (!announcement.isRead)
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
+    final scheme = Theme.of(context).colorScheme;
+    final tone = announcementTone(announcement.type);
+    final color = statusToneColor(tone);
+    final unread = !announcement.isRead;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(announcementIcon(announcement.type),
+                    color: color, size: 20),
               ),
-            ),
-        ],
-      ),
-      subtitle: announcement.createdAt != null
-          ? Text(_formatDateTime(announcement.createdAt!))
-          : null,
-      onTap: onTap,
-    );
-  }
-
-  IconData _getIcon() {
-    switch (announcement.type) {
-      case 'warning':
-        return Icons.warning;
-      case 'error':
-        return Icons.error;
-      case 'success':
-        return Icons.check_circle;
-      default:
-        return Icons.info;
-    }
-  }
-
-  String _formatDateTime(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-/// 公告详情对话框。
-class _AnnouncementDetailDialog extends StatelessWidget {
-  const _AnnouncementDetailDialog({
-    required this.announcement,
-    required this.onClose,
-  });
-
-  final UserAnnouncement announcement;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(announcement.title),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (announcement.createdAt != null) ...[
-              Text(
-                _formatDateTime(announcement.createdAt!),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            announcement.title,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight:
+                                      unread ? FontWeight.w700 : FontWeight.w500,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (unread)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(left: 6, top: 4),
+                            decoration: BoxDecoration(
+                              color: scheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      announcement.content,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    if (announcement.createdAt != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        formatDateTime(announcement.createdAt!),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
             ],
-            MarkdownText(announcement.content),
-          ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            onClose();
-          },
-          child: Text(context.tr('common.close')),
-        ),
-      ],
     );
-  }
-
-  String _formatDateTime(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }

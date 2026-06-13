@@ -17,6 +17,8 @@ import '../../features/user/profile/presentation/bindings_page.dart';
 import '../../features/user/profile/presentation/profile_page.dart';
 import '../../features/user/profile/presentation/totp_manage_page.dart';
 import '../../features/user/announcements/presentation/announcements_page.dart';
+import '../../features/user/announcements/presentation/announcement_detail_page.dart';
+import '../../features/user/announcements/data/announcements_api.dart';
 import '../../features/user/redeem/presentation/redeem_page.dart';
 import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
@@ -111,6 +113,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/announcements',
         builder: (context, state) => const AnnouncementsPage(),
+      ),
+      GoRoute(
+        path: '/announcements/:id',
+        builder: (context, state) {
+          final extra = state.extra;
+          // 详情数据通过 extra 传入(列表已持有);无 extra(深链)时回退到列表。
+          if (extra is UserAnnouncement) {
+            return AnnouncementDetailPage(announcement: extra);
+          }
+          return const AnnouncementsPage();
+        },
       ),
       // 可选开启的功能页面(占位,完整页见 P5–P7)。入口仅在管理员开启对应开关时展示。
       GoRoute(
