@@ -7,6 +7,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/session/auth_api.dart';
 import '../../core/session/session_controller.dart';
 import '../../i18n/app_localizations.dart';
+import '../../shared/widgets/app_toast.dart';
 
 /// 注册页。字段按服务器公开设置动态展示:
 /// 邮箱验证码(email_verify_enabled)、优惠码、邀请码;注册成功即登录。
@@ -50,6 +51,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final res =
           await ref.read(authApiProvider).sendVerifyCode(_email.text.trim());
       final countdown = (res['countdown'] as num?)?.toInt() ?? 60;
+      if (mounted) showAppToast(context, context.tr('auth.verifyCodeSent'));
       setState(() => _resendIn = countdown);
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (t) {

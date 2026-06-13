@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../data/profile_api.dart';
 import '../providers/profile_providers.dart';
 
@@ -239,9 +242,27 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
   bool _isLoading = false;
   String? _errorMessage;
   int _step = 1; // 1=验证身份, 2=扫码+验证动态码
+  int _resendIn = 0;
+  Timer? _resendTimer;
+
+  void _startResendCountdown([int seconds = 60]) {
+    _resendTimer?.cancel();
+    setState(() => _resendIn = seconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() {
+        _resendIn -= 1;
+        if (_resendIn <= 0) t.cancel();
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _passwordController.dispose();
     _emailCodeController.dispose();
     _totpCodeController.dispose();
@@ -257,9 +278,8 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
     try {
       await ref.read(profileApiProvider).sendTotpVerifyCode();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('auth.verifyCodeSent'))),
-        );
+        showAppToast(context, context.tr('auth.verifyCodeSent'));
+        _startResendCountdown();
       }
     } catch (e) {
       setState(() {
@@ -380,8 +400,12 @@ class _EnableTotpDialogState extends ConsumerState<_EnableTotpDialog> {
               labelText: context.tr('auth.verifyCode'),
               border: const OutlineInputBorder(),
               suffixIcon: TextButton(
-                onPressed: _isLoading ? null : _sendEmailCode,
-                child: Text(context.tr('auth.sendCode')),
+                onPressed:
+                    (_isLoading || _resendIn > 0) ? null : _sendEmailCode,
+                child: Text(_resendIn > 0
+                    ? context.tr('auth.resendIn',
+                        params: {'seconds': '$_resendIn'})
+                    : context.tr('auth.sendCode')),
               ),
               suffixIconConstraints:
                   const BoxConstraints(minWidth: 0, minHeight: 0),
@@ -503,9 +527,27 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
 
   bool _isLoading = false;
   String? _errorMessage;
+  int _resendIn = 0;
+  Timer? _resendTimer;
+
+  void _startResendCountdown([int seconds = 60]) {
+    _resendTimer?.cancel();
+    setState(() => _resendIn = seconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() {
+        _resendIn -= 1;
+        if (_resendIn <= 0) t.cancel();
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _passwordController.dispose();
     _emailCodeController.dispose();
     super.dispose();
@@ -520,9 +562,8 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
     try {
       await ref.read(profileApiProvider).sendTotpVerifyCode();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('auth.verifyCodeSent'))),
-        );
+        showAppToast(context, context.tr('auth.verifyCodeSent'));
+        _startResendCountdown();
       }
     } catch (e) {
       setState(() {
@@ -585,8 +626,13 @@ class _DisableTotpDialogState extends ConsumerState<_DisableTotpDialog> {
                   labelText: context.tr('auth.verifyCode'),
                   border: const OutlineInputBorder(),
                   suffixIcon: TextButton(
-                    onPressed: _isLoading ? null : _sendEmailCode,
-                    child: Text(context.tr('auth.sendCode')),
+                    onPressed: (_isLoading || _resendIn > 0)
+                        ? null
+                        : _sendEmailCode,
+                    child: Text(_resendIn > 0
+                        ? context.tr('auth.resendIn',
+                            params: {'seconds': '$_resendIn'})
+                        : context.tr('auth.sendCode')),
                   ),
                   suffixIconConstraints:
                       const BoxConstraints(minWidth: 0, minHeight: 0),
