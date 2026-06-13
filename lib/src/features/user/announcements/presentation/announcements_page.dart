@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../i18n/app_localizations.dart';
+import '../../../../shared/widgets/markdown_text.dart';
 import '../data/announcements_api.dart';
 import '../providers/announcements_providers.dart';
 
@@ -193,7 +194,7 @@ class _AnnouncementDetailDialog extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
-            Text(announcement.content),
+            MarkdownText(announcement.content),
           ],
         ),
       ),

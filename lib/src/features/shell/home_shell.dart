@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
+import '../../shared/widgets/markdown_text.dart';
 import '../user/announcements/providers/announcements_providers.dart';
 
 /// 登录后的主导航壳:底部导航 总览/密钥/用量/我的。
@@ -54,7 +55,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ],
         ),
         content: SingleChildScrollView(
-          child: Text(announcement.content),
+          child: MarkdownText(announcement.content),
         ),
         actions: [
           TextButton(
