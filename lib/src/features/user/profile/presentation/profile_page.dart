@@ -291,11 +291,18 @@ class _BalanceNotifyTile extends ConsumerWidget {
         ),
         if (user.balanceNotifyEnabled)
           ListTile(
-            contentPadding: const EdgeInsets.only(left: 72, right: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             title: Text(context.tr('profile.balanceNotifyThreshold')),
-            trailing: Text(
-              threshold != null ? '\$${threshold.toStringAsFixed(2)}' : '2',
-              style: Theme.of(context).textTheme.titleSmall,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  threshold != null ? '\$${threshold.toStringAsFixed(2)}' : '—',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.edit_outlined, size: 18),
+              ],
             ),
             onTap: () => _editThreshold(context, ref, threshold),
           ),
@@ -339,21 +346,21 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // 标签靠左、值靠右(space-between);窄屏值过长时换行右对齐。
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 96,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
         ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             value,
+            textAlign: TextAlign.right,
             style: emphasize
                 ? Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: scheme.primary,
