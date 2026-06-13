@@ -38,6 +38,8 @@ dependencies:
     sdk: flutter
   flutter_svg: ^2.3.0
   gpt_markdown: ^1.1.7
+  image_picker: ^1.2.2
+  image: ^4.9.1
 
 dev_dependencies:
   flutter_test:
@@ -47,8 +49,6 @@ dev_dependencies:
   # 图标生成(dart run flutter_launcher_icons)
   flutter_launcher_icons: ^0.14.4
   # tool/prepare_icon.dart 使用的图像处理库
-  image: ^4.9.1
-
 flutter:
   uses-material-design: true
 

@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:isolate';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/session/auth_models.dart';
 import '../../../../core/session/session_controller.dart';
@@ -105,24 +111,80 @@ class ProfilePage extends ConsumerWidget {
 
   Future<void> _editAvatar(
       BuildContext context, WidgetRef ref, String current) async {
-    final value = await _promptText(
-      context,
-      title: context.tr('profile.editAvatar'),
-      label: context.tr('profile.avatarUrlHint'),
-      initial: current,
-      keyboardType: TextInputType.url,
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(ctx.tr('profile.avatarUpload')),
+              onTap: () => Navigator.of(ctx).pop('pick'),
+            ),
+            if (current.isNotEmpty)
+              ListTile(
+                leading: Icon(Icons.delete_outline,
+                    color: Theme.of(ctx).colorScheme.error),
+                title: Text(ctx.tr('profile.avatarDelete')),
+                onTap: () => Navigator.of(ctx).pop('delete'),
+              ),
+          ],
+        ),
+      ),
     );
-    if (value == null) return;
-    final trimmed = value.trim();
+    if (action == null || !context.mounted) return;
+
+    if (action == 'delete') {
+      await _save(context, ref,
+          () => ref.read(profileApiProvider).updateProfile(avatarUrl: null));
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 90,
+    );
+    if (picked == null || !context.mounted) return;
+    final bytes = await picked.readAsBytes();
+    // 解码/压缩在后台 isolate 进行,避免卡 UI。
+    final dataUrl = await Isolate.run(() => _avatarToDataUrl(bytes));
     if (!context.mounted) return;
-    await _save(
-      context,
-      ref,
-      () => ref
-          .read(profileApiProvider)
-          .updateProfile(avatarUrl: trimmed.isEmpty ? null : trimmed),
-    );
+    if (dataUrl == null) {
+      showAppToast(context, context.tr('profile.avatarFailed'), error: true);
+      return;
+    }
+    await _save(context, ref,
+        () => ref.read(profileApiProvider).updateProfile(avatarUrl: dataUrl));
   }
+}
+
+/// 将图片字节压缩到 ~20KB 内并编码为 data URL(对齐 web 头像策略:不上传文件,
+/// 直接把压缩后的 base64 存入 avatar_url)。
+String? _avatarToDataUrl(Uint8List bytes) {
+  const targetBytes = 20 * 1024;
+  const scales = [1.0, 0.85, 0.7, 0.55, 0.45, 0.36];
+  const qualities = [88, 78, 68, 58, 48, 38];
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return null;
+  List<int>? best;
+  for (final scale in scales) {
+    final resized = scale == 1.0
+        ? decoded
+        : img.copyResize(decoded,
+            width: (decoded.width * scale).round().clamp(1, decoded.width));
+    for (final q in qualities) {
+      final jpg = img.encodeJpg(resized, quality: q);
+      best = jpg;
+      if (jpg.length <= targetBytes) {
+        return 'data:image/jpeg;base64,${base64Encode(jpg)}';
+      }
+    }
+  }
+  // 兜底:返回最小的一版(可能略超目标)。
+  return best == null ? null : 'data:image/jpeg;base64,${base64Encode(best)}';
 }
 
 /// 执行一次资料更新并刷新会话用户,成功后顶部 toast 提示。
