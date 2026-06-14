@@ -226,14 +226,12 @@ class _SearchBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Badge(
-              isLabelVisible: filterCount > 0,
-              label: Text('$filterCount'),
-              child: OutlinedButton.icon(
-                onPressed: onOpenFilters,
-                icon: const Icon(Icons.tune, size: 18),
-                label: Text(context.tr('adminAccounts.filters')),
-              ),
+            OutlinedButton.icon(
+              onPressed: onOpenFilters,
+              icon: const Icon(Icons.tune, size: 18),
+              label: Text(filterCount > 0
+                  ? '${context.tr('adminAccounts.filters')} · $filterCount'
+                  : context.tr('adminAccounts.filters')),
             ),
           ],
         ),
