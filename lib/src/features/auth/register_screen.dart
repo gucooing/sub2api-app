@@ -114,10 +114,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
       if (mounted) context.go('/dashboard');
     } on ApiException catch (e) {
+      // 兜底:服务器要求邮箱验证但本地公开设置未识别(加载滞后/缓存)导致直接提交,
+      // 后端返回 EMAIL_VERIFY_REQUIRED → 自动进入验证码步骤并发送验证码,
+      // 避免「验证码已下发却没有输入框」。
+      if (!needVerifyCode &&
+          mounted &&
+          (e.reason == 'EMAIL_VERIFY_REQUIRED' || e.statusCode == 400) &&
+          _isEmailVerifyRequired(e)) {
+        setState(() {
+          _busy = false;
+          _step = 1;
+          _error = null;
+        });
+        await _sendCode();
+        return;
+      }
       if (mounted) setState(() => _error = e.localizedMessage(context));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// 是否为「需要邮箱验证码」类错误(优先看机器码 reason,兼容旧后端按消息文本判断)。
+  bool _isEmailVerifyRequired(ApiException e) {
+    if (e.reason == 'EMAIL_VERIFY_REQUIRED') return true;
+    final msg = e.serverMessage?.toLowerCase() ?? '';
+    return msg.contains('verif') && (msg.contains('email') || msg.contains('邮'));
   }
 
   @override
@@ -314,6 +336,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: TextFormField(
                 controller: _code,
                 enabled: !_busy,
+                autofocus: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: context.tr('auth.verifyCode'),

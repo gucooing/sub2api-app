@@ -24,7 +24,7 @@ class ServerState {
 class ServerStore extends Notifier<ServerState> {
   static const ServerProfile _builtIn = ServerProfile(
     id: 'default',
-    name: 'Sub2API',
+    name: 'Codex Api',
     baseUrl: AppConfig.defaultBaseUrl,
     builtIn: true,
   );

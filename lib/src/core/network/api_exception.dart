@@ -13,6 +13,7 @@ class ApiException implements Exception {
     this.serverMessage,
     this.statusCode,
     this.businessCode,
+    this.reason,
   });
 
   final ApiExceptionKind kind;
@@ -25,6 +26,9 @@ class ApiException implements Exception {
 
   /// 后端业务错误码(封套 code 非 0,或错误体内的 code 字段)。
   final Object? businessCode;
+
+  /// 后端错误体的 `reason` 机器码(如 `EMAIL_VERIFY_REQUIRED`),用于按类型分支处理。
+  final String? reason;
 
   bool get isUnauthorized => statusCode == 401;
 
@@ -66,17 +70,21 @@ class ApiException implements Exception {
         final body = res?.data;
         String? message;
         Object? code;
+        String? reason;
         if (body is Map) {
-          // 后端错误体常见形态:{code,message} 或 {detail}
+          // 后端错误体常见形态:{code,message,reason} 或 {detail}
           final m = body['message'] ?? body['detail'];
           if (m is String && m.isNotEmpty) message = m;
           code = body['code'];
+          final r = body['reason'];
+          if (r is String && r.isNotEmpty) reason = r;
         }
         return ApiException(
           kind: ApiExceptionKind.http,
           statusCode: res?.statusCode,
           businessCode: code,
           serverMessage: message,
+          reason: reason,
         );
       case DioExceptionType.connectionError:
       case DioExceptionType.badCertificate:
