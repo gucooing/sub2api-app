@@ -6,7 +6,6 @@ import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_retry.dart';
-import '../../../../shared/widgets/kpi_tile.dart';
 import '../../../../shared/widgets/multi_series_trend_chart.dart';
 import '../../../../shared/widgets/progress_meter.dart';
 import '../../../../shared/widgets/responsive.dart';
@@ -67,7 +66,7 @@ class _Content extends ConsumerWidget {
               _Hero(stats: stats),
               const SizedBox(height: 16),
               SectionHeader(title: context.tr('admin.dashboard.kpis')),
-              _kpiGrid(context),
+              _MetricsCard(stats: stats),
               const SizedBox(height: 16),
               SectionHeader(title: context.tr('admin.dashboard.accountHealth')),
               _AccountHealthCard(stats: stats),
@@ -80,55 +79,117 @@ class _Content extends ConsumerWidget {
       ],
     );
   }
+}
 
-  Widget _kpiGrid(BuildContext context) {
-    return ResponsiveGrid(
-      minTileWidth: 165,
-      maxColumns: 4,
-      children: [
-        KpiTile(
-          label: context.tr('admin.dashboard.totalUsers'),
-          value: formatInt(stats.totalUsers),
-          icon: Icons.group_outlined,
+/// 高密度核心指标:单卡内多列紧凑排布(值 + 小标签),信息密度优先。
+class _MetricsCard extends StatelessWidget {
+  const _MetricsCard({required this.stats});
+
+  final AdminDashboardStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = <(String, String, Color?)>[
+      (context.tr('admin.dashboard.totalUsers'), formatInt(stats.totalUsers),
+          null),
+      (
+        context.tr('admin.dashboard.todayNewUsers'),
+        '+${formatInt(stats.todayNewUsers)}',
+        AppColors.brandGreen
+      ),
+      (context.tr('admin.dashboard.activeUsers'), formatInt(stats.activeUsers),
+          null),
+      (
+        context.tr('admin.dashboard.apiKeys'),
+        '${formatInt(stats.activeApiKeys)}/${formatInt(stats.totalApiKeys)}',
+        null
+      ),
+      (context.tr('admin.dashboard.totalAccounts'),
+          formatInt(stats.totalAccounts), null),
+      (
+        context.tr('admin.dashboard.todayRequests'),
+        formatCompact(stats.todayRequests),
+        null
+      ),
+      (
+        context.tr('admin.dashboard.todayCost'),
+        formatCost(stats.todayActualCost),
+        AppColors.brandBlue
+      ),
+      (context.tr('admin.dashboard.totalCost'),
+          formatCost(stats.totalActualCost), null),
+      (context.tr('admin.dashboard.rpm'), stats.rpm.toStringAsFixed(1), null),
+      (
+        context.tr('admin.dashboard.avgLatency'),
+        '${stats.averageDurationMs.round()} ms',
+        null
+      ),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            // 紧凑:每格约 110px,手机 3 列、宽屏更多。
+            final cols = (c.maxWidth / 112).floor().clamp(2, 6);
+            final cellW = c.maxWidth / cols;
+            return Wrap(
+              children: [
+                for (final m in metrics)
+                  SizedBox(
+                    width: cellW,
+                    child: _MetricCell(
+                      label: m.$1,
+                      value: m.$2,
+                      accent: m.$3,
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
-        KpiTile(
-          label: context.tr('admin.dashboard.todayNewUsers'),
-          value: '+${formatInt(stats.todayNewUsers)}',
-          icon: Icons.person_add_alt_outlined,
-          accent: AppColors.brandGreen,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.activeUsers'),
-          value: formatInt(stats.activeUsers),
-          icon: Icons.bolt_outlined,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.apiKeys'),
-          value: '${formatInt(stats.activeApiKeys)}/${formatInt(stats.totalApiKeys)}',
-          icon: Icons.vpn_key_outlined,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.todayRequests'),
-          value: formatCompact(stats.todayRequests),
-          icon: Icons.swap_vert_outlined,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.todayCost'),
-          value: formatCost(stats.todayActualCost),
-          icon: Icons.payments_outlined,
-          accent: AppColors.brandBlue,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.rpm'),
-          value: stats.rpm.toStringAsFixed(1),
-          icon: Icons.speed_outlined,
-        ),
-        KpiTile(
-          label: context.tr('admin.dashboard.avgLatency'),
-          value: '${stats.averageDurationMs.round()} ms',
-          icon: Icons.timer_outlined,
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _MetricCell extends StatelessWidget {
+  const _MetricCell({required this.label, required this.value, this.accent});
+
+  final String label;
+  final String value;
+  final Color? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: accent,
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }
