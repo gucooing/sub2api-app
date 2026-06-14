@@ -46,4 +46,43 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('发送验证码行:Row(Expanded TextField + 文本按钮) 用 ConstrainedBox 限宽不报错',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 150),
+                      child: SizedBox(
+                        height: 56,
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          child: const Text('发送验证码'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

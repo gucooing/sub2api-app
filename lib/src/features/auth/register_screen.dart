@@ -348,15 +348,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(
-              height: 56,
-              child: OutlinedButton(
-                onPressed: (_busy || _resendIn > 0) ? null : _sendCode,
-                child: Text(
-                  _resendIn > 0
-                      ? context.tr('auth.resendIn',
-                          params: {'seconds': '$_resendIn'})
-                      : context.tr('auth.sendCode'),
+            // 含 Expanded 的 Row 测量非弹性子项时会传入无限宽,文本按钮会因此崩溃;
+            // 用 ConstrainedBox 把入参宽度收敛为有限值,按钮再按文案自适应。
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 150),
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: (_busy || _resendIn > 0) ? null : _sendCode,
+                  child: Text(
+                    _resendIn > 0
+                        ? context.tr('auth.resendIn',
+                            params: {'seconds': '$_resendIn'})
+                        : context.tr('auth.sendCode'),
+                  ),
                 ),
               ),
             ),
