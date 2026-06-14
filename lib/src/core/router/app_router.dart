@@ -213,6 +213,57 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/admin/settings',
         builder: (context, state) => const AdminSettingsPage(),
       ),
+      // 其余管理模块(对照 web 侧边栏);未实装先占位,逐步替换为真实页面。
+      GoRoute(
+        path: '/admin/ops',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.ops'),
+      ),
+      GoRoute(
+        path: '/admin/channels',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.channels'),
+      ),
+      GoRoute(
+        path: '/admin/subscriptions',
+        builder: (context, state) => const ModulePlaceholderScreen(
+            titleKey: 'admin.modules.subscriptions'),
+      ),
+      GoRoute(
+        path: '/admin/announcements-admin',
+        builder: (context, state) => const ModulePlaceholderScreen(
+            titleKey: 'admin.modules.announcements'),
+      ),
+      GoRoute(
+        path: '/admin/proxies',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.proxies'),
+      ),
+      GoRoute(
+        path: '/admin/risk-control',
+        builder: (context, state) => const ModulePlaceholderScreen(
+            titleKey: 'admin.modules.riskControl'),
+      ),
+      GoRoute(
+        path: '/admin/promo-codes',
+        builder: (context, state) => const ModulePlaceholderScreen(
+            titleKey: 'admin.modules.promoCodes'),
+      ),
+      GoRoute(
+        path: '/admin/affiliates',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.affiliates'),
+      ),
+      GoRoute(
+        path: '/admin/orders',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.orders'),
+      ),
+      GoRoute(
+        path: '/admin/usage',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.modules.usage'),
+      ),
       // 登录后的主壳:底部导航四个分支
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

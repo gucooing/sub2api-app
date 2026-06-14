@@ -86,6 +86,21 @@
     "monitor": {
       "title": "Channel monitor"
     },
+    "modules": {
+      "ops": "Ops monitoring",
+      "channels": "Channels",
+      "channelMonitor": "Channel monitor",
+      "subscriptions": "Subscriptions",
+      "announcements": "Announcements",
+      "proxies": "Proxy IPs",
+      "riskControl": "Risk control",
+      "redeem": "Redeem codes",
+      "promoCodes": "Promo codes",
+      "affiliates": "Affiliates",
+      "orders": "Orders",
+      "usage": "Usage logs",
+      "settings": "System settings"
+    },
     "settings": {
       "title": "System settings",
       "subtitle": "Server-side settings",

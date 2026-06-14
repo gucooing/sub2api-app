@@ -17,6 +17,7 @@ import '../../../../shared/widgets/status_pill.dart';
 import '../../../../shared/widgets/token_trend_series.dart';
 import '../../../user/features/data/user_features.dart';
 import '../../../user/features/presentation/custom_page_launcher.dart';
+import '../../shared/admin_modules.dart';
 import '../data/admin_dashboard_api.dart';
 import '../providers/admin_dashboard_providers.dart';
 
@@ -412,18 +413,8 @@ class _QuickAccess extends ConsumerWidget {
         : visibleCustomPages(settings, isAdmin: true);
 
     final items = <_QaItem>[
-      _QaItem(Icons.cloud_outlined, context.tr('admin.nav.accounts'),
-          () => context.go('/admin/accounts')),
-      _QaItem(Icons.group_outlined, context.tr('admin.nav.users'),
-          () => context.go('/admin/users')),
-      _QaItem(Icons.workspaces_outline, context.tr('admin.nav.groups'),
-          () => context.go('/admin/groups')),
-      _QaItem(Icons.card_giftcard_outlined, context.tr('admin.redeem.title'),
-          () => context.push('/admin/redeem')),
-      _QaItem(Icons.monitor_heart_outlined, context.tr('admin.monitor.title'),
-          () => context.push('/admin/monitor')),
-      _QaItem(Icons.tune_outlined, context.tr('admin.settings.title'),
-          () => context.push('/admin/settings')),
+      for (final m in visibleAdminModules(settings))
+        _QaItem(m.icon, context.tr(m.labelKey), () => context.push(m.route)),
       for (final p in customPages)
         _QaItem(Icons.public_outlined, p.label,
             () => openCustomPage(context, ref, p)),

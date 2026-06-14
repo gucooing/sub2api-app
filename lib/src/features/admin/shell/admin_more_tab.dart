@@ -12,6 +12,7 @@ import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/responsive.dart';
 import '../../user/features/data/user_features.dart';
 import '../../user/features/presentation/custom_page_launcher.dart';
+import '../shared/admin_modules.dart';
 
 /// 管理端「更多」:站点信息(对应用户端用户信息)+ 其余管理模块入口 +
 /// 自定义页面 + 切回用户端 + 设置 + 退出登录。
@@ -95,25 +96,13 @@ class AdminMoreTab extends ConsumerWidget {
             ),
           ),
           _GroupHeader(context.tr('admin.nav.more')),
-          ListTile(
-            leading: const Icon(Icons.card_giftcard_outlined),
-            title: Text(context.tr('admin.redeem.title')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/admin/redeem'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.monitor_heart_outlined),
-            title: Text(context.tr('admin.monitor.title')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/admin/monitor'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.tune_outlined),
-            title: Text(context.tr('admin.settings.title')),
-            subtitle: Text(context.tr('admin.settings.subtitle')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/admin/settings'),
-          ),
+          for (final m in visibleAdminModules(settings))
+            ListTile(
+              leading: Icon(m.icon),
+              title: Text(context.tr(m.labelKey)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(m.route),
+            ),
           // 管理员配置的自定义页面(浏览器中打开)。
           if (customPages.isNotEmpty) ...[
             const Divider(),
