@@ -7,6 +7,7 @@ import '../../features/auth/register_screen.dart';
 import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
 import '../../features/admin/accounts/presentation/accounts_list_page.dart';
 import '../../features/admin/accounts/presentation/accounts_detail_page.dart';
+import '../../features/admin/accounts/presentation/account_edit_page.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/shared/admin_tab_placeholder.dart';
@@ -223,6 +224,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       // 其余管理模块(对照 web 侧边栏);未实装先占位,逐步替换为真实页面。
+      GoRoute(
+        path: '/admin/accounts/new',
+        builder: (context, state) => const AccountEditPage(),
+      ),
+      GoRoute(
+        path: '/admin/accounts/:id/edit',
+        builder: (context, state) => AccountEditPage(
+          accountId: int.tryParse(state.pathParameters['id'] ?? ''),
+        ),
+      ),
       GoRoute(
         path: '/admin/accounts/:id',
         builder: (context, state) => AccountDetailPage(

@@ -22,6 +22,9 @@ class AdminAccountsState {
     this.search = '',
     this.status = '',
     this.platform = '',
+    this.type = '',
+    this.group = '',
+    this.privacyMode = '',
   });
 
   final List<AdminAccount> items;
@@ -35,6 +38,13 @@ class AdminAccountsState {
   final String search;
   final String status;
   final String platform;
+  final String type;
+  final String group;
+  final String privacyMode;
+
+  /// 已启用的非空筛选数量(用于「筛选」按钮角标)。
+  int get activeFilterCount =>
+      [status, platform, type, group, privacyMode].where((s) => s.isNotEmpty).length;
 
   AdminAccountsState copyWith({
     List<AdminAccount>? items,
@@ -48,6 +58,9 @@ class AdminAccountsState {
     String? search,
     String? status,
     String? platform,
+    String? type,
+    String? group,
+    String? privacyMode,
   }) =>
       AdminAccountsState(
         items: items ?? this.items,
@@ -61,6 +74,9 @@ class AdminAccountsState {
         search: search ?? this.search,
         status: status ?? this.status,
         platform: platform ?? this.platform,
+        type: type ?? this.type,
+        group: group ?? this.group,
+        privacyMode: privacyMode ?? this.privacyMode,
       );
 
   static const _sentinel = Object();
@@ -81,7 +97,10 @@ class AdminAccountsController extends Notifier<AdminAccountsState> {
       final res = await _api.list(
         page: 1,
         platform: state.platform,
+        type: state.type,
         status: state.status,
+        group: state.group,
+        privacyMode: state.privacyMode,
         search: state.search,
       );
       final cost = await _safeCost(res.items);
@@ -116,7 +135,10 @@ class AdminAccountsController extends Notifier<AdminAccountsState> {
       final res = await _api.list(
         page: next,
         platform: state.platform,
+        type: state.type,
         status: state.status,
+        group: state.group,
+        privacyMode: state.privacyMode,
         search: state.search,
       );
       final cost = await _safeCost(res.items);
@@ -138,15 +160,27 @@ class AdminAccountsController extends Notifier<AdminAccountsState> {
     _loadFirst();
   }
 
-  void setStatus(String v) {
-    if (v == state.status) return;
-    state = state.copyWith(status: v);
+  /// 一次性应用「更多筛选」弹层的选择。
+  void applyFilters({
+    required String status,
+    required String platform,
+    required String type,
+    required String group,
+    required String privacyMode,
+  }) {
+    state = state.copyWith(
+      status: status,
+      platform: platform,
+      type: type,
+      group: group,
+      privacyMode: privacyMode,
+    );
     _loadFirst();
   }
 
-  void setPlatform(String v) {
-    if (v == state.platform) return;
-    state = state.copyWith(platform: v);
+  void clearFilters() {
+    state = state.copyWith(
+        status: '', platform: '', type: '', group: '', privacyMode: '');
     _loadFirst();
   }
 }
@@ -158,4 +192,10 @@ final adminAccountsControllerProvider = NotifierProvider.autoDispose<
 final adminAccountDetailProvider =
     FutureProvider.autoDispose.family<AdminAccount, int>((ref, id) {
   return ref.watch(adminAccountsApiProvider).getById(id);
+});
+
+/// 全部分组(id+name),供筛选与编辑选择;不分页。
+final adminGroupsAllProvider =
+    FutureProvider.autoDispose<List<({int id, String name})>>((ref) {
+  return ref.watch(adminAccountsApiProvider).groupsAll();
 });

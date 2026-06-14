@@ -12,8 +12,10 @@ import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../data/admin_accounts_api.dart';
 import '../providers/admin_accounts_providers.dart';
+import 'account_filter_sheet.dart';
+import 'account_test_dialog.dart';
 
-/// 账号池(管理端底部导航分支):搜索 + 平台/状态筛选 + 分页列表 + 逐项操作。
+/// 账号池(管理端底部导航分支):紧凑列表 + 搜索 + 弹层筛选 + 新增 + 逐项操作。
 class AccountsListPage extends ConsumerStatefulWidget {
   const AccountsListPage({super.key});
 
@@ -47,19 +49,47 @@ class _AccountsListPageState extends ConsumerState<AccountsListPage> {
     final state = ref.watch(adminAccountsControllerProvider);
     final ctrl = ref.read(adminAccountsControllerProvider.notifier);
 
-    return Column(
-      children: [
-        _FilterBar(
-          searchCtrl: _searchCtrl,
-          status: state.status,
-          platform: state.platform,
-          onSearch: ctrl.setSearch,
-          onStatus: ctrl.setStatus,
-          onPlatform: ctrl.setPlatform,
-        ),
-        Expanded(child: _body(context, state, ctrl)),
-      ],
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/admin/accounts/new'),
+        child: const Icon(Icons.add),
+      ),
+      body: Column(
+        children: [
+          _SearchBar(
+            controller: _searchCtrl,
+            filterCount: state.activeFilterCount,
+            onSearch: ctrl.setSearch,
+            onOpenFilters: () => _openFilters(context, state, ctrl),
+          ),
+          Expanded(child: _body(context, state, ctrl)),
+        ],
+      ),
     );
+  }
+
+  Future<void> _openFilters(BuildContext context, AdminAccountsState state,
+      AdminAccountsController ctrl) async {
+    final result = await showAccountFilterSheet(
+      context,
+      ref,
+      initial: AccountFilterValues(
+        status: state.status,
+        platform: state.platform,
+        type: state.type,
+        group: state.group,
+        privacyMode: state.privacyMode,
+      ),
+    );
+    if (result != null) {
+      ctrl.applyFilters(
+        status: result.status,
+        platform: result.platform,
+        type: result.type,
+        group: result.group,
+        privacyMode: result.privacyMode,
+      );
+    }
   }
 
   Widget _body(BuildContext context, AdminAccountsState state,
@@ -82,12 +112,10 @@ class _AccountsListPageState extends ConsumerState<AccountsListPage> {
         maxWidth: 1100,
         child: ListView.builder(
           controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+          padding: const EdgeInsets.fromLTRB(10, 2, 10, 24),
           itemCount: state.items.length + 1,
           itemBuilder: (context, i) {
-            if (i == state.items.length) {
-              return _Footer(state: state);
-            }
+            if (i == state.items.length) return _Footer(state: state);
             final a = state.items[i];
             return _AccountCard(
               account: a,
@@ -102,34 +130,32 @@ class _AccountsListPageState extends ConsumerState<AccountsListPage> {
   }
 
   Future<void> _runAction(BuildContext context, AdminAccountsController ctrl,
-      AdminAccount a, _AccountAction act) async {
+      AdminAccount a, AccountAction act) async {
     final api = ref.read(adminAccountsApiProvider);
     try {
       switch (act) {
-        case _AccountAction.toggle:
+        case AccountAction.edit:
+          context.push('/admin/accounts/${a.id}/edit');
+          return;
+        case AccountAction.test:
+          await showAccountTestDialog(context, ref, a);
+          return;
+        case AccountAction.toggle:
           await api.setStatus(a.id, !a.isActive);
-          await ctrl.refresh();
-        case _AccountAction.test:
-          showAppToast(context, context.tr('adminAccounts.testing'));
-          final r = await api.test(a.id);
-          if (context.mounted) {
-            showAppToast(
-              context,
-              r.latencyMs != null ? '${r.message} (${r.latencyMs}ms)' : r.message,
-              error: !r.success,
-            );
-          }
-        case _AccountAction.clearError:
+        case AccountAction.clearError:
           await api.clearError(a.id);
-          await ctrl.refresh();
-        case _AccountAction.clearRateLimit:
+        case AccountAction.clearRateLimit:
           await api.clearRateLimit(a.id);
-          await ctrl.refresh();
-        case _AccountAction.refresh:
+        case AccountAction.recoverState:
+          await api.recoverState(a.id);
+        case AccountAction.refreshToken:
           showAppToast(context, context.tr('adminAccounts.refreshing'));
           await api.refreshCredentials(a.id);
-          await ctrl.refresh();
-        case _AccountAction.delete:
+        case AccountAction.resetQuota:
+          await api.resetQuota(a.id);
+        case AccountAction.setPrivacy:
+          await api.setPrivacy(a.id);
+        case AccountAction.delete:
           final ok = await showConfirmDialog(
             context,
             title: context.tr('adminAccounts.delete'),
@@ -138,123 +164,80 @@ class _AccountsListPageState extends ConsumerState<AccountsListPage> {
             confirmLabel: context.tr('common.delete'),
             destructive: true,
           );
-          if (ok) {
-            await api.delete(a.id);
-            await ctrl.refresh();
-          }
+          if (!ok) return;
+          await api.delete(a.id);
       }
+      await ctrl.refresh();
+      if (context.mounted) showAppToast(context, context.tr('common.done'));
     } catch (e) {
       if (context.mounted) showAppToast(context, '$e', error: true);
     }
   }
 }
 
-enum _AccountAction { toggle, test, clearError, clearRateLimit, refresh, delete }
+/// 逐项操作(按账号类型/状态出显)。
+enum AccountAction {
+  edit,
+  test,
+  toggle,
+  clearError,
+  clearRateLimit,
+  recoverState,
+  refreshToken,
+  resetQuota,
+  setPrivacy,
+  delete,
+}
 
-class _FilterBar extends StatelessWidget {
-  const _FilterBar({
-    required this.searchCtrl,
-    required this.status,
-    required this.platform,
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.filterCount,
     required this.onSearch,
-    required this.onStatus,
-    required this.onPlatform,
+    required this.onOpenFilters,
   });
 
-  final TextEditingController searchCtrl;
-  final String status;
-  final String platform;
+  final TextEditingController controller;
+  final int filterCount;
   final ValueChanged<String> onSearch;
-  final ValueChanged<String> onStatus;
-  final ValueChanged<String> onPlatform;
+  final VoidCallback onOpenFilters;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: ResponsiveCenter(
-        maxWidth: 1100,
-        child: Column(
+    return ResponsiveCenter(
+      maxWidth: 1100,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+        child: Row(
           children: [
-            TextField(
-              controller: searchCtrl,
-              onSubmitted: onSearch,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: context.tr('adminAccounts.searchHint'),
-                prefixIcon: const Icon(Icons.search),
-                isDense: true,
-                border: const OutlineInputBorder(),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                onSubmitted: onSearch,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: context.tr('adminAccounts.searchHint'),
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  isDense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: const OutlineInputBorder(),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _Dropdown(
-                    value: status,
-                    label: context.tr('adminAccounts.status'),
-                    items: const {
-                      '': 'adminAccounts.statusAll',
-                      'active': 'adminAccounts.statusActive',
-                      'inactive': 'adminAccounts.statusInactive',
-                      'error': 'adminAccounts.statusError',
-                    },
-                    onChanged: onStatus,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _Dropdown(
-                    value: platform,
-                    label: context.tr('adminAccounts.platform'),
-                    items: const {
-                      '': 'adminAccounts.platformAll',
-                      'anthropic': 'adminAccounts.platformAnthropic',
-                      'openai': 'adminAccounts.platformOpenai',
-                      'gemini': 'adminAccounts.platformGemini',
-                      'antigravity': 'adminAccounts.platformAntigravity',
-                    },
-                    onChanged: onPlatform,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 8),
+            Badge(
+              isLabelVisible: filterCount > 0,
+              label: Text('$filterCount'),
+              child: OutlinedButton.icon(
+                onPressed: onOpenFilters,
+                icon: const Icon(Icons.tune, size: 18),
+                label: Text(context.tr('adminAccounts.filters')),
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Dropdown extends StatelessWidget {
-  const _Dropdown({
-    required this.value,
-    required this.label,
-    required this.items,
-    required this.onChanged,
-  });
-
-  final String value;
-  final String label;
-  final Map<String, String> items;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (final e in items.entries)
-          DropdownMenuItem(value: e.key, child: Text(context.tr(e.value))),
-      ],
-      onChanged: (v) => onChanged(v ?? ''),
     );
   }
 }
@@ -272,7 +255,7 @@ class _Footer extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Center(
         child: Text(
           context.tr('adminAccounts.total', params: {'n': '${state.total}'}),
@@ -286,6 +269,7 @@ class _Footer extends StatelessWidget {
   }
 }
 
+/// 紧凑账号卡:名称 + 类型/平台 + 容量 + 状态 + 调度,信息密度优先。
 class _AccountCard extends StatelessWidget {
   const _AccountCard({
     required this.account,
@@ -297,7 +281,7 @@ class _AccountCard extends StatelessWidget {
   final AdminAccount account;
   final double? todayCost;
   final VoidCallback onTap;
-  final ValueChanged<_AccountAction> onAction;
+  final ValueChanged<AccountAction> onAction;
 
   StatusTone get _tone => switch (account.status) {
         'active' => StatusTone.positive,
@@ -314,18 +298,36 @@ class _AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final schedTone = !account.schedulable
+        ? StatusTone.neutral
+        : account.isRateLimited
+            ? StatusTone.warning
+            : account.isTempUnschedulable
+                ? StatusTone.warning
+                : StatusTone.positive;
+    final schedKey = !account.schedulable
+        ? 'adminAccounts.schedOff'
+        : account.isRateLimited
+            ? 'adminAccounts.status.rateLimited'
+            : account.isTempUnschedulable
+                ? 'adminAccounts.status.tempUnschedulable'
+                : 'adminAccounts.schedOn';
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
+                  _badge(context, account.platform, scheme.primaryContainer,
+                      scheme.onPrimaryContainer),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       account.name,
@@ -338,89 +340,41 @@ class _AccountCard extends StatelessWidget {
                   ),
                   StatusPill(
                       label: context.tr(_statusKey()), tone: _tone, dense: true),
-                  PopupMenuButton<_AccountAction>(
+                  PopupMenuButton<AccountAction>(
                     icon: const Icon(Icons.more_vert, size: 20),
+                    padding: EdgeInsets.zero,
                     onSelected: onAction,
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: _AccountAction.toggle,
-                        child: Text(context.tr(account.isActive
-                            ? 'adminAccounts.disable'
-                            : 'adminAccounts.enable')),
-                      ),
-                      PopupMenuItem(
-                        value: _AccountAction.test,
-                        child: Text(context.tr('adminAccounts.test')),
-                      ),
-                      if (account.isError)
-                        PopupMenuItem(
-                          value: _AccountAction.clearError,
-                          child: Text(context.tr('adminAccounts.clearError')),
-                        ),
-                      PopupMenuItem(
-                        value: _AccountAction.clearRateLimit,
-                        child: Text(context.tr('adminAccounts.clearRateLimit')),
-                      ),
-                      PopupMenuItem(
-                        value: _AccountAction.refresh,
-                        child: Text(context.tr('adminAccounts.refresh')),
-                      ),
-                      PopupMenuItem(
-                        value: _AccountAction.delete,
-                        child: Text(
-                          context.tr('adminAccounts.delete'),
-                          style: TextStyle(color: scheme.error),
-                        ),
-                      ),
+                    itemBuilder: (context) => _menuItems(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              DefaultTextStyle.merge(
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall!
+                    .copyWith(color: scheme.onSurfaceVariant),
+                child: Row(
+                  children: [
+                    Text(account.type),
+                    _dot(context),
+                    Icon(Icons.bolt_outlined, size: 13, color: scheme.onSurfaceVariant),
+                    Text(' ${account.currentConcurrency}/${account.concurrency}'),
+                    _dot(context),
+                    _MiniPill(label: context.tr(schedKey), tone: schedTone),
+                    const Spacer(),
+                    if (account.rateMultiplier != null) ...[
+                      Text('×${account.rateMultiplier!.toStringAsFixed(2)}'),
+                      const SizedBox(width: 8),
                     ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _chip(context, account.platform),
-                  _chip(context, account.type),
-                  for (final g in account.groupNames) _chip(context, g),
-                ],
-              ),
-              if (account.isError &&
-                  (account.errorMessage ?? '').isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  account.errorMessage!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: scheme.error),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _meta(context, Icons.bolt_outlined,
-                      '${account.currentConcurrency}/${account.concurrency}'),
-                  const SizedBox(width: 14),
-                  _meta(context, Icons.low_priority_outlined,
-                      '${account.priority}'),
-                  if (account.rateMultiplier != null) ...[
-                    const SizedBox(width: 14),
-                    _meta(context, Icons.percent,
-                        '×${account.rateMultiplier!.toStringAsFixed(2)}'),
+                    Text(
+                      formatCost(todayCost ?? 0),
+                      style: TextStyle(
+                          color: scheme.primary, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 8),
                   ],
-                  const Spacer(),
-                  Text(
-                    formatCost(todayCost ?? 0),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -429,31 +383,80 @@ class _AccountCard extends StatelessWidget {
     );
   }
 
-  Widget _chip(BuildContext context, String label) {
+  List<PopupMenuEntry<AccountAction>> _menuItems(BuildContext context) {
+    PopupMenuItem<AccountAction> item(AccountAction a, String key,
+            {Color? color}) =>
+        PopupMenuItem(
+          value: a,
+          height: 40,
+          child: Text(context.tr(key),
+              style: color == null ? null : TextStyle(color: color)),
+        );
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
-    );
+    return [
+      item(AccountAction.edit, 'common.edit'),
+      item(AccountAction.test, 'adminAccounts.test'),
+      item(AccountAction.toggle,
+          account.isActive ? 'adminAccounts.disable' : 'adminAccounts.enable'),
+      if (account.isError) item(AccountAction.clearError, 'adminAccounts.clearError'),
+      if (account.isRateLimited)
+        item(AccountAction.clearRateLimit, 'adminAccounts.clearRateLimit'),
+      if (account.hasRecoverableState)
+        item(AccountAction.recoverState, 'adminAccounts.recoverState'),
+      if (account.isOauthLike)
+        item(AccountAction.refreshToken, 'adminAccounts.refreshToken'),
+      if (account.hasQuotaLimit)
+        item(AccountAction.resetQuota, 'adminAccounts.resetQuota'),
+      if (account.supportsPrivacy)
+        item(AccountAction.setPrivacy, 'adminAccounts.setPrivacy'),
+      item(AccountAction.delete, 'adminAccounts.delete', color: scheme.error),
+    ];
   }
 
-  Widget _meta(BuildContext context, IconData icon, String text) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: scheme.onSurfaceVariant),
-        const SizedBox(width: 3),
-        Text(text,
+  Widget _dot(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Text('·',
+            style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+      );
+
+  Widget _badge(BuildContext context, String text, Color bg, Color fg) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+        child: Text(text,
             style: Theme.of(context)
                 .textTheme
-                .bodySmall
-                ?.copyWith(color: scheme.onSurfaceVariant)),
-      ],
+                .labelSmall
+                ?.copyWith(color: fg, fontWeight: FontWeight.w600)),
+      );
+}
+
+class _MiniPill extends StatelessWidget {
+  const _MiniPill({required this.label, required this.tone});
+  final String label;
+  final StatusTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = switch (tone) {
+      StatusTone.positive => const Color(0xFF4ADE80),
+      StatusTone.warning => const Color(0xFFB7791F),
+      StatusTone.danger => scheme.error,
+      _ => scheme.onSurfaceVariant,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(label,
+          style: Theme.of(context)
+              .textTheme
+              .labelSmall
+              ?.copyWith(color: color)),
     );
   }
 }
