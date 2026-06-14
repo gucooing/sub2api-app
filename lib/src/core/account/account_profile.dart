@@ -12,6 +12,7 @@ class AccountProfile {
     required this.email,
     required this.displayName,
     this.avatarUrl,
+    this.isAdmin = false,
   });
 
   /// 稳定标识:`<serverId>:<userId>`。同服务器同用户重登只更新,不重复。
@@ -32,6 +33,9 @@ class AccountProfile {
   /// 头像(可为 base64 data URL)。
   final String? avatarUrl;
 
+  /// 是否为管理员(登录/会话恢复时按后端用户角色写入,供账号列表展示标识)。
+  final bool isAdmin;
+
   /// 由服务器与用户 id 派生账号 id。
   static String deriveId(String serverId, int userId) => '$serverId:$userId';
 
@@ -39,6 +43,7 @@ class AccountProfile {
     String? email,
     String? displayName,
     String? avatarUrl,
+    bool? isAdmin,
   }) =>
       AccountProfile(
         id: id,
@@ -47,6 +52,7 @@ class AccountProfile {
         email: email ?? this.email,
         displayName: displayName ?? this.displayName,
         avatarUrl: avatarUrl ?? this.avatarUrl,
+        isAdmin: isAdmin ?? this.isAdmin,
       );
 
   Map<String, dynamic> toJson() => {
@@ -56,6 +62,7 @@ class AccountProfile {
         'email': email,
         'display_name': displayName,
         'avatar_url': avatarUrl,
+        'is_admin': isAdmin,
       };
 
   factory AccountProfile.fromJson(Map<String, dynamic> json) => AccountProfile(
@@ -65,6 +72,7 @@ class AccountProfile {
         email: json['email'] as String? ?? '',
         displayName: json['display_name'] as String? ?? '',
         avatarUrl: json['avatar_url'] as String?,
+        isAdmin: json['is_admin'] as bool? ?? false,
       );
 
   @override
@@ -75,9 +83,10 @@ class AccountProfile {
       other.userId == userId &&
       other.email == email &&
       other.displayName == displayName &&
-      other.avatarUrl == avatarUrl;
+      other.avatarUrl == avatarUrl &&
+      other.isAdmin == isAdmin;
 
   @override
   int get hashCode =>
-      Object.hash(id, serverId, userId, email, displayName, avatarUrl);
+      Object.hash(id, serverId, userId, email, displayName, avatarUrl, isAdmin);
 }

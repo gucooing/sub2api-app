@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../i18n/app_localizations.dart';
+import '../../core/app_mode/app_mode_controller.dart';
+import '../../core/session/session_controller.dart';
 import '../../shared/widgets/markdown_text.dart';
 import '../settings/update_check.dart';
 import '../user/announcements/data/announcements_api.dart';
@@ -108,6 +110,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       appBar: AppBar(
         title: Text(_getTitle(context)),
         actions: [
+          // 管理员:一键进入管理端(切换整套主界面);非管理员不显示。
+          if (ref.watch(sessionControllerProvider).isAdmin)
+            IconButton(
+              tooltip: context.tr('admin.switchToAdmin'),
+              icon: const Icon(Icons.admin_panel_settings_outlined),
+              onPressed: () async {
+                await ref
+                    .read(appModeControllerProvider.notifier)
+                    .setMode(AppMode.admin);
+                if (context.mounted) context.go('/admin/dashboard');
+              },
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: Badge(

@@ -44,6 +44,46 @@
     "settings": "Settings",
     "admin": "Admin"
   },
+  "admin": {
+    "switchToAdmin": "Enter admin",
+    "switchToAdminHint": "Switch to the admin console (full interface)",
+    "switchToUser": "User",
+    "switchToUserHint": "Switch back to the user interface",
+    "nav": {
+      "dashboard": "Overview",
+      "accounts": "Accounts",
+      "users": "Users",
+      "groups": "Groups",
+      "more": "More"
+    },
+    "dashboard": {
+      "platformOverview": "Platform overview",
+      "kpis": "Key metrics",
+      "accountHealth": "Account health",
+      "usageTrend": "Usage trend",
+      "totalUsers": "Total users",
+      "todayNewUsers": "New today",
+      "activeUsers": "Active users",
+      "apiKeys": "Keys (active/total)",
+      "todayRequests": "Requests today",
+      "todayCost": "Cost today",
+      "totalCost": "Total cost",
+      "totalAccounts": "Total accounts",
+      "rpm": "Requests/min",
+      "avgLatency": "Avg latency",
+      "normalRatio": "Healthy accounts",
+      "normal": "Normal",
+      "error": "Error",
+      "rateLimited": "Rate-limited",
+      "overloaded": "Overloaded"
+    },
+    "redeem": {
+      "title": "Redeem codes"
+    },
+    "monitor": {
+      "title": "Channel monitor"
+    }
+  },
   "auth": {
     "login": "Sign in",
     "loginButton": "Sign in",

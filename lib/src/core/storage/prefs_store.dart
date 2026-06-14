@@ -34,4 +34,8 @@ class PrefKeys {
 
   /// 是否使用外置浏览器打开链接;false(默认)表示应用内浏览器。
   static const String externalBrowser = 'pref.external_browser';
+
+  /// 各账号当前所处界面(用户端/管理端)。JSON map:`{accountId: "admin"}`,
+  /// 缺省表示用户端。切换账号/重启后据此恢复账号上次所在的界面。
+  static const String appModeByAccount = 'pref.app_mode_by_account';
 }

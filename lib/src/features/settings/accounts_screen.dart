@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/account/account_profile.dart';
 import '../../core/account/account_store.dart';
+import '../../core/app_mode/app_mode_controller.dart';
 import '../../core/server/server_store.dart';
 import '../../core/session/session_controller.dart';
+import '../../core/storage/prefs_store.dart';
 import '../../i18n/app_localizations.dart';
 import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state.dart';
@@ -56,9 +58,7 @@ class AccountsScreen extends ConsumerWidget {
                           active: account.id == accountState.activeId,
                           onTap: account.id == accountState.activeId
                               ? null
-                              : () => ref
-                                  .read(sessionControllerProvider.notifier)
-                                  .switchAccount(account.id),
+                              : () => _switchTo(context, ref, account.id),
                           onLogout: () => _logout(context, ref),
                           onRemove: () => _remove(context, ref, account),
                         ),
@@ -70,8 +70,17 @@ class AccountsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showConfirmDialog(
+  /// 切换激活账号,并落地到该账号上次所在的界面(用户端/管理端)。
+  Future<void> _switchTo(
+      BuildContext context, WidgetRef ref, String accountId) async {
+    await ref.read(sessionControllerProvider.notifier).switchAccount(accountId);
+    if (!context.mounted) return;
+    // 按账号记忆的模式跳转;若该账号非管理员,路由守卫会把 /admin 收敛回用户端。
+    final mode = appModeForAccount(ref.read(sharedPreferencesProvider), accountId);
+    context.go(mode == AppMode.admin ? '/admin/dashboard' : '/dashboard');
+  }
+
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {    final confirmed = await showConfirmDialog(
       context,
       title: context.tr('accounts.logoutThis'),
       message: context.tr('me.logoutConfirm'),
@@ -162,6 +171,10 @@ class _AccountCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (account.isAdmin) ...[
+                          const SizedBox(width: 8),
+                          _AdminChip(label: context.tr('me.roleAdmin')),
+                        ],
                         if (active) ...[
                           const SizedBox(width: 8),
                           _ActiveChip(label: context.tr('accounts.active')),
@@ -200,6 +213,39 @@ class _AccountCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AdminChip extends StatelessWidget {
+  const _AdminChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.shield_outlined,
+              size: 11, color: scheme.onTertiaryContainer),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: scheme.onTertiaryContainer),
+          ),
+        ],
       ),
     );
   }

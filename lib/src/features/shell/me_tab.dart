@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/account/account_store.dart';
+import '../../core/app_mode/app_mode_controller.dart';
 import '../../core/server/server_store.dart';
 import '../../core/session/auth_models.dart';
 import '../../core/session/session_controller.dart';
@@ -185,9 +186,15 @@ class MeTab extends ConsumerWidget {
           if (session.isAdmin)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings_outlined),
-              title: Text(context.tr('nav.admin')),
+              title: Text(context.tr('admin.switchToAdmin')),
+              subtitle: Text(context.tr('admin.switchToAdminHint')),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/admin'),
+              onTap: () async {
+                await ref
+                    .read(appModeControllerProvider.notifier)
+                    .setMode(AppMode.admin);
+                if (context.mounted) context.go('/admin/dashboard');
+              },
             ),
           const Divider(),
           ListTile(

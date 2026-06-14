@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
+import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
+import '../../features/admin/shell/admin_shell.dart';
+import '../../features/admin/shell/admin_more_tab.dart';
+import '../../features/admin/shared/admin_tab_placeholder.dart';
 import '../../features/settings/servers_screen.dart';
 import '../../features/settings/accounts_screen.dart';
 import '../../features/settings/settings_screen.dart';
@@ -31,6 +35,7 @@ import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
 import '../../features/user/usage_logs/presentation/log_detail_page.dart';
 import '../../shared/widgets/module_placeholder.dart';
+import '../app_mode/app_mode_controller.dart';
 import '../session/session_controller.dart';
 
 /// 会话状态变化时通知 GoRouter 重新评估 redirect。
@@ -62,9 +67,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final allowed = location == '/login' || location == '/register';
           return allowed ? null : '/login';
         case SessionStatus.authenticated:
-          // 已登录:仅启动闪屏跳转到总览;/login、/register 保持可达(用于新增账号)。
+          // 已登录:启动闪屏按账号记忆的界面(用户端/管理端)落地;
+          // /login、/register 保持可达(用于新增账号)。
           if (location == '/splash') {
-            return '/dashboard';
+            final mode = ref.read(appModeControllerProvider);
+            return (mode == AppMode.admin && session.isAdmin)
+                ? '/admin/dashboard'
+                : '/dashboard';
           }
           if (location.startsWith('/admin') && !session.isAdmin) {
             return '/dashboard';
@@ -180,8 +189,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin',
+        redirect: (context, state) =>
+            state.matchedLocation == '/admin' ? '/admin/dashboard' : null,
+      ),
+      // 管理端按需推入的子页(占位,完整页见 Phase D)。
+      GoRoute(
+        path: '/admin/redeem',
         builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'nav.admin'),
+            const ModulePlaceholderScreen(titleKey: 'admin.redeem.title'),
+      ),
+      GoRoute(
+        path: '/admin/monitor',
+        builder: (context, state) =>
+            const ModulePlaceholderScreen(titleKey: 'admin.monitor.title'),
       ),
       // 登录后的主壳:底部导航四个分支
       StatefulShellRoute.indexedStack(
@@ -210,6 +230,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: '/me',
               builder: (context, state) => const MeTab(),
+            ),
+          ]),
+        ],
+      ),
+      // 管理端主壳:底部导航 概览/账号池/用户/分组/更多(仅管理员可达,redirect 守卫)。
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AdminShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/admin/dashboard',
+              builder: (context, state) => const AdminDashboardTab(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/admin/accounts',
+              builder: (context, state) => const AdminTabPlaceholder(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/admin/users',
+              builder: (context, state) => const AdminTabPlaceholder(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/admin/groups',
+              builder: (context, state) => const AdminTabPlaceholder(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/admin/more',
+              builder: (context, state) => const AdminMoreTab(),
             ),
           ]),
         ],

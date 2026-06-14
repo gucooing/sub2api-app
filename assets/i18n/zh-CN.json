@@ -44,6 +44,46 @@
     "settings": "设置",
     "admin": "管理端"
   },
+  "admin": {
+    "switchToAdmin": "进入管理端",
+    "switchToAdminHint": "切换到管理员控制台(整套界面)",
+    "switchToUser": "用户端",
+    "switchToUserHint": "切回用户端界面",
+    "nav": {
+      "dashboard": "概览",
+      "accounts": "账号池",
+      "users": "用户",
+      "groups": "分组",
+      "more": "更多"
+    },
+    "dashboard": {
+      "platformOverview": "平台总览",
+      "kpis": "核心指标",
+      "accountHealth": "账号健康度",
+      "usageTrend": "用量趋势",
+      "totalUsers": "用户总数",
+      "todayNewUsers": "今日新增",
+      "activeUsers": "活跃用户",
+      "apiKeys": "密钥(活跃/总)",
+      "todayRequests": "今日请求",
+      "todayCost": "今日消耗",
+      "totalCost": "累计消耗",
+      "totalAccounts": "账号总数",
+      "rpm": "每分钟请求",
+      "avgLatency": "平均响应",
+      "normalRatio": "正常账号占比",
+      "normal": "正常",
+      "error": "异常",
+      "rateLimited": "限流",
+      "overloaded": "过载"
+    },
+    "redeem": {
+      "title": "兑换码管理"
+    },
+    "monitor": {
+      "title": "渠道监控"
+    }
+  },
   "auth": {
     "login": "登录",
     "loginButton": "登录",

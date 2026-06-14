@@ -81,6 +81,16 @@ class SessionController extends Notifier<SessionState> {
       _userAccountId = account.id;
       _set(epoch,
           SessionState(status: SessionStatus.authenticated, user: user));
+      // 回填账号档案最新信息(角色/邮箱/头像),供账号列表展示管理员标识等。
+      if (account.isAdmin != user.isAdmin ||
+          account.email != user.email ||
+          account.avatarUrl != user.avatarUrl) {
+        await _accounts.upsert(account.copyWith(
+          isAdmin: user.isAdmin,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        ));
+      }
     } on ApiException catch (e) {
       if (e.isUnauthorized) {
         // 令牌确认失效才清理;网络错误保留令牌,下次再试。
@@ -114,6 +124,7 @@ class SessionController extends Notifier<SessionState> {
       email: user.email,
       displayName: user.username.isNotEmpty ? user.username : user.email,
       avatarUrl: user.avatarUrl,
+      isAdmin: user.isAdmin,
     );
     _user = user;
     _userAccountId = accountId;
