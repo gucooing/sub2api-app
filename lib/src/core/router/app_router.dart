@@ -8,7 +8,8 @@ import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/shared/admin_tab_placeholder.dart';
-import '../../features/admin/settings/presentation/admin_settings_page.dart';
+import '../../features/admin/settings/presentation/admin_settings_index_page.dart';
+import '../../features/admin/settings/presentation/admin_setting_category_page.dart';
 import '../../features/settings/servers_screen.dart';
 import '../../features/settings/accounts_screen.dart';
 import '../../features/settings/settings_screen.dart';
@@ -211,7 +212,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/settings',
-        builder: (context, state) => const AdminSettingsPage(),
+        builder: (context, state) => const AdminSettingsIndexPage(),
+      ),
+      GoRoute(
+        path: '/admin/settings/:category',
+        builder: (context, state) => AdminSettingCategoryPage(
+          categoryKey: state.pathParameters['category'] ?? '',
+        ),
       ),
       // 其余管理模块(对照 web 侧边栏);未实装先占位,逐步替换为真实页面。
       GoRoute(
