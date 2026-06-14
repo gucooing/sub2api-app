@@ -82,6 +82,28 @@
     },
     "monitor": {
       "title": "渠道监控"
+    },
+    "settings": {
+      "title": "系统设置",
+      "subtitle": "服务端设置",
+      "saved": "已保存",
+      "site": "站点信息",
+      "siteName": "站点名称",
+      "siteSubtitle": "站点副标题",
+      "contact": "联系方式",
+      "docUrl": "文档地址",
+      "registerLogin": "注册与登录",
+      "registration": "开放注册",
+      "emailVerify": "邮箱验证码",
+      "passwordReset": "找回密码",
+      "invitation": "邀请码",
+      "promo": "优惠码",
+      "totp": "两步验证(TOTP)",
+      "turnstile": "人机验证(Turnstile)",
+      "defaults": "默认值",
+      "defaultBalance": "默认余额",
+      "defaultConcurrency": "默认并发",
+      "defaultRpm": "默认 RPM 限制"
     }
   },
   "auth": {

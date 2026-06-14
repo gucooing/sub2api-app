@@ -8,6 +8,7 @@ import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/shared/admin_tab_placeholder.dart';
+import '../../features/admin/settings/presentation/admin_settings_page.dart';
 import '../../features/settings/servers_screen.dart';
 import '../../features/settings/accounts_screen.dart';
 import '../../features/settings/settings_screen.dart';
@@ -202,6 +203,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/admin/monitor',
         builder: (context, state) =>
             const ModulePlaceholderScreen(titleKey: 'admin.monitor.title'),
+      ),
+      GoRoute(
+        path: '/admin/settings',
+        builder: (context, state) => const AdminSettingsPage(),
       ),
       // 登录后的主壳:底部导航四个分支
       StatefulShellRoute.indexedStack(

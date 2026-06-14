@@ -82,6 +82,28 @@
     },
     "monitor": {
       "title": "Channel monitor"
+    },
+    "settings": {
+      "title": "System settings",
+      "subtitle": "Server-side settings",
+      "saved": "Saved",
+      "site": "Site info",
+      "siteName": "Site name",
+      "siteSubtitle": "Site subtitle",
+      "contact": "Contact",
+      "docUrl": "Docs URL",
+      "registerLogin": "Registration & login",
+      "registration": "Open registration",
+      "emailVerify": "Email verification code",
+      "passwordReset": "Password reset",
+      "invitation": "Invitation code",
+      "promo": "Promo code",
+      "totp": "Two-factor (TOTP)",
+      "turnstile": "Turnstile verification",
+      "defaults": "Defaults",
+      "defaultBalance": "Default balance",
+      "defaultConcurrency": "Default concurrency",
+      "defaultRpm": "Default RPM limit"
     }
   },
   "auth": {

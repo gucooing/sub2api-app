@@ -40,6 +40,13 @@ class AdminMoreTab extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/admin/monitor'),
           ),
+          ListTile(
+            leading: const Icon(Icons.tune_outlined),
+            title: Text(context.tr('admin.settings.title')),
+            subtitle: Text(context.tr('admin.settings.subtitle')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/admin/settings'),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.swap_horiz),
