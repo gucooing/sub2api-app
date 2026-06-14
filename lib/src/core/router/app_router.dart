@@ -12,6 +12,7 @@ import '../../features/admin/settings/presentation/admin_settings_page.dart';
 import '../../features/settings/servers_screen.dart';
 import '../../features/settings/accounts_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/settings/logs_page.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/shell/me_tab.dart';
 import '../../features/shell/splash_screen.dart';
@@ -58,7 +59,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final location = state.matchedLocation;
 
       // 登录前后都可访问的页面
-      const open = {'/servers', '/settings'};
+      const open = {'/servers', '/settings', '/logs'};
       if (open.contains(location)) return null;
 
       switch (session.status) {
@@ -107,6 +108,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/logs',
+        builder: (context, state) => const LogsPage(),
       ),
       GoRoute(
         path: '/profile',

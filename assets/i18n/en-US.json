@@ -308,7 +308,19 @@
     "compatibleBackend": "Compatible backend",
     "compatibleBackendHint": "Sub2API version this app targets",
     "repo": "Repository",
-    "checkUpdate": "Check for updates"
+    "checkUpdate": "Check for updates",
+    "feedback": "Feedback",
+    "feedbackHint": "Open an issue on the repository"
+  },
+  "logs": {
+    "title": "Logs",
+    "subtitle": "Exceptions & errors (redacted)",
+    "copyAll": "Copy all",
+    "copied": "Logs copied to clipboard",
+    "clear": "Clear",
+    "clearConfirm": "Clear all logs?",
+    "empty": "No logs yet",
+    "hint": "Runtime exceptions and errors are recorded here; sensitive data is redacted"
   },
   "dashboard": {
     "balance": "Balance",

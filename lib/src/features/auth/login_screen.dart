@@ -205,7 +205,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final settingsAsync = ref.watch(publicSettingsForServerProvider(server));
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('auth.login'))),
+      appBar: AppBar(
+        title: Text(context.tr('auth.login')),
+        actions: [
+          // 登录前也可进设置(切换语言/主题)。
+          IconButton(
+            tooltip: context.tr('nav.settings'),
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

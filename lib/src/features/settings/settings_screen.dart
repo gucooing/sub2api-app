@@ -138,6 +138,23 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => runUpdateCheck(context, ref),
           ),
+          ListTile(
+            leading: const Icon(Icons.receipt_long_outlined),
+            title: Text(context.tr('logs.title')),
+            subtitle: Text(context.tr('logs.subtitle')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/logs'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.feedback_outlined),
+            title: Text(context.tr('settings.feedback')),
+            subtitle: Text(context.tr('settings.feedbackHint')),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => launchUrl(
+              Uri.parse('${AppConfig.repoUrl}/issues/new'),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
         ],
       ),
       ),

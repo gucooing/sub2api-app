@@ -308,7 +308,19 @@
     "compatibleBackend": "兼容后端版本",
     "compatibleBackendHint": "本 app 对齐适配的 Sub2API 版本",
     "repo": "项目仓库",
-    "checkUpdate": "检查更新"
+    "checkUpdate": "检查更新",
+    "feedback": "问题反馈",
+    "feedbackHint": "前往仓库提交 issue"
+  },
+  "logs": {
+    "title": "日志",
+    "subtitle": "异常与错误记录(已脱敏)",
+    "copyAll": "复制全部",
+    "copied": "日志已复制到剪贴板",
+    "clear": "清空",
+    "clearConfirm": "确定清空所有日志吗?",
+    "empty": "暂无日志",
+    "hint": "应用运行中的异常与错误会自动记录在此,敏感信息已脱敏"
   },
   "dashboard": {
     "balance": "账户余额",

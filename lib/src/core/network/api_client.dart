@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
+import '../logging/app_logger.dart';
 import 'api_exception.dart';
 
 /// 取当前应转发给后端的语言标签(Accept-Language)。
@@ -195,8 +196,12 @@ class ApiClient {
       return res.data as T;
     } on DioException catch (e) {
       final inner = e.error;
-      if (inner is ApiException) throw inner;
-      throw ApiException.fromDio(e);
+      final ex = inner is ApiException ? inner : ApiException.fromDio(e);
+      // 记录到本地日志(脱敏在 AppLogger 内完成),便于用户导出反馈。
+      final m = e.requestOptions.method;
+      final p = e.requestOptions.path;
+      AppLogger.instance.warn('API $m $p -> $ex');
+      throw ex;
     }
   }
 
