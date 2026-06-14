@@ -219,4 +219,18 @@ class ApiClient {
 
   Future<T> delete<T>(String path, {Object? data}) =>
       _guard<T>(() => _dio.delete(path, data: data));
+
+  /// 打开一个 SSE / 流式 POST 的字节流(供测试连接等需要实时展示过程的接口)。
+  /// 鉴权头由请求拦截器注入;调用方负责解码与按行解析。
+  Future<Stream<List<int>>> openByteStream(String path, {Object? data}) async {
+    final res = await _dio.post<ResponseBody>(
+      path,
+      data: data,
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
+    return res.data!.stream.cast<List<int>>();
+  }
 }

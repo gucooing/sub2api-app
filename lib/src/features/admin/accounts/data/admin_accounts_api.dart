@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -169,14 +171,44 @@ class AdminAccountPage {
   }
 }
 
-/// 测试账号结果。
+/// 可测试模型(id + 展示名)。
 @immutable
-class AccountTestResult {
-  const AccountTestResult(
-      {required this.success, required this.message, this.latencyMs});
-  final bool success;
-  final String message;
-  final int? latencyMs;
+class TestModel {
+  const TestModel({required this.id, required this.displayName});
+  final String id;
+  final String displayName;
+}
+
+/// 测试连接的流式事件(对照 web SSE:test_start/content/image/test_complete/error)。
+@immutable
+class AccountTestEvent {
+  const AccountTestEvent({
+    required this.type,
+    this.text,
+    this.model,
+    this.success,
+    this.error,
+    this.imageUrl,
+    this.mimeType,
+  });
+
+  final String type;
+  final String? text;
+  final String? model;
+  final bool? success;
+  final String? error;
+  final String? imageUrl;
+  final String? mimeType;
+
+  factory AccountTestEvent.fromJson(Map<String, dynamic> j) => AccountTestEvent(
+        type: j['type'] as String? ?? '',
+        text: j['text'] as String?,
+        model: j['model'] as String?,
+        success: j['success'] as bool?,
+        error: j['error'] as String?,
+        imageUrl: j['image_url'] as String?,
+        mimeType: j['mime_type'] as String?,
+      );
 }
 
 /// 管理端账号池 API。
@@ -274,35 +306,47 @@ class AdminAccountsApi {
   Future<void> setPrivacy(int id) =>
       _client.post<dynamic>('/admin/accounts/$id/set-privacy');
 
-  /// 该账号可用模型 id 列表(测试连接选择模型用)。
-  Future<List<String>> availableModels(int id) async {
+  /// 该账号可用模型(id + 展示名),测试连接选择模型用。
+  Future<List<TestModel>> availableModels(int id) async {
     final data = await _client.get<dynamic>('/admin/accounts/$id/models');
     final list = (data as List?) ?? const [];
-    final out = <String>[];
+    final out = <TestModel>[];
     for (final e in list) {
       if (e is Map && e['id'] != null) {
-        out.add('${e['id']}');
+        final mid = '${e['id']}';
+        final dn = e['display_name'] as String?;
+        out.add(TestModel(id: mid, displayName: dn?.isNotEmpty == true ? dn! : mid));
       } else if (e is String) {
-        out.add(e);
+        out.add(TestModel(id: e, displayName: e));
       }
     }
     return out;
   }
 
-  /// 测试连接:POST {model_id,prompt} 返回 SSE 文本(整体收取后解析)。
-  Future<String> testRaw(int id, {required String modelId, String prompt = ''}) {
-    return _client.post<String>('/admin/accounts/$id/test',
-        data: {'model_id': modelId, 'prompt': prompt});
-  }
-
-  Future<AccountTestResult> test(int id) async {
-    final data =
-        await _client.post<dynamic>('/admin/accounts/$id/test') as Map;
-    return AccountTestResult(
-      success: data['success'] as bool? ?? false,
-      message: data['message'] as String? ?? '',
-      latencyMs: (data['latency_ms'] as num?)?.toInt(),
+  /// 测试连接(流式):POST {model_id,prompt} → SSE,逐事件 yield,实时展示过程与结果。
+  Stream<AccountTestEvent> testStream(int id,
+      {required String modelId, String prompt = ''}) async* {
+    final byteStream = await _client.openByteStream(
+      '/admin/accounts/$id/test',
+      data: {'model_id': modelId, 'prompt': prompt},
     );
+    final lines = byteStream
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .transform(const LineSplitter());
+    await for (final line in lines) {
+      final t = line.trim();
+      if (!t.startsWith('data:')) continue;
+      final payload = t.substring(5).trim();
+      if (payload.isEmpty || payload == '[DONE]') continue;
+      try {
+        final obj = jsonDecode(payload);
+        if (obj is Map) {
+          yield AccountTestEvent.fromJson(obj.cast<String, dynamic>());
+        }
+      } catch (_) {
+        // 忽略无法解析的行。
+      }
+    }
   }
 
   Future<void> clearError(int id) =>
