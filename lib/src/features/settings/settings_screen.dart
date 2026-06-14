@@ -117,6 +117,12 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: Text(context.tr('settings.compatibleBackend')),
+            subtitle: Text(context.tr('settings.compatibleBackendHint')),
+            trailing: const Text('v${AppConfig.compatibleBackendVersion}'),
+          ),
+          ListTile(
             leading: const Icon(Icons.code_outlined),
             title: Text(context.tr('settings.repo')),
             subtitle: const Text(AppConfig.repoUrl),

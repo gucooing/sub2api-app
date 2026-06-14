@@ -240,6 +240,8 @@
     "version": "Version",
     "buildTime": "Build time",
     "localBuild": "Local build",
+    "compatibleBackend": "Compatible backend",
+    "compatibleBackendHint": "Sub2API version this app targets",
     "repo": "Repository",
     "checkUpdate": "Check for updates"
   },

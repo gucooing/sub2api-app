@@ -240,6 +240,8 @@
     "version": "版本",
     "buildTime": "构建时间",
     "localBuild": "本地构建",
+    "compatibleBackend": "兼容后端版本",
+    "compatibleBackendHint": "本 app 对齐适配的 Sub2API 版本",
     "repo": "项目仓库",
     "checkUpdate": "检查更新"
   },
