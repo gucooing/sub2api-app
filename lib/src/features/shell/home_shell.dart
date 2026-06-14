@@ -26,13 +26,32 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   final Set<int> _shownPopupIds = {};
   bool _popupShowing = false;
 
+  /// 公告未读红点。用 listenManual(在 build 外回调)更新,避免在 build 中 watch
+  /// 触发上游(apiClient/账号)脏链同步 flush 导致 setState-during-build。
+  bool _hasUnread = false;
+
   @override
   void initState() {
     super.initState();
-    // 启动即在总览页时检查 popup 公告;并静默检查应用更新(仅有更新时弹窗)。
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // 公告未读监听 + 初值读取都放到首帧之后(build 阶段之外),避免订阅/读取时
+    // 同步 flush 上游脏链(apiClient/账号)而在 build 期触发 setState。
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       _maybeShowPopup();
       runUpdateCheck(context, ref, silent: true);
+      ref.listenManual<AsyncValue<int>>(
+        unreadAnnouncementsCountProvider,
+        (prev, next) {
+          final v = next.maybeWhen(data: (c) => c > 0, orElse: () => false);
+          if (mounted && v != _hasUnread) setState(() => _hasUnread = v);
+        },
+      );
+      try {
+        final count = await ref.read(unreadAnnouncementsCountProvider.future);
+        if (mounted && (count > 0) != _hasUnread) {
+          setState(() => _hasUnread = count > 0);
+        }
+      } catch (_) {}
     });
   }
 
@@ -97,10 +116,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = ref.watch(unreadAnnouncementsCountProvider).maybeWhen(
-          data: (count) => count > 0,
-          orElse: () => false,
-        );
+    final hasUnread = _hasUnread;
     // 在总览页时尝试弹出 popup 公告(set 去重,不会重复)。
     if (widget.navigationShell.currentIndex == 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
