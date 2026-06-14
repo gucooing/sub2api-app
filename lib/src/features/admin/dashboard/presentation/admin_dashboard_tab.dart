@@ -99,8 +99,6 @@ class _MetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = <(String, String, Color?)>[
-      (context.tr('admin.dashboard.totalUsers'), formatInt(stats.totalUsers),
-          null),
       (
         context.tr('admin.dashboard.todayNewUsers'),
         '+${formatInt(stats.todayNewUsers)}',
@@ -113,30 +111,11 @@ class _MetricsCard extends StatelessWidget {
         '${formatInt(stats.activeApiKeys)}/${formatInt(stats.totalApiKeys)}',
         null
       ),
-      (context.tr('admin.dashboard.totalAccounts'),
-          formatInt(stats.totalAccounts), null),
       (
         context.tr('admin.dashboard.todayRequests'),
         formatCompact(stats.todayRequests),
         null
       ),
-      (
-        context.tr('admin.dashboard.todayTokens'),
-        formatCompact(stats.todayTokens),
-        null
-      ),
-      (
-        context.tr('admin.dashboard.totalTokens'),
-        formatCompact(stats.totalTokens),
-        null
-      ),
-      (
-        context.tr('admin.dashboard.todayCost'),
-        formatCost(stats.todayActualCost),
-        AppColors.brandBlue
-      ),
-      (context.tr('admin.dashboard.totalCost'),
-          formatCost(stats.totalActualCost), null),
       (context.tr('admin.dashboard.rpm'), stats.rpm.toStringAsFixed(1), null),
       (
         context.tr('admin.dashboard.avgLatency'),
@@ -253,6 +232,15 @@ class _Hero extends StatelessWidget {
                   formatCost(stats.todayActualCost)),
               _heroMetric(context, context.tr('admin.dashboard.totalCost'),
                   formatCost(stats.totalActualCost)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _heroMetric(context, context.tr('admin.dashboard.todayTokens'),
+                  formatCompact(stats.todayTokens)),
+              _heroMetric(context, context.tr('admin.dashboard.totalTokens'),
+                  formatCompact(stats.totalTokens)),
             ],
           ),
         ],
