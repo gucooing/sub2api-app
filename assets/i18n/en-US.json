@@ -227,6 +227,17 @@
     "fApiKey": "API Key",
     "fApiKeyEditHint": "Leave empty to keep unchanged",
     "nameRequired": "Please enter account name",
+    "loadFactor": "Load factor",
+    "windowReserve": "Sticky reserve",
+    "idleTimeout": "Idle timeout (min)",
+    "proxyNone": "No proxy",
+    "noExpiry": "Never expires",
+    "sec": {
+      "basic": "Basic info",
+      "credentials": "Credentials",
+      "scheduling": "Scheduling & groups",
+      "quota": "Quota control"
+    },
     "enable": "Enable",
     "disable": "Disable",
     "test": "Test",

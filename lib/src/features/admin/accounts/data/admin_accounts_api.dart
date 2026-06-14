@@ -35,8 +35,11 @@ class AdminAccount {
     this.quotaDailyLimit,
     this.quotaWeeklyLimit,
     this.windowCostLimit,
+    this.windowCostStickyReserve,
     this.maxSessions,
+    this.sessionIdleTimeoutMinutes,
     this.baseRpm,
+    this.loadFactor,
   });
 
   final int id;
@@ -66,8 +69,11 @@ class AdminAccount {
   final num? quotaDailyLimit;
   final num? quotaWeeklyLimit;
   final num? windowCostLimit;
+  final num? windowCostStickyReserve;
   final int? maxSessions;
+  final int? sessionIdleTimeoutMinutes;
   final int? baseRpm;
+  final double? loadFactor;
 
   bool get isActive => status == 'active';
   bool get isError => status == 'error';
@@ -136,8 +142,12 @@ class AdminAccount {
       quotaDailyLimit: json['quota_daily_limit'] as num?,
       quotaWeeklyLimit: json['quota_weekly_limit'] as num?,
       windowCostLimit: json['window_cost_limit'] as num?,
+      windowCostStickyReserve: json['window_cost_sticky_reserve'] as num?,
       maxSessions: (json['max_sessions'] as num?)?.toInt(),
+      sessionIdleTimeoutMinutes:
+          (json['session_idle_timeout_minutes'] as num?)?.toInt(),
       baseRpm: (json['base_rpm'] as num?)?.toInt(),
+      loadFactor: (json['load_factor'] as num?)?.toDouble(),
     );
   }
 }
@@ -249,6 +259,20 @@ class AdminAccountsApi {
       for (final e in list)
         if (e is Map && e['id'] != null)
           (id: (e['id'] as num).toInt(), name: '${e['name'] ?? ''}'),
+    ];
+  }
+
+  /// 全部代理(id+name),供编辑选择。
+  Future<List<({int id, String name})>> proxiesAll() async {
+    final data = await _client.get<dynamic>('/admin/proxies/all');
+    final list = (data as List?) ?? const [];
+    return [
+      for (final e in list)
+        if (e is Map && e['id'] != null)
+          (
+            id: (e['id'] as num).toInt(),
+            name: '${e['name'] ?? e['host'] ?? e['id']}'
+          ),
     ];
   }
 

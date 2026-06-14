@@ -199,3 +199,9 @@ final adminGroupsAllProvider =
     FutureProvider.autoDispose<List<({int id, String name})>>((ref) {
   return ref.watch(adminAccountsApiProvider).groupsAll();
 });
+
+/// 全部代理(id+name),供编辑选择。
+final adminProxiesAllProvider =
+    FutureProvider.autoDispose<List<({int id, String name})>>((ref) {
+  return ref.watch(adminAccountsApiProvider).proxiesAll();
+});

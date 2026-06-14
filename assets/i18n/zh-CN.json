@@ -227,6 +227,17 @@
     "fApiKey": "API Key",
     "fApiKeyEditHint": "留空表示不修改",
     "nameRequired": "请输入账号名称",
+    "loadFactor": "负载系数",
+    "windowReserve": "粘性预留",
+    "idleTimeout": "空闲超时(分)",
+    "proxyNone": "不使用代理",
+    "noExpiry": "永不过期",
+    "sec": {
+      "basic": "基本信息",
+      "credentials": "凭据",
+      "scheduling": "调度与归属",
+      "quota": "配额控制"
+    },
     "enable": "启用",
     "disable": "停用",
     "test": "测试连接",
