@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
+import '../../features/admin/accounts/presentation/accounts_list_page.dart';
+import '../../features/admin/accounts/presentation/accounts_detail_page.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/shared/admin_tab_placeholder.dart';
@@ -222,6 +224,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       // 其余管理模块(对照 web 侧边栏);未实装先占位,逐步替换为真实页面。
       GoRoute(
+        path: '/admin/accounts/:id',
+        builder: (context, state) => AccountDetailPage(
+          accountId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
+      ),
+      GoRoute(
         path: '/admin/ops',
         builder: (context, state) =>
             const ModulePlaceholderScreen(titleKey: 'admin.modules.ops'),
@@ -316,7 +324,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/admin/accounts',
-              builder: (context, state) => const AdminTabPlaceholder(),
+              builder: (context, state) => const AccountsListPage(),
             ),
           ]),
           StatefulShellBranch(routes: [
