@@ -288,31 +288,18 @@ class _TrendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-        child: trendAsync.when(
-          loading: () => const SizedBox(
-            height: 240,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) => SizedBox(
-            height: 240,
-            child: EmptyState(
+        padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
+        child: SizedBox(
+          height: 280,
+          child: trendAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => EmptyState(
               icon: Icons.show_chart,
               message: context.tr('errors.network'),
             ),
-          ),
-          data: (points) {
-            if (points.isEmpty) {
-              return SizedBox(
-                height: 240,
-                child: EmptyState(
-                  icon: Icons.show_chart,
-                  message: context.tr('common.empty'),
-                ),
-              );
-            }
-            return MultiSeriesTrendChart(
+            data: (points) => MultiSeriesTrendChart(
               labels: [for (final p in points) p.shortLabel],
+              emptyHint: context.tr('common.empty'),
               series: tokenTrendSeries(
                 context,
                 input: [for (final p in points) p.inputTokens.toDouble()],
@@ -326,8 +313,8 @@ class _TrendCard extends StatelessWidget {
                 cacheHitRate: [for (final p in points) p.cacheHitRate],
                 amount: [for (final p in points) p.actualCost],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
