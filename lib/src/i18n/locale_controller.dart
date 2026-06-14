@@ -42,6 +42,10 @@ class LocaleState {
 
 /// 管理应用语言:初始化为「已保存语言」或「系统语言」,支持运行时切换与热重载语言包。
 class LocaleController extends Notifier<LocaleState> {
+  /// 当前语言标签(供 ApiClient 注入 Accept-Language)。
+  /// 直接读自身 state,使其在持有本 notifier 的长生命周期对象中安全可用。
+  String? get currentTag => state.currentTag;
+
   @override
   LocaleState build() {
     final registry = ref.watch(languagePackRegistryProvider);
