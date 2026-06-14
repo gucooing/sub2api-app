@@ -59,6 +59,7 @@
     "dashboard": {
       "platformOverview": "平台总览",
       "kpis": "核心指标",
+      "quickAccess": "快捷入口",
       "accountHealth": "账号健康度",
       "usageTrend": "用量趋势",
       "totalUsers": "用户总数",
@@ -66,6 +67,8 @@
       "activeUsers": "活跃用户",
       "apiKeys": "密钥(活跃/总)",
       "todayRequests": "今日请求",
+      "todayTokens": "今日 Token",
+      "totalTokens": "累计 Token",
       "todayCost": "今日消耗",
       "totalCost": "累计消耗",
       "totalAccounts": "账号总数",

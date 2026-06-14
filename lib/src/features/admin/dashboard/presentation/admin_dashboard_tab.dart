@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/session/session_controller.dart';
+import '../../../../core/session/auth_models.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../i18n/app_localizations.dart';
 import '../../../../shared/format/formatters.dart';
@@ -12,6 +15,8 @@ import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/status_pill.dart';
 import '../../../../shared/widgets/token_trend_series.dart';
+import '../../../user/features/data/user_features.dart';
+import '../../../user/features/presentation/custom_page_launcher.dart';
 import '../data/admin_dashboard_api.dart';
 import '../providers/admin_dashboard_providers.dart';
 
@@ -68,6 +73,9 @@ class _Content extends ConsumerWidget {
               SectionHeader(title: context.tr('admin.dashboard.kpis')),
               _MetricsCard(stats: stats),
               const SizedBox(height: 16),
+              SectionHeader(title: context.tr('admin.dashboard.quickAccess')),
+              const _QuickAccess(),
+              const SizedBox(height: 16),
               SectionHeader(title: context.tr('admin.dashboard.accountHealth')),
               _AccountHealthCard(stats: stats),
               const SizedBox(height: 16),
@@ -109,6 +117,16 @@ class _MetricsCard extends StatelessWidget {
       (
         context.tr('admin.dashboard.todayRequests'),
         formatCompact(stats.todayRequests),
+        null
+      ),
+      (
+        context.tr('admin.dashboard.todayTokens'),
+        formatCompact(stats.todayTokens),
+        null
+      ),
+      (
+        context.tr('admin.dashboard.totalTokens'),
+        formatCompact(stats.totalTokens),
         null
       ),
       (
@@ -376,6 +394,93 @@ class _TrendCard extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 快捷入口:管理端各模块 + 管理员自定义页面(对齐用户端总览的快捷入口)。
+class _QuickAccess extends ConsumerWidget {
+  const _QuickAccess();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(publicSettingsProvider).value;
+    final customPages = settings == null
+        ? const <CustomMenuItem>[]
+        : visibleCustomPages(settings, isAdmin: true);
+
+    final items = <_QaItem>[
+      _QaItem(Icons.cloud_outlined, context.tr('admin.nav.accounts'),
+          () => context.go('/admin/accounts')),
+      _QaItem(Icons.group_outlined, context.tr('admin.nav.users'),
+          () => context.go('/admin/users')),
+      _QaItem(Icons.workspaces_outline, context.tr('admin.nav.groups'),
+          () => context.go('/admin/groups')),
+      _QaItem(Icons.card_giftcard_outlined, context.tr('admin.redeem.title'),
+          () => context.push('/admin/redeem')),
+      _QaItem(Icons.monitor_heart_outlined, context.tr('admin.monitor.title'),
+          () => context.push('/admin/monitor')),
+      _QaItem(Icons.tune_outlined, context.tr('admin.settings.title'),
+          () => context.push('/admin/settings')),
+      for (final p in customPages)
+        _QaItem(Icons.public_outlined, p.label,
+            () => openCustomPage(context, ref, p)),
+    ];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final cols = (c.maxWidth / 96).floor().clamp(3, 6);
+            final cellW = c.maxWidth / cols;
+            return Wrap(
+              children: [
+                for (final it in items)
+                  SizedBox(width: cellW, child: _QaCell(item: it)),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _QaItem {
+  const _QaItem(this.icon, this.label, this.onTap);
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+class _QaCell extends StatelessWidget {
+  const _QaCell({required this.item});
+
+  final _QaItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: item.onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Column(
+          children: [
+            Icon(item.icon, color: scheme.primary),
+            const SizedBox(height: 6),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
       ),
     );

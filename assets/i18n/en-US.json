@@ -59,6 +59,7 @@
     "dashboard": {
       "platformOverview": "Platform overview",
       "kpis": "Key metrics",
+      "quickAccess": "Quick access",
       "accountHealth": "Account health",
       "usageTrend": "Usage trend",
       "totalUsers": "Total users",
@@ -66,6 +67,8 @@
       "activeUsers": "Active users",
       "apiKeys": "Keys (active/total)",
       "todayRequests": "Requests today",
+      "todayTokens": "Tokens today",
+      "totalTokens": "Total tokens",
       "todayCost": "Cost today",
       "totalCost": "Total cost",
       "totalAccounts": "Total accounts",
