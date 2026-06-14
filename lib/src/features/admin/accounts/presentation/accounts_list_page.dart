@@ -204,36 +204,40 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final filterBtn = IconButton.filledTonal(
+      onPressed: onOpenFilters,
+      tooltip: context.tr('adminAccounts.filters'),
+      icon: const Icon(Icons.tune),
+    );
     return ResponsiveCenter(
       maxWidth: 1100,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                onSubmitted: onSearch,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: context.tr('adminAccounts.searchHint'),
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: const OutlineInputBorder(),
+        child: SizedBox(
+          height: 52,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  onSubmitted: onSearch,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: context.tr('adminAccounts.searchHint'),
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: onOpenFilters,
-              icon: const Icon(Icons.tune, size: 18),
-              label: Text(filterCount > 0
-                  ? '${context.tr('adminAccounts.filters')} · $filterCount'
-                  : context.tr('adminAccounts.filters')),
-            ),
-          ],
+              const SizedBox(width: 6),
+              filterCount > 0
+                  ? Badge.count(count: filterCount, child: filterBtn)
+                  : filterBtn,
+            ],
+          ),
         ),
       ),
     );
