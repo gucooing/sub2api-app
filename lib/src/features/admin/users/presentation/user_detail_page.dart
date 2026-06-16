@@ -51,6 +51,7 @@ class UserDetailPage extends ConsumerWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(u.username.isEmpty ? u.email : u.username,
                       style: Theme.of(context).textTheme.titleLarge),
@@ -82,29 +83,26 @@ class UserDetailPage extends ConsumerWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(context.tr('adminUsers.balance'),
-                        style: Theme.of(context).textTheme.bodySmall),
-                    Text(formatCost(u.balance.toDouble()),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w700)),
-                  ],
-                ),
-                const Spacer(),
-                FilledButton.tonalIcon(
-                  onPressed: () => _adjustBalance(context, ref, u),
-                  icon: const Icon(Icons.account_balance_wallet_outlined,
-                      size: 18),
-                  label: Text(context.tr('adminUsers.adjustBalance')),
-                ),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(context.tr('adminUsers.balance'),
+                      style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(formatCost(u.balance.toDouble()),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: () => _adjustBalance(context, ref, u),
+                    icon: const Icon(Icons.account_balance_wallet_outlined,
+                        size: 18),
+                    label: Text(context.tr('adminUsers.adjustBalance')),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
