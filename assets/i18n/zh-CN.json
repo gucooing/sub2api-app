@@ -236,16 +236,13 @@
       "basic": "基本信息",
       "credentials": "凭据",
       "scheduling": "调度与归属",
-      "quota": "配额控制"
+      "quota": "配额控制",
+      "model": "模型限制",
+      "poolMode": "池模式",
+      "errorCodes": "自定义错误码"
     },
     "enable": "启用",
     "disable": "停用",
-    "test": "测试连接",
-    "testing": "测试中…",
-    "testTitle": "测试账号连接",
-    "testModel": "选择模型",
-    "testPrompt": "请求内容",
-    "runTest": "测试",
     "test": {
       "ready": "准备就绪,点击下方开始测试",
       "connecting": "正在连接 API…",
@@ -265,6 +262,11 @@
       "copy": "复制输出",
       "copied": "输出已复制"
     },
+    "testing": "测试中…",
+    "testTitle": "测试账号连接",
+    "testModel": "选择模型",
+    "testPrompt": "请求内容",
+    "runTest": "测试",
     "clearError": "清除错误",
     "clearRateLimit": "清除限流",
     "recoverState": "恢复状态",
@@ -274,7 +276,43 @@
     "resetQuota": "重置配额",
     "setPrivacy": "设为隐私",
     "delete": "删除账号",
-    "deleteConfirm": "确定删除账号「{name}」吗?"
+    "deleteConfirm": "确定删除账号「{name}」吗?",
+    "apiKeyRequired": "请填写 API Key",
+    "model": {
+      "whitelist": "白名单",
+      "mapping": "模型映射",
+      "customHint": "输入模型名后回车添加",
+      "allModels": "未选择 = 支持全部模型",
+      "selectedCount": "已选 {count} 个模型",
+      "requestModel": "请求模型",
+      "actualModel": "实际模型",
+      "addMapping": "添加映射",
+      "mappingExists": "{model} 已在映射中",
+      "wildcardOnlyAtEnd": "通配符 * 只能放在末尾",
+      "targetNoWildcard": "目标模型不能包含通配符",
+      "syncUpstream": "同步上游模型",
+      "syncDone": "已新增 {count} 个(上游共 {total} 个)"
+    },
+    "poolMode": {
+      "label": "池模式",
+      "hint": "失败时在同组账号间自动重试",
+      "info": "开启后,该账号请求失败会按重试策略切换到同组其它账号",
+      "retryCount": "重试次数",
+      "retryCountHint": "默认 {default},最大 {max}",
+      "retryCodes": "触发重试的状态码",
+      "retryCodesHint": "逗号分隔,默认 {default}"
+    },
+    "errorCodes": {
+      "label": "自定义错误码",
+      "hint": "将这些上游状态码视为账号错误",
+      "warning": "谨慎使用:错误处理可能影响调度",
+      "warn429": "429 通常是限流而非账号错误,确定加入?",
+      "warn529": "529 通常是过载而非账号错误,确定加入?",
+      "invalid": "请输入 100–599 之间的状态码",
+      "exists": "该状态码已添加",
+      "enterCode": "输入状态码",
+      "noneSelected": "未选择 = 使用默认"
+    }
   },
   "auth": {
     "login": "登录",

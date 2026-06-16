@@ -236,16 +236,13 @@
       "basic": "Basic info",
       "credentials": "Credentials",
       "scheduling": "Scheduling & groups",
-      "quota": "Quota control"
+      "quota": "Quota control",
+      "model": "Model Restriction",
+      "poolMode": "Pool Mode",
+      "errorCodes": "Custom Error Codes"
     },
     "enable": "Enable",
     "disable": "Disable",
-    "test": "Test",
-    "testing": "Testing…",
-    "testTitle": "Test account connection",
-    "testModel": "Select model",
-    "testPrompt": "Request content",
-    "runTest": "Test",
     "test": {
       "ready": "Ready. Click below to start the test.",
       "connecting": "Connecting to API…",
@@ -265,6 +262,11 @@
       "copy": "Copy output",
       "copied": "Output copied"
     },
+    "testing": "Testing…",
+    "testTitle": "Test account connection",
+    "testModel": "Select model",
+    "testPrompt": "Request content",
+    "runTest": "Test",
     "clearError": "Clear error",
     "clearRateLimit": "Clear rate limit",
     "recoverState": "Recover state",
@@ -274,7 +276,43 @@
     "resetQuota": "Reset quota",
     "setPrivacy": "Set privacy",
     "delete": "Delete account",
-    "deleteConfirm": "Delete account \"{name}\"?"
+    "deleteConfirm": "Delete account \"{name}\"?",
+    "apiKeyRequired": "API Key is required",
+    "model": {
+      "whitelist": "Whitelist",
+      "mapping": "Mapping",
+      "customHint": "Type a model name, press Enter to add",
+      "allModels": "None selected = all models supported",
+      "selectedCount": "{count} models selected",
+      "requestModel": "Request model",
+      "actualModel": "Actual model",
+      "addMapping": "Add mapping",
+      "mappingExists": "{model} is already mapped",
+      "wildcardOnlyAtEnd": "Wildcard * is only allowed at the end",
+      "targetNoWildcard": "Target model cannot contain a wildcard",
+      "syncUpstream": "Sync upstream models",
+      "syncDone": "Added {count} (upstream total {total})"
+    },
+    "poolMode": {
+      "label": "Pool Mode",
+      "hint": "Auto-retry across accounts in the same group on failure",
+      "info": "When enabled, failed requests on this account retry on other accounts in the same group per the retry policy",
+      "retryCount": "Retry count",
+      "retryCountHint": "Default {default}, max {max}",
+      "retryCodes": "Retry status codes",
+      "retryCodesHint": "Comma-separated, default {default}"
+    },
+    "errorCodes": {
+      "label": "Custom Error Codes",
+      "hint": "Treat these upstream status codes as account errors",
+      "warning": "Use with caution: error handling may affect scheduling",
+      "warn429": "429 is usually rate-limiting, not an account error. Add anyway?",
+      "warn529": "529 is usually overload, not an account error. Add anyway?",
+      "invalid": "Enter a status code between 100-599",
+      "exists": "This status code is already added",
+      "enterCode": "Enter status code",
+      "noneSelected": "None selected = use default"
+    }
   },
   "auth": {
     "login": "Sign in",

@@ -495,4 +495,12 @@ class AdminAccountsApi {
 
   Future<void> refreshCredentials(int id) =>
       _client.post<dynamic>('/admin/accounts/$id/refresh');
+
+  /// 同步上游模型(antigravity 等):返回上游模型 id 列表。
+  Future<List<String>> syncUpstreamModels(int id) async {
+    final data = await _client
+        .post<dynamic>('/admin/accounts/$id/models/sync-upstream');
+    final models = (data is Map ? data['models'] : null) as List? ?? const [];
+    return [for (final m in models) '$m'.trim()].where((m) => m.isNotEmpty).toList();
+  }
 }

@@ -1,0 +1,83 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:sub2api/src/features/admin/accounts/data/account_model_mapping.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/custom_error_codes_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/model_restriction_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/pool_mode_section.dart';
+import 'package:sub2api/src/i18n/app_localizations.dart';
+import 'package:sub2api/src/i18n/language_pack.dart';
+import 'package:sub2api/src/i18n/language_pack_registry.dart';
+
+/// 用真实 zh-CN 语言包包裹被测组件,提供 `context.tr`。
+Widget _host(Widget child) {
+  final pack = LanguagePack.fromJsonString(
+      File('assets/i18n/zh-CN.json').readAsStringSync());
+  final registry = LanguagePackRegistry()
+    ..replaceAll([pack], fallbackTag: 'zh-CN');
+  return MaterialApp(
+    locale: const Locale('zh', 'CN'),
+    localizationsDelegates: [
+      AppLocalizationsDelegate(registry),
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('zh', 'CN')],
+    // 有界高度,Column 内放各 section,模拟表单 ListView 场景。
+    home: Scaffold(
+      body: ListView(padding: const EdgeInsets.all(16), children: [child]),
+    ),
+  );
+}
+
+void main() {
+  testWidgets('模型限制·映射模式:from→to 行 + 预设 + 同步按钮 在有界列中不报错',
+      (tester) async {
+    await tester.pumpWidget(_host(ModelRestrictionSection(
+      platform: 'antigravity',
+      mappingOnly: true,
+      onSyncUpstream: () async => ['claude-opus-4-8'],
+      value: ModelRestrictionValue(
+        mode: ModelRestrictionMode.mapping,
+        mappings: [ModelMappingEntry(from: 'claude-*', to: 'claude-sonnet-4-5')],
+      ),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('模型限制·白名单模式:候选 chip + 自定义添加 不报错', (tester) async {
+    await tester.pumpWidget(_host(ModelRestrictionSection(
+      platform: 'anthropic',
+      value: ModelRestrictionValue(
+        mode: ModelRestrictionMode.whitelist,
+        allowedModels: ['claude-opus-4-8'],
+      ),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('池模式:开启态字段不报错', (tester) async {
+    await tester.pumpWidget(_host(PoolModeSection(
+      value: PoolModeValue(enabled: true, retryStatusCodesInput: '401, 429'),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('自定义错误码:开启态 chip + 已选 不报错', (tester) async {
+    await tester.pumpWidget(_host(CustomErrorCodesSection(
+      value: CustomErrorCodesValue(enabled: true, codes: [401, 403]),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+}
