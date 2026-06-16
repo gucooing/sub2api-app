@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_model_mapping.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_platform_options.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_quota.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/bedrock_credentials_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/custom_error_codes_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/model_restriction_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/openai_section.dart';
@@ -168,6 +169,15 @@ void main() {
         TempUnschedRule(
             errorCode: 529, keywords: 'overloaded', durationMinutes: 60),
       ]),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Bedrock 凭据:SigV4 / APIKey 两模式 不报错', (tester) async {
+    await tester.pumpWidget(_host(BedrockCredentialsSection(
+      value: BedrockCredsValue(authMode: 'sigv4', forceGlobal: true),
       onChanged: (_) {},
     )));
     await tester.pump();

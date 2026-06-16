@@ -439,6 +439,31 @@
     "antigravity": {
       "mixedScheduling": "混合调度(只读)",
       "allowOverages": "允许 AI 额度超额"
+    },
+    "typeServiceAccount": "Vertex 服务账号",
+    "typeUpstream": "上游中继",
+    "oauthCreateNote": "OAuth 授权类账号需通过网页授权流程创建,移动端即将支持",
+    "upstreamRequired": "请填写 Base URL 与 API Key",
+    "bedrock": {
+      "sigv4": "SigV4 密钥",
+      "apiKeyMode": "API Key",
+      "apiKey": "Bedrock API Key",
+      "accessKeyId": "Access Key ID",
+      "secretKey": "Secret Access Key",
+      "sessionToken": "Session Token(可选)",
+      "region": "区域",
+      "forceGlobal": "强制使用 global 推理",
+      "forceGlobalHint": "跨区域走 global 端点",
+      "leaveEmptyKeep": "留空保留已有",
+      "required": "请填写 Bedrock 凭据"
+    },
+    "sa": {
+      "uploadJson": "上传 Service Account JSON",
+      "jsonOnFile": "已保存 JSON(留空保留)",
+      "noJson": "尚未上传 JSON",
+      "invalidJson": "JSON 解析失败",
+      "required": "请填写 Project ID 与 Location",
+      "jsonRequired": "请上传 Service Account JSON"
     }
   },
   "auth": {

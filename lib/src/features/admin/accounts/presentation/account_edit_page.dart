@@ -14,6 +14,7 @@ import '../data/account_quota.dart';
 import '../data/admin_accounts_api.dart';
 import '../providers/admin_accounts_providers.dart';
 import '../../settings/providers/admin_settings_providers.dart';
+import 'sections/bedrock_credentials_section.dart';
 import 'sections/custom_error_codes_section.dart';
 import 'sections/model_restriction_section.dart';
 import 'sections/openai_section.dart';
@@ -21,6 +22,7 @@ import 'sections/platform_toggle_sections.dart';
 import 'sections/pool_mode_section.dart';
 import 'sections/quota_advanced_section.dart';
 import 'sections/quota_limit_section.dart';
+import 'sections/service_account_section.dart';
 import 'sections/temp_unschedulable_section.dart';
 
 /// 账号 新增 / 编辑。
@@ -67,6 +69,8 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
   AnthropicApikeyOptions _anthropic = AnthropicApikeyOptions();
   AntigravityOptions _antigravity = AntigravityOptions();
   TempUnschedValue _tempUnsched = TempUnschedValue();
+  BedrockCredsValue _bedrock = BedrockCredsValue();
+  ServiceAccountValue _serviceAccount = ServiceAccountValue();
   bool _interceptWarmup = false;
   bool _hadCodexCliOnly = false;
   String? _credError;
@@ -87,6 +91,36 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
 
   /// base_url + api_key 凭据输入(apikey / upstream)。
   bool get _showApiKeyCreds => _isApiKey || _isUpstream;
+
+  /// Bedrock 凭据。
+  bool get _showBedrockCreds => _isBedrock;
+
+  /// Vertex Service Account 凭据((gemini|anthropic) & service_account)。
+  bool get _showServiceAccount =>
+      (_platform == 'gemini' || _platform == 'anthropic') &&
+      _type == 'service_account';
+
+  /// 新建时各平台可填类型(OAuth 授权类不在此,需另行授权流程)。
+  Map<String, String> _createTypesFor(String platform) {
+    switch (platform) {
+      case 'openai':
+        return const {'apikey': 'adminAccounts.typeApikey'};
+      case 'gemini':
+        return const {
+          'apikey': 'adminAccounts.typeApikey',
+          'service_account': 'adminAccounts.typeServiceAccount',
+        };
+      case 'antigravity':
+        return const {'upstream': 'adminAccounts.typeUpstream'};
+      case 'anthropic':
+      default:
+        return const {
+          'apikey': 'adminAccounts.typeApikey',
+          'bedrock': 'adminAccounts.typeBedrock',
+          'service_account': 'adminAccounts.typeServiceAccount',
+        };
+    }
+  }
 
   /// 模型限制(白名单/映射):apikey(非 antigravity)/bedrock/service_account/openai-oauth。
   bool get _showModelRestriction =>
@@ -223,6 +257,8 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
     _tempUnsched = TempUnschedValue.fromCredentials(a.credentials);
     _interceptWarmup = a.credentials['intercept_warmup_requests'] == true;
     _hadCodexCliOnly = a.extra['codex_cli_only'] == true;
+    _bedrock = BedrockCredsValue.fromCredentials(a.credentials);
+    _serviceAccount = ServiceAccountValue.fromCredentials(a.credentials);
   }
 
   Widget _form(BuildContext context) {
@@ -248,11 +284,22 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
               'openai': 'OpenAI',
               'gemini': 'Gemini',
               'antigravity': 'Antigravity',
-            }, (v) => setState(() => _platform = v), raw: true),
-            _dropdown('adminAccounts.type', _type, const {
-              'apikey': 'adminAccounts.typeApikey',
-              'bedrock': 'adminAccounts.typeBedrock',
-            }, (v) => setState(() => _type = v)),
+            }, (v) => setState(() {
+                  _platform = v;
+                  final types = _createTypesFor(v);
+                  if (!types.containsKey(_type)) _type = types.keys.first;
+                }), raw: true),
+            KeyedSubtree(
+              key: ValueKey('type-$_platform'),
+              child: _dropdown('adminAccounts.type', _type,
+                  _createTypesFor(_platform), (v) => setState(() => _type = v)),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(context.tr('adminAccounts.oauthCreateNote'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ),
           ],
           if (widget.isEdit)
             SwitchListTile(
@@ -270,6 +317,35 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
             _field(_apiKey, 'adminAccounts.fApiKey',
                 optional: widget.isEdit,
                 hint: widget.isEdit ? 'adminAccounts.fApiKeyEditHint' : null),
+          ],
+
+          // ===== 凭据(Bedrock) =====
+          if (_showBedrockCreds) ...[
+            const SizedBox(height: 8),
+            SectionHeader(title: context.tr('adminAccounts.sec.credentials')),
+            BedrockCredentialsSection(
+              key: const ValueKey('bedrock-creds'),
+              value: _bedrock,
+              enabled: !_saving,
+              isEdit: widget.isEdit,
+              onChanged: (v) => _bedrock = v,
+            ),
+          ],
+
+          // ===== 凭据(Vertex Service Account) =====
+          if (_showServiceAccount) ...[
+            const SizedBox(height: 8),
+            SectionHeader(title: context.tr('adminAccounts.sec.credentials')),
+            ServiceAccountSection(
+              key: const ValueKey('sa-creds'),
+              value: _serviceAccount,
+              enabled: !_saving,
+              isEdit: widget.isEdit,
+              hasExistingJson: _credentialsStatus['has_service_account_json'] ==
+                      true ||
+                  _credentialsStatus['has_service_account'] == true,
+              onChanged: (v) => _serviceAccount = v,
+            ),
           ],
 
           // ===== 模型限制 =====
@@ -537,6 +613,42 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
       if (base.isNotEmpty) creds['base_url'] = base;
       final key = _apiKey.text.trim();
       if (key.isNotEmpty) creds['api_key'] = key;
+      // upstream 新建:base_url + api_key 必填。
+      if (_isUpstream && !widget.isEdit && (base.isEmpty || key.isEmpty)) {
+        _credError = context.tr('adminAccounts.upstreamRequired');
+        return null;
+      }
+    }
+
+    if (_showBedrockCreds) {
+      if (!widget.isEdit) {
+        // 新建:SigV4 需 AccessKeyId+Secret;APIKey 模式需 api_key。
+        final missing = _bedrock.authMode == 'apikey'
+            ? _bedrock.apiKey.trim().isEmpty
+            : (_bedrock.accessKeyId.trim().isEmpty ||
+                _bedrock.secretKey.trim().isEmpty);
+        if (missing) {
+          _credError = context.tr('adminAccounts.bedrock.required');
+          return null;
+        }
+      }
+      _bedrock.applyToCredentials(creds);
+    }
+
+    if (_showServiceAccount) {
+      if (_serviceAccount.projectId.trim().isEmpty ||
+          _serviceAccount.location.trim().isEmpty) {
+        _credError = context.tr('adminAccounts.sa.required');
+        return null;
+      }
+      final hasJson = _serviceAccount.saJson != null ||
+          _credentialsStatus['has_service_account_json'] == true ||
+          _credentialsStatus['has_service_account'] == true;
+      if (!hasJson) {
+        _credError = context.tr('adminAccounts.sa.jsonRequired');
+        return null;
+      }
+      _serviceAccount.applyToCredentials(creds);
     }
 
     // OpenAI 开启自动透传时保留现有模型映射,不再编辑(对照 web)。

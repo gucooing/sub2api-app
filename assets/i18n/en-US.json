@@ -439,6 +439,31 @@
     "antigravity": {
       "mixedScheduling": "Mixed scheduling (read-only)",
       "allowOverages": "Allow AI credits overages"
+    },
+    "typeServiceAccount": "Vertex Service Account",
+    "typeUpstream": "Upstream Relay",
+    "oauthCreateNote": "OAuth accounts must be created via the web authorize flow; mobile support is coming",
+    "upstreamRequired": "Base URL and API Key are required",
+    "bedrock": {
+      "sigv4": "SigV4 keys",
+      "apiKeyMode": "API Key",
+      "apiKey": "Bedrock API Key",
+      "accessKeyId": "Access Key ID",
+      "secretKey": "Secret Access Key",
+      "sessionToken": "Session Token (optional)",
+      "region": "Region",
+      "forceGlobal": "Force global inference",
+      "forceGlobalHint": "Use the global endpoint across regions",
+      "leaveEmptyKeep": "Leave empty to keep",
+      "required": "Bedrock credentials are required"
+    },
+    "sa": {
+      "uploadJson": "Upload Service Account JSON",
+      "jsonOnFile": "JSON saved (leave to keep)",
+      "noJson": "No JSON uploaded yet",
+      "invalidJson": "Failed to parse JSON",
+      "required": "Project ID and Location are required",
+      "jsonRequired": "Please upload the Service Account JSON"
     }
   },
   "auth": {
