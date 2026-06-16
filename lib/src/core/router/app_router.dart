@@ -10,9 +10,11 @@ import '../../features/admin/accounts/presentation/accounts_detail_page.dart';
 import '../../features/admin/accounts/presentation/account_edit_page.dart';
 import '../../features/admin/users/presentation/users_list_page.dart';
 import '../../features/admin/users/presentation/user_detail_page.dart';
+import '../../features/admin/groups/presentation/groups_list_page.dart';
+import '../../features/admin/groups/presentation/group_edit_page.dart';
+import '../../features/admin/groups/presentation/group_rates_page.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
-import '../../features/admin/shared/admin_tab_placeholder.dart';
 import '../../features/admin/settings/presentation/admin_settings_index_page.dart';
 import '../../features/admin/settings/presentation/admin_setting_category_page.dart';
 import '../../features/settings/servers_screen.dart';
@@ -357,7 +359,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/admin/groups',
-              builder: (context, state) => const AdminTabPlaceholder(),
+              builder: (context, state) => const GroupsListPage(),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => const GroupEditPage(),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) => GroupEditPage(
+                    groupId: int.parse(state.pathParameters['id']!),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'rates',
+                      builder: (context, state) => GroupRatesPage(
+                        groupId: int.parse(state.pathParameters['id']!),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
