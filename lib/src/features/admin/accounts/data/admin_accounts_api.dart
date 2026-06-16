@@ -503,4 +503,15 @@ class AdminAccountsApi {
     final models = (data is Map ? data['models'] : null) as List? ?? const [];
     return [for (final m in models) '$m'.trim()].where((m) => m.isNotEmpty).toList();
   }
+
+  /// TLS 指纹配置(id+name),供高级配额(Anthropic OAuth/setup-token)选择。
+  Future<List<({int id, String name})>> tlsFingerprintProfiles() async {
+    final data = await _client.get<dynamic>('/admin/tls-fingerprint-profiles');
+    final list = (data as List?) ?? const [];
+    return [
+      for (final e in list)
+        if (e is Map && e['id'] != null)
+          (id: (e['id'] as num).toInt(), name: '${e['name'] ?? e['id']}'),
+    ];
+  }
 }

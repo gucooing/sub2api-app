@@ -205,3 +205,13 @@ final adminProxiesAllProvider =
     FutureProvider.autoDispose<List<({int id, String name})>>((ref) {
   return ref.watch(adminAccountsApiProvider).proxiesAll();
 });
+
+/// TLS 指纹配置(id+name),供高级配额选择;失败回退空列表。
+final adminTlsProfilesProvider =
+    FutureProvider.autoDispose<List<({int id, String name})>>((ref) async {
+  try {
+    return await ref.watch(adminAccountsApiProvider).tlsFingerprintProfiles();
+  } catch (_) {
+    return const [];
+  }
+});

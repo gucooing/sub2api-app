@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_model_mapping.dart';
+import 'package:sub2api/src/features/admin/accounts/data/account_quota.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/custom_error_codes_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/model_restriction_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/pool_mode_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/quota_advanced_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/quota_limit_section.dart';
 import 'package:sub2api/src/i18n/app_localizations.dart';
 import 'package:sub2api/src/i18n/language_pack.dart';
 import 'package:sub2api/src/i18n/language_pack_registry.dart';
@@ -75,6 +78,40 @@ void main() {
   testWidgets('自定义错误码:开启态 chip + 已选 不报错', (tester) async {
     await tester.pumpWidget(_host(CustomErrorCodesSection(
       value: CustomErrorCodesValue(enabled: true, codes: [401, 403]),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('配额控制:启用 + fixed 重置 + 通知 不报错', (tester) async {
+    await tester.pumpWidget(_host(QuotaLimitSection(
+      notifyGlobalEnabled: true,
+      value: QuotaLimitValue(
+        daily: 10,
+        weekly: 50,
+        total: 100,
+        dailyResetMode: 'fixed',
+        weeklyResetMode: 'fixed',
+        notifyTotal: QuotaNotify(enabled: true, threshold: 80),
+      ),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('高级配额:全部卡片启用 不报错', (tester) async {
+    await tester.pumpWidget(_host(QuotaAdvancedSection(
+      tlsProfiles: const [(id: 1, name: 'chrome')],
+      value: AdvancedQuotaValue(
+        windowCostEnabled: true,
+        sessionLimitEnabled: true,
+        rpmEnabled: true,
+        tlsEnabled: true,
+        cacheTtlEnabled: true,
+        customBaseUrlEnabled: true,
+      ),
       onChanged: (_) {},
     )));
     await tester.pump();

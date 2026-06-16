@@ -9,11 +9,15 @@ import '../../../../shared/widgets/error_retry.dart';
 import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../data/account_model_mapping.dart';
+import '../data/account_quota.dart';
 import '../data/admin_accounts_api.dart';
 import '../providers/admin_accounts_providers.dart';
+import '../../settings/providers/admin_settings_providers.dart';
 import 'sections/custom_error_codes_section.dart';
 import 'sections/model_restriction_section.dart';
 import 'sections/pool_mode_section.dart';
+import 'sections/quota_advanced_section.dart';
+import 'sections/quota_limit_section.dart';
 
 /// 账号 新增 / 编辑。
 ///
@@ -53,10 +57,13 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
   ModelRestrictionValue _model = ModelRestrictionValue();
   PoolModeValue _pool = PoolModeValue();
   CustomErrorCodesValue _errorCodes = CustomErrorCodesValue();
+  QuotaLimitValue _quota = QuotaLimitValue();
+  AdvancedQuotaValue _advQuota = AdvancedQuotaValue();
 
-  // 编辑态保存所需的原始 credentials/credentialsStatus(用于合并 + 判定已有密钥)。
+  // 编辑态保存所需的原始 credentials/credentialsStatus/extra(用于合并)。
   Map<String, dynamic> _credentials = const {};
   Map<String, bool> _credentialsStatus = const {};
+  Map<String, dynamic> _extra = const {};
 
   bool _initialized = false;
   bool _saving = false;
@@ -83,6 +90,13 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
 
   /// 自定义错误码:apikey。
   bool get _showCustomErrorCodes => _isApiKey;
+
+  /// 配额控制(总/日/周):apikey / bedrock。
+  bool get _showQuota => _isApiKey || _isBedrock;
+
+  /// 高级配额(窗口费用/会话/RPM/TLS/...):Anthropic OAuth / setup-token。
+  bool get _showAdvancedQuota =>
+      _platform == 'anthropic' && (_type == 'oauth' || _type == 'setup-token');
 
   @override
   void dispose() {
@@ -150,6 +164,7 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
 
     _credentials = a.credentials;
     _credentialsStatus = a.credentialsStatus;
+    _extra = a.extra;
     _baseUrl.text = (a.credentials['base_url'] as String?) ?? '';
 
     // 模型限制:antigravity 与其它平台都落在 credentials.model_mapping。
@@ -174,11 +189,19 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
           ? [for (final c in rawCodes) if (c is num) c.toInt()]
           : const [],
     );
+
+    _quota = QuotaLimitValue.fromAccount(a);
+    _advQuota = AdvancedQuotaValue.fromAccount(a);
   }
 
   Widget _form(BuildContext context) {
     final groupsAsync = ref.watch(adminGroupsAllProvider);
     final proxiesAsync = ref.watch(adminProxiesAllProvider);
+    // 全局「账号配额通知」开关:关闭时不显示通知配置(对照 web)。
+    final notifyGlobal = ref.watch(adminSettingsProvider).maybeWhen(
+          data: (m) => m['account_quota_notify_enabled'] == true,
+          orElse: () => false,
+        );
     return ResponsiveCenter(
       maxWidth: 640,
       child: ListView(
@@ -261,10 +284,43 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
             ),
           ],
 
+          // ===== 配额控制(总/日/周) =====
+          if (_showQuota) ...[
+            const SizedBox(height: 16),
+            SectionHeader(title: context.tr('adminAccounts.sec.quota')),
+            QuotaLimitSection(
+              key: ValueKey('quota-$_type'),
+              value: _quota,
+              enabled: !_saving,
+              notifyGlobalEnabled: notifyGlobal,
+              onChanged: (v) => _quota = v,
+            ),
+          ],
+
+          // ===== 高级配额(Anthropic OAuth/setup-token) =====
+          if (_showAdvancedQuota) ...[
+            const SizedBox(height: 16),
+            SectionHeader(title: context.tr('adminAccounts.sec.quota')),
+            ref.watch(adminTlsProfilesProvider).maybeWhen(
+                  data: (profiles) => QuotaAdvancedSection(
+                    key: ValueKey('adv-$_type'),
+                    value: _advQuota,
+                    enabled: !_saving,
+                    tlsProfiles: profiles,
+                    onChanged: (v) => _advQuota = v,
+                  ),
+                  orElse: () => QuotaAdvancedSection(
+                    key: ValueKey('adv-$_type'),
+                    value: _advQuota,
+                    enabled: !_saving,
+                    onChanged: (v) => _advQuota = v,
+                  ),
+                ),
+          ],
+
           // ===== 调度与归属 =====
           const SizedBox(height: 16),
-          SectionHeader(title: context.tr('adminAccounts.sec.scheduling')),
-          Text(context.tr('adminAccounts.groups'),
+          SectionHeader(title: context.tr('adminAccounts.sec.scheduling')),          Text(context.tr('adminAccounts.groups'),
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 6),
           groupsAsync.maybeWhen(
@@ -440,6 +496,17 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
     return creds;
   }
 
+  /// 构建提交用的 extra:从原始 extra 展开,各区块改/删键后整体回传。
+  /// 后端 update 会保留运行态键(model_rate_limits 等)。
+  Map<String, dynamic>? _buildExtra() {
+    final touches = _showQuota || _showAdvancedQuota;
+    if (!touches) return null;
+    final extra = <String, dynamic>{...(widget.isEdit ? _extra : {})};
+    if (_showQuota) _quota.applyToExtra(extra);
+    if (_showAdvancedQuota) _advQuota.applyToExtra(extra);
+    return extra;
+  }
+
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
       showAppToast(context, context.tr('adminAccounts.nameRequired'),
@@ -480,6 +547,8 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
       };
       final creds = _buildCredentials();
       if (creds != null) body['credentials'] = creds;
+      final extra = _buildExtra();
+      if (extra != null) body['extra'] = extra;
 
       if (widget.isEdit) {
         body['status'] = _active ? 'active' : 'inactive';
