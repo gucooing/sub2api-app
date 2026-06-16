@@ -13,6 +13,7 @@ import '../../features/admin/users/presentation/user_detail_page.dart';
 import '../../features/admin/groups/presentation/groups_list_page.dart';
 import '../../features/admin/groups/presentation/group_edit_page.dart';
 import '../../features/admin/groups/presentation/group_rates_page.dart';
+import '../../features/admin/redeem/presentation/redeem_list_page.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/settings/presentation/admin_settings_index_page.dart';
@@ -209,8 +210,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 管理端按需推入的子页(占位,完整页见 Phase D)。
       GoRoute(
         path: '/admin/redeem',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.redeem.title'),
+        builder: (context, state) => const RedeemListPage(),
       ),
       GoRoute(
         path: '/admin/monitor',

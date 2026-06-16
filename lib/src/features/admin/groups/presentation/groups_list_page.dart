@@ -50,6 +50,7 @@ class _GroupsListPageState extends ConsumerState<GroupsListPage> {
     final ctrl = ref.read(adminGroupsControllerProvider.notifier);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-admin-groups',
         onPressed: () => context.push('/admin/groups/new'),
         child: const Icon(Icons.add),
       ),

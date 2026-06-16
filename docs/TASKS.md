@@ -69,7 +69,7 @@
 | └ 账号编辑/新增 全功能对照 web(按 平台×类型 装配:凭据/模型限制(白名单·映射)/池模式/自定义错误码/配额控制(总日周+重置+通知)/高级配额(窗口·会话·RPM·TLS·掩码·缓存TTL·BaseURL)/OpenAI·Anthropic·Antigravity 平台开关/临时不可调度/拦截预热;Bedrock·ServiceAccount·upstream 凭据;OAuth 授权创建待做) | `features/admin/accounts/presentation/sections/` `data/account_{model_mapping,quota,platform_options}.dart` | P1 | ✅ |
 | 用户管理:列表/搜索/余额调整/启停   | `lib/src/features/admin/users/` | P1 | ✅ |
 | 分组管理:列表/启停/权重        | `lib/src/features/admin/groups/` | P1 | ✅ |
-| 兑换码管理:批量生成/列表/作废     | `lib/src/features/admin/redeem/` | P1 | ⬜ |
+| 兑换码管理:批量生成/列表/作废     | `lib/src/features/admin/redeem/` | P1 | ✅ |
 | 渠道监控:状态一览            | `lib/src/features/admin/monitor/` | P2 | ⬜ |
 | 优惠码、订阅计划、系统设置管理      | `lib/src/features/admin/…` | P2 | ⬜ |
 

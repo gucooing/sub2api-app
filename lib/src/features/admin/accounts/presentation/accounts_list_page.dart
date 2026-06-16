@@ -51,6 +51,7 @@ class _AccountsListPageState extends ConsumerState<AccountsListPage> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-admin-accounts',
         onPressed: () => context.push('/admin/accounts/new'),
         child: const Icon(Icons.add),
       ),
