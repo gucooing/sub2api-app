@@ -4,7 +4,12 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_client.dart';
 
-/// 上游账号(管理端账号池),取移动端关心的字段子集。
+/// 上游账号(管理端账号池)。
+///
+/// 编辑/新增表单需要逐键回写 `credentials`/`extra`,因此这里保留后端返回的
+/// **原始脱敏 map**(`credentials`/`extra`/`credentialsStatus`),以及从 extra
+/// 提取的强类型字段,字段集合与 web `Account` 对齐(详见
+/// `backend/internal/handler/dto/types.go` 的 `Account`)。
 @immutable
 class AdminAccount {
   const AdminAccount({
@@ -24,7 +29,9 @@ class AdminAccount {
     this.createdAt,
     this.updatedAt,
     this.expiresAt,
+    this.autoPauseOnExpired = false,
     this.groupNames = const [],
+    this.groupIds = const [],
     this.proxyId,
     this.privacyMode,
     this.rateLimitResetAt,
@@ -32,20 +39,46 @@ class AdminAccount {
     this.tempUnschedulableUntil,
     this.tempUnschedulableReason,
     this.quotaLimit,
+    this.quotaUsed,
     this.quotaDailyLimit,
     this.quotaWeeklyLimit,
+    this.quotaDailyResetMode,
+    this.quotaDailyResetHour,
+    this.quotaWeeklyResetMode,
+    this.quotaWeeklyResetDay,
+    this.quotaWeeklyResetHour,
+    this.quotaResetTimezone,
+    this.quotaNotifyDailyEnabled,
+    this.quotaNotifyDailyThreshold,
+    this.quotaNotifyWeeklyEnabled,
+    this.quotaNotifyWeeklyThreshold,
+    this.quotaNotifyTotalEnabled,
+    this.quotaNotifyTotalThreshold,
     this.windowCostLimit,
     this.windowCostStickyReserve,
     this.maxSessions,
     this.sessionIdleTimeoutMinutes,
     this.baseRpm,
+    this.rpmStrategy,
+    this.rpmStickyBuffer,
+    this.userMsgQueueMode,
+    this.enableTlsFingerprint,
+    this.tlsFingerprintProfileId,
+    this.sessionIdMaskingEnabled,
+    this.cacheTtlOverrideEnabled,
+    this.cacheTtlOverrideTarget,
+    this.customBaseUrlEnabled,
+    this.customBaseUrl,
     this.loadFactor,
+    this.credentials = const {},
+    this.credentialsStatus = const {},
+    this.extra = const {},
   });
 
   final int id;
   final String name;
   final String platform; // anthropic / openai / gemini / antigravity
-  final String type; // oauth / setup-token / apikey / bedrock ...
+  final String type; // oauth / setup-token / apikey / bedrock / service_account / upstream
   final String status; // active / inactive / error
   final String? notes;
   final String? errorMessage;
@@ -58,7 +91,9 @@ class AdminAccount {
   final String? createdAt;
   final String? updatedAt;
   final int? expiresAt; // epoch 秒
+  final bool autoPauseOnExpired;
   final List<String> groupNames;
+  final List<int> groupIds;
   final int? proxyId;
   final String? privacyMode;
   final String? rateLimitResetAt;
@@ -66,14 +101,44 @@ class AdminAccount {
   final String? tempUnschedulableUntil;
   final String? tempUnschedulableReason;
   final num? quotaLimit;
+  final num? quotaUsed;
   final num? quotaDailyLimit;
   final num? quotaWeeklyLimit;
+  final String? quotaDailyResetMode; // rolling / fixed
+  final int? quotaDailyResetHour;
+  final String? quotaWeeklyResetMode; // rolling / fixed
+  final int? quotaWeeklyResetDay;
+  final int? quotaWeeklyResetHour;
+  final String? quotaResetTimezone;
+  final bool? quotaNotifyDailyEnabled;
+  final num? quotaNotifyDailyThreshold;
+  final bool? quotaNotifyWeeklyEnabled;
+  final num? quotaNotifyWeeklyThreshold;
+  final bool? quotaNotifyTotalEnabled;
+  final num? quotaNotifyTotalThreshold;
   final num? windowCostLimit;
   final num? windowCostStickyReserve;
   final int? maxSessions;
   final int? sessionIdleTimeoutMinutes;
   final int? baseRpm;
+  final String? rpmStrategy; // tiered / sticky_exempt
+  final int? rpmStickyBuffer;
+  final String? userMsgQueueMode; // '' / throttle / serialize
+  final bool? enableTlsFingerprint;
+  final int? tlsFingerprintProfileId;
+  final bool? sessionIdMaskingEnabled;
+  final bool? cacheTtlOverrideEnabled;
+  final String? cacheTtlOverrideTarget; // 5m / 1h
+  final bool? customBaseUrlEnabled;
+  final String? customBaseUrl;
   final double? loadFactor;
+
+  /// 后端返回的脱敏凭据原文(敏感键已被剔除,改由 [credentialsStatus] 暴露存在性)。
+  final Map<String, dynamic> credentials;
+  final Map<String, bool> credentialsStatus;
+
+  /// 账号扩展配置原文(配额/限速/各平台开关均落在此)。
+  final Map<String, dynamic> extra;
 
   bool get isActive => status == 'active';
   bool get isError => status == 'error';
@@ -112,8 +177,16 @@ class AdminAccount {
         if (g is Map && g['name'] is String) groups.add(g['name'] as String);
       }
     }
-    final extra = json['extra'];
-    final privacy = (extra is Map) ? extra['privacy_mode'] as String? : null;
+    final groupIds = <int>[];
+    final gids = json['group_ids'];
+    if (gids is List) {
+      for (final g in gids) {
+        final n = (g as num?)?.toInt();
+        if (n != null) groupIds.add(n);
+      }
+    }
+    final extra = _asStringMap(json['extra']);
+    final privacy = extra['privacy_mode'] as String?;
     return AdminAccount(
       id: (json['id'] as num?)?.toInt() ?? 0,
       name: json['name'] as String? ?? '',
@@ -131,7 +204,9 @@ class AdminAccount {
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       expiresAt: (json['expires_at'] as num?)?.toInt(),
+      autoPauseOnExpired: json['auto_pause_on_expired'] as bool? ?? false,
       groupNames: groups,
+      groupIds: groupIds,
       proxyId: (json['proxy_id'] as num?)?.toInt(),
       privacyMode: privacy,
       rateLimitResetAt: json['rate_limit_reset_at'] as String?,
@@ -139,16 +214,55 @@ class AdminAccount {
       tempUnschedulableUntil: json['temp_unschedulable_until'] as String?,
       tempUnschedulableReason: json['temp_unschedulable_reason'] as String?,
       quotaLimit: json['quota_limit'] as num?,
+      quotaUsed: json['quota_used'] as num?,
       quotaDailyLimit: json['quota_daily_limit'] as num?,
       quotaWeeklyLimit: json['quota_weekly_limit'] as num?,
+      quotaDailyResetMode: json['quota_daily_reset_mode'] as String?,
+      quotaDailyResetHour: (json['quota_daily_reset_hour'] as num?)?.toInt(),
+      quotaWeeklyResetMode: json['quota_weekly_reset_mode'] as String?,
+      quotaWeeklyResetDay: (json['quota_weekly_reset_day'] as num?)?.toInt(),
+      quotaWeeklyResetHour: (json['quota_weekly_reset_hour'] as num?)?.toInt(),
+      quotaResetTimezone: json['quota_reset_timezone'] as String?,
+      quotaNotifyDailyEnabled: json['quota_notify_daily_enabled'] as bool?,
+      quotaNotifyDailyThreshold: json['quota_notify_daily_threshold'] as num?,
+      quotaNotifyWeeklyEnabled: json['quota_notify_weekly_enabled'] as bool?,
+      quotaNotifyWeeklyThreshold: json['quota_notify_weekly_threshold'] as num?,
+      quotaNotifyTotalEnabled: json['quota_notify_total_enabled'] as bool?,
+      quotaNotifyTotalThreshold: json['quota_notify_total_threshold'] as num?,
       windowCostLimit: json['window_cost_limit'] as num?,
       windowCostStickyReserve: json['window_cost_sticky_reserve'] as num?,
       maxSessions: (json['max_sessions'] as num?)?.toInt(),
       sessionIdleTimeoutMinutes:
           (json['session_idle_timeout_minutes'] as num?)?.toInt(),
       baseRpm: (json['base_rpm'] as num?)?.toInt(),
+      rpmStrategy: json['rpm_strategy'] as String?,
+      rpmStickyBuffer: (json['rpm_sticky_buffer'] as num?)?.toInt(),
+      userMsgQueueMode: json['user_msg_queue_mode'] as String?,
+      enableTlsFingerprint: json['enable_tls_fingerprint'] as bool?,
+      tlsFingerprintProfileId:
+          (json['tls_fingerprint_profile_id'] as num?)?.toInt(),
+      sessionIdMaskingEnabled: json['session_id_masking_enabled'] as bool?,
+      cacheTtlOverrideEnabled: json['cache_ttl_override_enabled'] as bool?,
+      cacheTtlOverrideTarget: json['cache_ttl_override_target'] as String?,
+      customBaseUrlEnabled: json['custom_base_url_enabled'] as bool?,
+      customBaseUrl: json['custom_base_url'] as String?,
       loadFactor: (json['load_factor'] as num?)?.toDouble(),
+      credentials: _asStringMap(json['credentials']),
+      credentialsStatus: _asBoolMap(json['credentials_status']),
+      extra: extra,
     );
+  }
+
+  static Map<String, dynamic> _asStringMap(dynamic v) =>
+      v is Map ? v.cast<String, dynamic>() : <String, dynamic>{};
+
+  static Map<String, bool> _asBoolMap(dynamic v) {
+    if (v is! Map) return const {};
+    final out = <String, bool>{};
+    v.forEach((k, val) {
+      if (val is bool) out['$k'] = val;
+    });
+    return out;
   }
 }
 
