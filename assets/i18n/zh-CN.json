@@ -1037,5 +1037,39 @@
     "status_expired": "已过期",
     "status_disabled": "已禁用",
     "status_active": "有效"
+  },
+  "adminMonitor": {
+    "title": "渠道监控",
+    "detailTitle": "监控详情",
+    "searchHint": "搜索监控名",
+    "all": "全部",
+    "empty": "暂无监控",
+    "disabled": "已停用",
+    "disable": "停用",
+    "enable": "启用",
+    "delete": "删除",
+    "deleteConfirm": "确定删除监控「{name}」?",
+    "runNow": "立即检测",
+    "runDone": "检测完成:{ok}/{total} 正常",
+    "decryptFailed": "API Key 解密失败,请重新编辑该监控以提供新密钥",
+    "noHistory": "暂无检测记录",
+    "statusUnknown": "未知",
+    "status_operational": "正常",
+    "status_degraded": "降级",
+    "status_failed": "失败",
+    "status_error": "错误",
+    "sec": {
+      "info": "基本信息",
+      "models": "各模型状态",
+      "history": "检测历史"
+    },
+    "kProvider": "平台",
+    "kPrimary": "主模型",
+    "kEndpoint": "端点",
+    "kInterval": "检测间隔",
+    "kAvailability": "7天可用率",
+    "kLatency": "延迟",
+    "kGroup": "分组",
+    "kLastChecked": "最近检测"
   }
 }

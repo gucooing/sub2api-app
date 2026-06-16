@@ -14,6 +14,9 @@ import '../../features/admin/groups/presentation/groups_list_page.dart';
 import '../../features/admin/groups/presentation/group_edit_page.dart';
 import '../../features/admin/groups/presentation/group_rates_page.dart';
 import '../../features/admin/redeem/presentation/redeem_list_page.dart';
+import '../../features/admin/monitor/presentation/monitor_list_page.dart';
+import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
+    as admin_monitor;
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/settings/presentation/admin_settings_index_page.dart';
@@ -214,8 +217,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/monitor',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.monitor.title'),
+        builder: (context, state) => const MonitorListPage(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (context, state) => admin_monitor.MonitorDetailPage(
+              monitorId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/admin/settings',

@@ -70,7 +70,7 @@
 | 用户管理:列表/搜索/余额调整/启停   | `lib/src/features/admin/users/` | P1 | ✅ |
 | 分组管理:列表/启停/权重        | `lib/src/features/admin/groups/` | P1 | ✅ |
 | 兑换码管理:批量生成/列表/作废     | `lib/src/features/admin/redeem/` | P1 | ✅ |
-| 渠道监控:状态一览            | `lib/src/features/admin/monitor/` | P2 | ⬜ |
+| 渠道监控:状态一览            | `lib/src/features/admin/monitor/` | P2 | ✅ |
 | 优惠码、订阅计划、系统设置管理      | `lib/src/features/admin/…` | P2 | ⬜ |
 
 ## 里程碑 M4 · 体验与工程化(P2)

@@ -1037,5 +1037,39 @@
     "status_expired": "Expired",
     "status_disabled": "Disabled",
     "status_active": "Active"
+  },
+  "adminMonitor": {
+    "title": "Channel Monitor",
+    "detailTitle": "Monitor detail",
+    "searchHint": "Search monitor",
+    "all": "All",
+    "empty": "No monitors",
+    "disabled": "Disabled",
+    "disable": "Disable",
+    "enable": "Enable",
+    "delete": "Delete",
+    "deleteConfirm": "Delete monitor \"{name}\"?",
+    "runNow": "Run now",
+    "runDone": "Done: {ok}/{total} operational",
+    "decryptFailed": "API key decryption failed; re-edit this monitor to provide a fresh key",
+    "noHistory": "No check history",
+    "statusUnknown": "Unknown",
+    "status_operational": "Operational",
+    "status_degraded": "Degraded",
+    "status_failed": "Failed",
+    "status_error": "Error",
+    "sec": {
+      "info": "Info",
+      "models": "Model status",
+      "history": "Check history"
+    },
+    "kProvider": "Provider",
+    "kPrimary": "Primary model",
+    "kEndpoint": "Endpoint",
+    "kInterval": "Interval",
+    "kAvailability": "7-day uptime",
+    "kLatency": "Latency",
+    "kGroup": "Group",
+    "kLastChecked": "Last checked"
   }
 }
