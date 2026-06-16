@@ -99,7 +99,12 @@ sub2api/
 │       │   │                                  #     dashboard/ keys/ usage/ usage_logs/ announcements/
 │       │   │                                  #     subscriptions/ redeem/ profile/ features/
 │       │   │                                  #     recharge/ affiliate/ channels_view/
-│       │   └── admin/                         #   [规划中,M3 暂停] dashboard/ accounts/ users/ …
+│       │   └── admin/                         #   管理端,三层分模块:dashboard/ accounts/ users/ …
+│       │   │                                  #     accounts/:列表/筛选/详情/操作/测试 + 编辑·新增
+│       │   │                                  #     全功能对照 web —— presentation/sections/(模型限制/
+│       │   │                                  #     池模式/错误码/配额/高级配额/OpenAI/平台开关/临时不可
+│       │   │                                  #     调度/Bedrock·ServiceAccount 凭据)+ data/account_
+│       │   │                                  #     {model_mapping,quota,platform_options}.dart(纯逻辑)
 │       └── shared/                            # 跨功能复用的纯 UI 组件与工具
 │           ├── format/formatters.dart         #   数值/日期/金额格式化(formatCompact/Cost/Int/Date…)
 │           └── widgets/                       #   Pro 组件库:kpi_tile/sparkline/metric_trend_chart/
