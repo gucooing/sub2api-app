@@ -78,6 +78,18 @@ class _TempUnschedulableSectionState extends State<TempUnschedulableSection> {
     _emit();
   }
 
+  void _move(int i, int delta) {
+    final j = i + delta;
+    if (j < 0 || j >= _v.rules.length) return;
+    setState(() {
+      final r = _v.rules.removeAt(i);
+      _v.rules.insert(j, r);
+      final c = _ctrls.removeAt(i);
+      _ctrls.insert(j, c);
+    });
+    _emit();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -152,6 +164,19 @@ class _TempUnschedulableSectionState extends State<TempUnschedulableSection> {
                 params: {'index': '${i + 1}'})),
             const Spacer(),
             IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: widget.enabled && i > 0 ? () => _move(i, -1) : null,
+              icon: const Icon(Icons.arrow_upward, size: 18),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: widget.enabled && i < _ctrls.length - 1
+                  ? () => _move(i, 1)
+                  : null,
+              icon: const Icon(Icons.arrow_downward, size: 18),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
               onPressed: widget.enabled ? () => _remove(i) : null,
               icon: Icon(Icons.close,
                   size: 18, color: theme.colorScheme.error),
