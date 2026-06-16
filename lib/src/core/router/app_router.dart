@@ -8,6 +8,8 @@ import '../../features/admin/dashboard/presentation/admin_dashboard_tab.dart';
 import '../../features/admin/accounts/presentation/accounts_list_page.dart';
 import '../../features/admin/accounts/presentation/accounts_detail_page.dart';
 import '../../features/admin/accounts/presentation/account_edit_page.dart';
+import '../../features/admin/users/presentation/users_list_page.dart';
+import '../../features/admin/users/presentation/user_detail_page.dart';
 import '../../features/admin/shell/admin_shell.dart';
 import '../../features/admin/shell/admin_more_tab.dart';
 import '../../features/admin/shared/admin_tab_placeholder.dart';
@@ -341,7 +343,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/admin/users',
-              builder: (context, state) => const AdminTabPlaceholder(),
+              builder: (context, state) => const UsersListPage(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) => UserDetailPage(
+                    userId: int.parse(state.pathParameters['id']!),
+                  ),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
