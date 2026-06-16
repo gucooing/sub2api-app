@@ -28,7 +28,8 @@
     "empty": "Nothing here yet",
     "optional": "optional",
     "comingSoon": "This module is under construction",
-    "unknownError": "Something went wrong"
+    "unknownError": "Something went wrong",
+    "error": "Something went wrong"
   },
   "errors": {
     "network": "Connection failed. Check your network or server address",
@@ -212,7 +213,23 @@
     "quotaWeekly": "Weekly quota",
     "rateLimitReset": "Rate limit reset",
     "overloadUntil": "Overload until",
-    "tempUnsched": "Temp unsched until",
+    "tempUnsched": {
+      "title": "Temp Unschedulable Rules",
+      "hint": "Pause scheduling for a while when an error code + keyword matches",
+      "addRule": "Add rule",
+      "ruleIndex": "Rule {index}",
+      "errorCode": "Error code",
+      "duration": "Duration (min)",
+      "keywords": "Keywords",
+      "keywordsHint": "Comma-separated; any match triggers",
+      "description": "Description",
+      "rulesInvalid": "Enabled but no valid rule (need code 100-599, duration>0, at least one keyword)",
+      "preset": {
+        "overload": "Overload 529",
+        "rateLimit": "Rate limit 429",
+        "unavailable": "Unavailable 503"
+      }
+    },
     "tempUnschedReason": "Temp unsched reason",
     "expiresAt": "Expires at",
     "lastUsed": "Last used",
@@ -368,6 +385,60 @@
       "cacheTtlHint": "Bill cache-creation tokens under a fixed TTL",
       "customBaseUrl": "Custom Base URL Relay",
       "customBaseUrlHint": "Relay requests to a custom address"
+    },
+    "interceptWarmup": "Intercept warmup requests",
+    "interceptWarmupHint": "Intercept client warmup/probe requests instead of forwarding upstream",
+    "openai": {
+      "passthrough": "Passthrough",
+      "passthroughHint": "Forward requests directly, skipping model mapping/restriction",
+      "wsMode": "WebSocket mode",
+      "wsModeHint": "WS channel mode for the Responses API",
+      "wsOff": "Off",
+      "wsCtxPool": "Context pool",
+      "wsPassthrough": "Passthrough",
+      "responsesMode": "Responses mode",
+      "responsesModeHint": "Force Responses or Chat Completions",
+      "respAuto": "Auto",
+      "respForce": "Force Responses",
+      "respChat": "Force Chat",
+      "capabilities": "Endpoint capabilities (keep at least one)",
+      "cap": {
+        "chat_completions": "Text generation",
+        "embeddings": "Embeddings"
+      },
+      "codexCliOnly": "Codex official client only",
+      "codexCliOnlyHint": "Only the official Codex CLI may use this account",
+      "allowClaudeCode": "Also allow Claude Code",
+      "allowClaudeCodeHint": "Allow the Claude Code client",
+      "compactMode": "Compact mode",
+      "compactModeHint": "Auto / force on / force off",
+      "compactAuto": "Auto",
+      "compactOn": "Force on",
+      "compactOff": "Force off",
+      "compactMapping": "Compact model mapping",
+      "imageBridge": "Codex image generation bridge",
+      "imageBridgeHint": "Inherit global / force on / force off",
+      "bridgeInherit": "Inherit",
+      "bridgeEnabled": "On",
+      "bridgeDisabled": "Off",
+      "autoPause5hDisabled": "Disable 5h auto-pause",
+      "autoPause7dDisabled": "Disable 7d auto-pause",
+      "autoPauseDisabledHint": "When disabled, reaching the threshold no longer auto-pauses",
+      "autoPause5hThreshold": "5h pause threshold",
+      "autoPause7dThreshold": "7d pause threshold"
+    },
+    "anthropic": {
+      "passthrough": "API Key passthrough",
+      "passthroughHint": "Forward requests directly, skipping model mapping/restriction",
+      "webSearch": "Web search emulation",
+      "webSearchHint": "Default / enabled / disabled",
+      "wsDefault": "Default",
+      "wsEnabled": "Enabled",
+      "wsDisabled": "Disabled"
+    },
+    "antigravity": {
+      "mixedScheduling": "Mixed scheduling (read-only)",
+      "allowOverages": "Allow AI credits overages"
     }
   },
   "auth": {

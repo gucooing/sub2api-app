@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_model_mapping.dart';
+import 'package:sub2api/src/features/admin/accounts/data/account_platform_options.dart';
 import 'package:sub2api/src/features/admin/accounts/data/account_quota.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/custom_error_codes_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/model_restriction_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/openai_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/platform_toggle_sections.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/pool_mode_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/quota_advanced_section.dart';
 import 'package:sub2api/src/features/admin/accounts/presentation/sections/quota_limit_section.dart';
+import 'package:sub2api/src/features/admin/accounts/presentation/sections/temp_unschedulable_section.dart';
 import 'package:sub2api/src/i18n/app_localizations.dart';
 import 'package:sub2api/src/i18n/language_pack.dart';
 import 'package:sub2api/src/i18n/language_pack_registry.dart';
@@ -112,6 +116,58 @@ void main() {
         cacheTtlEnabled: true,
         customBaseUrlEnabled: true,
       ),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('OpenAI 区块:apikey 全开 不报错', (tester) async {
+    await tester.pumpWidget(_host(OpenAiSection(
+      type: 'apikey',
+      value: OpenAiOptions(
+        passthrough: true,
+        responsesMode: 'force_responses',
+        compactMappings: [ModelMappingEntry(from: 'a', to: 'b')],
+        autoPause5hThreshold: 80,
+      ),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('OpenAI 区块:oauth + codexCliOnly 子开关 不报错', (tester) async {
+    await tester.pumpWidget(_host(OpenAiSection(
+      type: 'oauth',
+      value: OpenAiOptions(codexCliOnly: true, allowClaudeCode: true),
+      onChanged: (_) {},
+    )));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Anthropic / Antigravity 小区块 不报错', (tester) async {
+    await tester.pumpWidget(_host(Column(children: [
+      AnthropicApikeySection(
+        value: AnthropicApikeyOptions(webSearchMode: 'enabled'),
+        onChanged: (_) {},
+      ),
+      AntigravitySection(
+        value: AntigravityOptions(mixedScheduling: true, allowOverages: true),
+        onChanged: (_) {},
+      ),
+    ])));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('临时不可调度:启用 + 规则卡 不报错', (tester) async {
+    await tester.pumpWidget(_host(TempUnschedulableSection(
+      value: TempUnschedValue(enabled: true, rules: [
+        TempUnschedRule(
+            errorCode: 529, keywords: 'overloaded', durationMinutes: 60),
+      ]),
       onChanged: (_) {},
     )));
     await tester.pump();

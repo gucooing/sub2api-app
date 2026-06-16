@@ -9,15 +9,19 @@ import '../../../../shared/widgets/error_retry.dart';
 import '../../../../shared/widgets/responsive.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../data/account_model_mapping.dart';
+import '../data/account_platform_options.dart';
 import '../data/account_quota.dart';
 import '../data/admin_accounts_api.dart';
 import '../providers/admin_accounts_providers.dart';
 import '../../settings/providers/admin_settings_providers.dart';
 import 'sections/custom_error_codes_section.dart';
 import 'sections/model_restriction_section.dart';
+import 'sections/openai_section.dart';
+import 'sections/platform_toggle_sections.dart';
 import 'sections/pool_mode_section.dart';
 import 'sections/quota_advanced_section.dart';
 import 'sections/quota_limit_section.dart';
+import 'sections/temp_unschedulable_section.dart';
 
 /// 账号 新增 / 编辑。
 ///
@@ -59,6 +63,13 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
   CustomErrorCodesValue _errorCodes = CustomErrorCodesValue();
   QuotaLimitValue _quota = QuotaLimitValue();
   AdvancedQuotaValue _advQuota = AdvancedQuotaValue();
+  OpenAiOptions _openai = OpenAiOptions();
+  AnthropicApikeyOptions _anthropic = AnthropicApikeyOptions();
+  AntigravityOptions _antigravity = AntigravityOptions();
+  TempUnschedValue _tempUnsched = TempUnschedValue();
+  bool _interceptWarmup = false;
+  bool _hadCodexCliOnly = false;
+  String? _credError;
 
   // 编辑态保存所需的原始 credentials/credentialsStatus/extra(用于合并)。
   Map<String, dynamic> _credentials = const {};
@@ -97,6 +108,20 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
   /// 高级配额(窗口费用/会话/RPM/TLS/...):Anthropic OAuth / setup-token。
   bool get _showAdvancedQuota =>
       _platform == 'anthropic' && (_type == 'oauth' || _type == 'setup-token');
+
+  /// OpenAI 平台开关:openai oauth / apikey。
+  bool get _showOpenAi =>
+      _platform == 'openai' && (_type == 'oauth' || _isApiKey);
+
+  /// Anthropic API Key 开关。
+  bool get _showAnthropicApikey => _platform == 'anthropic' && _isApiKey;
+
+  /// Antigravity 开关。
+  bool get _showAntigravity => _isAntigravity;
+
+  /// 拦截预热请求:anthropic / antigravity。
+  bool get _showInterceptWarmup =>
+      _platform == 'anthropic' || _isAntigravity;
 
   @override
   void dispose() {
@@ -192,6 +217,12 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
 
     _quota = QuotaLimitValue.fromAccount(a);
     _advQuota = AdvancedQuotaValue.fromAccount(a);
+    _openai = OpenAiOptions.fromAccount(a);
+    _anthropic = AnthropicApikeyOptions.fromAccount(a);
+    _antigravity = AntigravityOptions.fromAccount(a);
+    _tempUnsched = TempUnschedValue.fromCredentials(a.credentials);
+    _interceptWarmup = a.credentials['intercept_warmup_requests'] == true;
+    _hadCodexCliOnly = a.extra['codex_cli_only'] == true;
   }
 
   Widget _form(BuildContext context) {
@@ -318,9 +349,69 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
                 ),
           ],
 
+          // ===== OpenAI 平台开关 =====
+          if (_showOpenAi) ...[
+            const SizedBox(height: 16),
+            SectionHeader(title: 'OpenAI'),
+            OpenAiSection(
+              key: ValueKey('openai-$_type'),
+              type: _type,
+              value: _openai,
+              enabled: !_saving,
+              onChanged: (v) => _openai = v,
+            ),
+          ],
+
+          // ===== Anthropic API Key 开关 =====
+          if (_showAnthropicApikey) ...[
+            const SizedBox(height: 16),
+            SectionHeader(title: 'Anthropic'),
+            AnthropicApikeySection(
+              key: const ValueKey('anthropic-apikey'),
+              value: _anthropic,
+              enabled: !_saving,
+              onChanged: (v) => _anthropic = v,
+            ),
+          ],
+
+          // ===== Antigravity 开关 =====
+          if (_showAntigravity) ...[
+            const SizedBox(height: 16),
+            SectionHeader(title: 'Antigravity'),
+            AntigravitySection(
+              key: const ValueKey('antigravity'),
+              value: _antigravity,
+              enabled: !_saving,
+              onChanged: (v) => _antigravity = v,
+            ),
+          ],
+
+          // ===== 拦截预热请求 =====
+          if (_showInterceptWarmup)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr('adminAccounts.interceptWarmup')),
+              subtitle: Text(context.tr('adminAccounts.interceptWarmupHint')),
+              value: _interceptWarmup,
+              onChanged:
+                  _saving ? null : (v) => setState(() => _interceptWarmup = v),
+            ),
+
+          // ===== 临时不可调度规则(所有类型) =====
+          const SizedBox(height: 16),
+          SectionHeader(title: context.tr('adminAccounts.tempUnsched.title')),
+          TempUnschedulableSection(
+            key: ValueKey('tempunsched-$_type'),
+            value: _tempUnsched,
+            enabled: !_saving,
+            onChanged: (v) => _tempUnsched = v,
+          ),
+
           // ===== 调度与归属 =====
           const SizedBox(height: 16),
-          SectionHeader(title: context.tr('adminAccounts.sec.scheduling')),          Text(context.tr('adminAccounts.groups'),
+          SectionHeader(title: context.tr('adminAccounts.sec.scheduling')),
+          const SizedBox(height: 4),
+          Text(context.tr('adminAccounts.groups'),
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 6),
           groupsAsync.maybeWhen(
@@ -436,15 +527,9 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
 
   /// 构建提交用的 credentials:从原始(脱敏)凭据展开,改/删键后整体回传。
   /// 后端 `MergePreservingSensitiveCreds` 会保留未重发的敏感键(api_key/token)。
+  /// 返回 null 表示校验失败([_credError] 已设),调用方应中止保存。
   Map<String, dynamic>? _buildCredentials() {
-    // 仅这些区块会触碰 credentials;都不涉及则返回 null(不提交 credentials)。
-    final touches = _showApiKeyCreds ||
-        _showModelRestriction ||
-        _isAntigravity ||
-        _showPoolMode ||
-        _showCustomErrorCodes;
-    if (!touches) return null;
-
+    _credError = null;
     final creds = <String, dynamic>{...(widget.isEdit ? _credentials : {})};
 
     if (_showApiKeyCreds) {
@@ -454,7 +539,9 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
       if (key.isNotEmpty) creds['api_key'] = key;
     }
 
-    if (_showModelRestriction || _isAntigravity) {
+    // OpenAI 开启自动透传时保留现有模型映射,不再编辑(对照 web)。
+    final openaiPassthrough = _showOpenAi && _openai.passthrough;
+    if ((_showModelRestriction || _isAntigravity) && !openaiPassthrough) {
       final mm = _model.build();
       if (mm != null) {
         creds['model_mapping'] = mm;
@@ -493,17 +580,45 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
       }
     }
 
+    if (_showOpenAi) _openai.applyToCredentials(creds, _type);
+
+    // 拦截预热请求(anthropic / antigravity)。
+    if (_showInterceptWarmup) {
+      if (_interceptWarmup) {
+        creds['intercept_warmup_requests'] = true;
+      } else if (widget.isEdit) {
+        creds.remove('intercept_warmup_requests');
+      }
+    }
+
+    // 临时不可调度规则(所有类型);开启但无有效规则则中止。
+    if (!_tempUnsched.applyToCredentials(creds)) {
+      _credError = context.tr('adminAccounts.tempUnsched.rulesInvalid');
+      return null;
+    }
+
     return creds;
   }
 
   /// 构建提交用的 extra:从原始 extra 展开,各区块改/删键后整体回传。
   /// 后端 update 会保留运行态键(model_rate_limits 等)。
   Map<String, dynamic>? _buildExtra() {
-    final touches = _showQuota || _showAdvancedQuota;
+    final touches = _showQuota ||
+        _showAdvancedQuota ||
+        _showOpenAi ||
+        _showAnthropicApikey ||
+        _showAntigravity;
     if (!touches) return null;
     final extra = <String, dynamic>{...(widget.isEdit ? _extra : {})};
     if (_showQuota) _quota.applyToExtra(extra);
     if (_showAdvancedQuota) _advQuota.applyToExtra(extra);
+    if (_showOpenAi) {
+      _openai.applyToExtra(extra, _type, hadCodexCliOnly: _hadCodexCliOnly);
+    }
+    if (_showAnthropicApikey) {
+      _anthropic.applyToExtra(extra, webSearchGlobal: true);
+    }
+    if (_showAntigravity) _antigravity.applyToExtra(extra);
     return extra;
   }
 
@@ -546,7 +661,15 @@ class _AccountEditPageState extends ConsumerState<AccountEditPage> {
         'group_ids': _groupIds.toList(),
       };
       final creds = _buildCredentials();
-      if (creds != null) body['credentials'] = creds;
+      if (creds == null) {
+        if (mounted) {
+          showAppToast(context, _credError ?? context.tr('common.error'),
+              error: true);
+          setState(() => _saving = false);
+        }
+        return;
+      }
+      body['credentials'] = creds;
       final extra = _buildExtra();
       if (extra != null) body['extra'] = extra;
 

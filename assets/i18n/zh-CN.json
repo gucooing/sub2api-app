@@ -28,7 +28,8 @@
     "empty": "暂无内容",
     "optional": "选填",
     "comingSoon": "模块开发中,敬请期待",
-    "unknownError": "出错了"
+    "unknownError": "出错了",
+    "error": "出错了"
   },
   "errors": {
     "network": "网络连接失败,请检查网络或服务器地址",
@@ -212,7 +213,23 @@
     "quotaWeekly": "周配额",
     "rateLimitReset": "限流恢复时间",
     "overloadUntil": "过载至",
-    "tempUnsched": "临停至",
+    "tempUnsched": {
+      "title": "临时不可调度规则",
+      "hint": "命中错误码与关键词时暂停调度一段时间",
+      "addRule": "添加规则",
+      "ruleIndex": "规则 {index}",
+      "errorCode": "错误码",
+      "duration": "时长(分钟)",
+      "keywords": "关键词",
+      "keywordsHint": "逗号分隔,任一命中即触发",
+      "description": "说明",
+      "rulesInvalid": "已开启但无有效规则(需错误码 100-599、时长>0、至少一个关键词)",
+      "preset": {
+        "overload": "过载 529",
+        "rateLimit": "限流 429",
+        "unavailable": "不可用 503"
+      }
+    },
     "tempUnschedReason": "临停原因",
     "expiresAt": "过期时间",
     "lastUsed": "最近使用",
@@ -368,6 +385,60 @@
       "cacheTtlHint": "将缓存创建 token 归入指定 TTL 计费",
       "customBaseUrl": "自定义 BaseURL 中继",
       "customBaseUrlHint": "将请求中继转发到自定义地址"
+    },
+    "interceptWarmup": "拦截预热请求",
+    "interceptWarmupHint": "拦截客户端的预热/探测请求,不转发到上游",
+    "openai": {
+      "passthrough": "自动透传",
+      "passthroughHint": "直接透传请求,跳过模型映射/限制",
+      "wsMode": "WebSocket 模式",
+      "wsModeHint": "Responses API 的 WS 通道模式",
+      "wsOff": "关闭",
+      "wsCtxPool": "上下文池",
+      "wsPassthrough": "透传",
+      "responsesMode": "Responses 模式",
+      "responsesModeHint": "强制使用 Responses 或 Chat Completions",
+      "respAuto": "自动",
+      "respForce": "强制 Responses",
+      "respChat": "强制 Chat",
+      "capabilities": "端点能力(至少保留一项)",
+      "cap": {
+        "chat_completions": "文本生成",
+        "embeddings": "向量嵌入"
+      },
+      "codexCliOnly": "仅限 Codex 官方客户端",
+      "codexCliOnlyHint": "仅允许官方 Codex CLI 使用该账号",
+      "allowClaudeCode": "同时允许 Claude Code",
+      "allowClaudeCodeHint": "放行 Claude Code 插件",
+      "compactMode": "Compact 模式",
+      "compactModeHint": "自动 / 强制开启 / 强制关闭",
+      "compactAuto": "自动",
+      "compactOn": "强制开",
+      "compactOff": "强制关",
+      "compactMapping": "Compact 模型映射",
+      "imageBridge": "Codex 图像生成桥接",
+      "imageBridgeHint": "继承全局 / 强制开启 / 强制关闭",
+      "bridgeInherit": "继承",
+      "bridgeEnabled": "开启",
+      "bridgeDisabled": "关闭",
+      "autoPause5hDisabled": "禁用 5h 自动暂停",
+      "autoPause7dDisabled": "禁用 7d 自动暂停",
+      "autoPauseDisabledHint": "禁用后达到阈值不再自动暂停",
+      "autoPause5hThreshold": "5h 暂停阈值",
+      "autoPause7dThreshold": "7d 暂停阈值"
+    },
+    "anthropic": {
+      "passthrough": "API Key 自动透传",
+      "passthroughHint": "直接透传请求,跳过模型映射/限制",
+      "webSearch": "联网搜索模拟",
+      "webSearchHint": "默认 / 启用 / 禁用",
+      "wsDefault": "默认",
+      "wsEnabled": "启用",
+      "wsDisabled": "禁用"
+    },
+    "antigravity": {
+      "mixedScheduling": "混合调度(只读)",
+      "allowOverages": "允许 AI 额度超额"
     }
   },
   "auth": {
