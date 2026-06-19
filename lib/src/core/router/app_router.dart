@@ -29,6 +29,7 @@ import '../../features/admin/channels/presentation/channels_list_page.dart';
 import '../../features/admin/channels/presentation/channel_edit_page.dart';
 import '../../features/admin/orders/presentation/orders_page.dart';
 import '../../features/admin/orders/presentation/plan_edit_page.dart';
+import '../../features/admin/affiliates/presentation/affiliates_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -344,8 +345,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/affiliates',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.affiliates'),
+        builder: (context, state) => const AdminAffiliatesPage(),
       ),
       GoRoute(
         path: '/admin/orders',
