@@ -14,6 +14,9 @@ import '../../features/admin/groups/presentation/groups_list_page.dart';
 import '../../features/admin/groups/presentation/group_edit_page.dart';
 import '../../features/admin/groups/presentation/group_rates_page.dart';
 import '../../features/admin/redeem/presentation/redeem_list_page.dart';
+import '../../features/admin/announcements/presentation/announcements_list_page.dart';
+import '../../features/admin/announcements/presentation/announcement_edit_page.dart';
+import '../../features/admin/announcements/presentation/announcement_read_status_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -271,8 +274,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/announcements-admin',
-        builder: (context, state) => const ModulePlaceholderScreen(
-            titleKey: 'admin.modules.announcements'),
+        builder: (context, state) => const AnnouncementsListPage(),
+      ),
+      GoRoute(
+        path: '/admin/announcements-admin/new',
+        builder: (context, state) => const AnnouncementEditPage(),
+      ),
+      GoRoute(
+        path: '/admin/announcements-admin/:id/edit',
+        builder: (context, state) => AnnouncementEditPage(
+          announcementId: int.tryParse(state.pathParameters['id'] ?? ''),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/announcements-admin/:id/read-status',
+        builder: (context, state) => AnnouncementReadStatusPage(
+          announcementId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
       ),
       GoRoute(
         path: '/admin/proxies',

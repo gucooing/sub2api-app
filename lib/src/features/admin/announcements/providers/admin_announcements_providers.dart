@@ -2,15 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client_provider.dart';
-import '../data/admin_groups_api.dart';
+import '../data/admin_announcements_api.dart';
 
-final adminGroupsApiProvider = Provider<AdminGroupsApi>(
-  (ref) => AdminGroupsApi(ref.watch(apiClientProvider)),
+final adminAnnouncementsApiProvider = Provider<AdminAnnouncementsApi>(
+  (ref) => AdminAnnouncementsApi(ref.watch(apiClientProvider)),
 );
 
 @immutable
-class AdminGroupsState {
-  const AdminGroupsState({
+class AdminAnnouncementsState {
+  const AdminAnnouncementsState({
     this.items = const [],
     this.loading = true,
     this.loadingMore = false,
@@ -19,11 +19,10 @@ class AdminGroupsState {
     this.page = 1,
     this.total = 0,
     this.search = '',
-    this.platform = '',
     this.status = '',
   });
 
-  final List<AdminGroup> items;
+  final List<Announcement> items;
   final bool loading;
   final bool loadingMore;
   final Object? error;
@@ -31,14 +30,10 @@ class AdminGroupsState {
   final int page;
   final int total;
   final String search;
-  final String platform;
   final String status;
 
-  int get activeFilterCount =>
-      [platform, status].where((s) => s.isNotEmpty).length;
-
-  AdminGroupsState copyWith({
-    List<AdminGroup>? items,
+  AdminAnnouncementsState copyWith({
+    List<Announcement>? items,
     bool? loading,
     bool? loadingMore,
     Object? error = _sentinel,
@@ -46,10 +41,9 @@ class AdminGroupsState {
     int? page,
     int? total,
     String? search,
-    String? platform,
     String? status,
   }) =>
-      AdminGroupsState(
+      AdminAnnouncementsState(
         items: items ?? this.items,
         loading: loading ?? this.loading,
         loadingMore: loadingMore ?? this.loadingMore,
@@ -58,28 +52,26 @@ class AdminGroupsState {
         page: page ?? this.page,
         total: total ?? this.total,
         search: search ?? this.search,
-        platform: platform ?? this.platform,
         status: status ?? this.status,
       );
 
   static const _sentinel = Object();
 }
 
-class AdminGroupsController extends Notifier<AdminGroupsState> {
+class AdminAnnouncementsController extends Notifier<AdminAnnouncementsState> {
   @override
-  AdminGroupsState build() {
+  AdminAnnouncementsState build() {
     Future.microtask(_loadFirst);
-    return const AdminGroupsState();
+    return const AdminAnnouncementsState();
   }
 
-  AdminGroupsApi get _api => ref.read(adminGroupsApiProvider);
+  AdminAnnouncementsApi get _api => ref.read(adminAnnouncementsApiProvider);
 
   Future<void> _loadFirst() async {
     state = state.copyWith(loading: true, error: null);
     try {
       final res = await _api.list(
         page: 1,
-        platform: state.platform,
         status: state.status,
         search: state.search,
       );
@@ -104,7 +96,6 @@ class AdminGroupsController extends Notifier<AdminGroupsState> {
       final next = state.page + 1;
       final res = await _api.list(
         page: next,
-        platform: state.platform,
         status: state.status,
         search: state.search,
       );
@@ -125,28 +116,18 @@ class AdminGroupsController extends Notifier<AdminGroupsState> {
     _loadFirst();
   }
 
-  void applyFilters({required String platform, required String status}) {
-    state = state.copyWith(platform: platform, status: status);
+  void setStatus(String v) {
+    if (v == state.status) return;
+    state = state.copyWith(status: v);
     _loadFirst();
   }
 }
 
-final adminGroupsControllerProvider =
-    NotifierProvider.autoDispose<AdminGroupsController, AdminGroupsState>(
-        AdminGroupsController.new);
+final adminAnnouncementsControllerProvider = NotifierProvider.autoDispose<
+    AdminAnnouncementsController,
+    AdminAnnouncementsState>(AdminAnnouncementsController.new);
 
-final adminGroupDetailProvider =
-    FutureProvider.autoDispose.family<AdminGroup, int>((ref, id) {
-  return ref.watch(adminGroupsApiProvider).getById(id);
-});
-
-/// 全部分组(完整字段),供公告定向 / 订阅等模块复用。
-final adminGroupsFullProvider =
-    FutureProvider.autoDispose<List<AdminGroup>>((ref) {
-  return ref.watch(adminGroupsApiProvider).getAll(includeInactive: true);
-});
-
-final adminGroupRatesProvider =
-    FutureProvider.autoDispose.family<List<GroupRateEntry>, int>((ref, id) {
-  return ref.watch(adminGroupsApiProvider).rateMultipliers(id);
+final adminAnnouncementDetailProvider =
+    FutureProvider.autoDispose.family<Announcement, int>((ref, id) {
+  return ref.watch(adminAnnouncementsApiProvider).getById(id);
 });

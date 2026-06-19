@@ -152,6 +152,18 @@ class AdminGroupsApi {
     return AdminGroup.fromJson((data as Map).cast<String, dynamic>());
   }
 
+  /// 全部分组(完整字段,不分页),供公告定向、订阅等需要 subscription_type 的场景。
+  Future<List<AdminGroup>> getAll({bool includeInactive = false}) async {
+    final data = await _client.get<dynamic>('/admin/groups/all', query: {
+      if (includeInactive) 'include_inactive': true,
+    });
+    final list = (data as List?) ?? const [];
+    return [
+      for (final e in list)
+        if (e is Map) AdminGroup.fromJson(e.cast<String, dynamic>()),
+    ];
+  }
+
   Future<AdminGroup> create(Map<String, dynamic> body) async {
     final data = await _client.post<dynamic>('/admin/groups', data: body);
     return AdminGroup.fromJson((data as Map).cast<String, dynamic>());
