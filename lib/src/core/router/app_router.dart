@@ -30,6 +30,8 @@ import '../../features/admin/channels/presentation/channel_edit_page.dart';
 import '../../features/admin/orders/presentation/orders_page.dart';
 import '../../features/admin/orders/presentation/plan_edit_page.dart';
 import '../../features/admin/affiliates/presentation/affiliates_page.dart';
+import '../../features/admin/riskcontrol/presentation/risk_control_page.dart';
+import '../../features/admin/riskcontrol/presentation/risk_config_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -330,8 +332,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/risk-control',
-        builder: (context, state) => const ModulePlaceholderScreen(
-            titleKey: 'admin.modules.riskControl'),
+        builder: (context, state) => const RiskControlPage(),
+      ),
+      GoRoute(
+        path: '/admin/risk-control/config',
+        builder: (context, state) => const RiskConfigPage(),
       ),
       GoRoute(
         path: '/admin/promo-codes',
