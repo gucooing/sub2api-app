@@ -17,6 +17,8 @@ import '../../features/admin/redeem/presentation/redeem_list_page.dart';
 import '../../features/admin/announcements/presentation/announcements_list_page.dart';
 import '../../features/admin/announcements/presentation/announcement_edit_page.dart';
 import '../../features/admin/announcements/presentation/announcement_read_status_page.dart';
+import '../../features/admin/promo/presentation/promo_list_page.dart';
+import '../../features/admin/promo/presentation/promo_usages_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -304,8 +306,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/promo-codes',
-        builder: (context, state) => const ModulePlaceholderScreen(
-            titleKey: 'admin.modules.promoCodes'),
+        builder: (context, state) => const PromoListPage(),
+      ),
+      GoRoute(
+        path: '/admin/promo-codes/:id/usages',
+        builder: (context, state) => PromoUsagesPage(
+          codeId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
       ),
       GoRoute(
         path: '/admin/affiliates',
