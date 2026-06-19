@@ -25,6 +25,8 @@ import '../../features/admin/subscriptions/presentation/subscriptions_list_page.
 import '../../features/admin/proxies/data/admin_proxies_api.dart';
 import '../../features/admin/proxies/presentation/proxy_list_page.dart';
 import '../../features/admin/proxies/presentation/proxy_edit_page.dart';
+import '../../features/admin/channels/presentation/channels_list_page.dart';
+import '../../features/admin/channels/presentation/channel_edit_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -272,8 +274,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/channels',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.channels'),
+        builder: (context, state) => const ChannelsListPage(),
+      ),
+      GoRoute(
+        path: '/admin/channels/new',
+        builder: (context, state) => const ChannelEditPage(),
+      ),
+      GoRoute(
+        path: '/admin/channels/:id/edit',
+        builder: (context, state) => ChannelEditPage(
+          channelId: int.tryParse(state.pathParameters['id'] ?? ''),
+        ),
       ),
       GoRoute(
         path: '/admin/subscriptions',
