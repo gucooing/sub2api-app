@@ -22,6 +22,9 @@ import '../../features/admin/promo/presentation/promo_usages_page.dart';
 import '../../features/admin/usage/presentation/admin_usage_list_page.dart';
 import '../../features/admin/usage/presentation/admin_usage_cleanup_page.dart';
 import '../../features/admin/subscriptions/presentation/subscriptions_list_page.dart';
+import '../../features/admin/proxies/data/admin_proxies_api.dart';
+import '../../features/admin/proxies/presentation/proxy_list_page.dart';
+import '../../features/admin/proxies/presentation/proxy_edit_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -298,8 +301,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/proxies',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.proxies'),
+        builder: (context, state) => const ProxyListPage(),
+      ),
+      GoRoute(
+        path: '/admin/proxies/new',
+        builder: (context, state) => const ProxyEditPage(),
+      ),
+      GoRoute(
+        path: '/admin/proxies/:id/edit',
+        builder: (context, state) => ProxyEditPage(
+          proxyId: int.tryParse(state.pathParameters['id'] ?? ''),
+          initial: state.extra is Proxy ? state.extra as Proxy : null,
+        ),
       ),
       GoRoute(
         path: '/admin/risk-control',
