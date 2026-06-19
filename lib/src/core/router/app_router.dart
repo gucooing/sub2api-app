@@ -19,6 +19,8 @@ import '../../features/admin/announcements/presentation/announcement_edit_page.d
 import '../../features/admin/announcements/presentation/announcement_read_status_page.dart';
 import '../../features/admin/promo/presentation/promo_list_page.dart';
 import '../../features/admin/promo/presentation/promo_usages_page.dart';
+import '../../features/admin/usage/presentation/admin_usage_list_page.dart';
+import '../../features/admin/usage/presentation/admin_usage_cleanup_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -326,8 +328,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/usage',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.usage'),
+        builder: (context, state) => const AdminUsageListPage(),
+      ),
+      GoRoute(
+        path: '/admin/usage/cleanup',
+        builder: (context, state) => const AdminUsageCleanupPage(),
       ),
       // 登录后的主壳:底部导航四个分支
       StatefulShellRoute.indexedStack(
