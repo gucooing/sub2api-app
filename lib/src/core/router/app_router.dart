@@ -21,6 +21,7 @@ import '../../features/admin/promo/presentation/promo_list_page.dart';
 import '../../features/admin/promo/presentation/promo_usages_page.dart';
 import '../../features/admin/usage/presentation/admin_usage_list_page.dart';
 import '../../features/admin/usage/presentation/admin_usage_cleanup_page.dart';
+import '../../features/admin/subscriptions/presentation/subscriptions_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -273,8 +274,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/subscriptions',
-        builder: (context, state) => const ModulePlaceholderScreen(
-            titleKey: 'admin.modules.subscriptions'),
+        builder: (context, state) => const SubscriptionsListPage(),
       ),
       GoRoute(
         path: '/admin/announcements-admin',
