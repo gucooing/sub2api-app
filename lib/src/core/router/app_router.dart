@@ -27,6 +27,8 @@ import '../../features/admin/proxies/presentation/proxy_list_page.dart';
 import '../../features/admin/proxies/presentation/proxy_edit_page.dart';
 import '../../features/admin/channels/presentation/channels_list_page.dart';
 import '../../features/admin/channels/presentation/channel_edit_page.dart';
+import '../../features/admin/orders/presentation/orders_page.dart';
+import '../../features/admin/orders/presentation/plan_edit_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -347,8 +349,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/orders',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.orders'),
+        builder: (context, state) => const AdminOrdersPage(),
+      ),
+      GoRoute(
+        path: '/admin/orders/plans/new',
+        builder: (context, state) => const PlanEditPage(),
+      ),
+      GoRoute(
+        path: '/admin/orders/plans/:id/edit',
+        builder: (context, state) => PlanEditPage(
+          planId: int.tryParse(state.pathParameters['id'] ?? ''),
+        ),
       ),
       GoRoute(
         path: '/admin/usage',
