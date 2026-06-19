@@ -32,6 +32,7 @@ import '../../features/admin/orders/presentation/plan_edit_page.dart';
 import '../../features/admin/affiliates/presentation/affiliates_page.dart';
 import '../../features/admin/riskcontrol/presentation/risk_control_page.dart';
 import '../../features/admin/riskcontrol/presentation/risk_config_page.dart';
+import '../../features/admin/ops/presentation/ops_page.dart';
 import '../../features/admin/monitor/presentation/monitor_list_page.dart';
 import '../../features/admin/monitor/presentation/monitor_detail_page.dart'
     as admin_monitor;
@@ -66,7 +67,6 @@ import '../../features/user/subscriptions/presentation/subscriptions_page.dart';
 import '../../features/user/usage/presentation/usage_tab.dart';
 import '../../features/user/usage_logs/presentation/usage_logs_page.dart';
 import '../../features/user/usage_logs/presentation/log_detail_page.dart';
-import '../../shared/widgets/module_placeholder.dart';
 import '../app_mode/app_mode_controller.dart';
 import '../session/session_controller.dart';
 
@@ -274,8 +274,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/ops',
-        builder: (context, state) =>
-            const ModulePlaceholderScreen(titleKey: 'admin.modules.ops'),
+        builder: (context, state) => const OpsPage(),
       ),
       GoRoute(
         path: '/admin/channels',
